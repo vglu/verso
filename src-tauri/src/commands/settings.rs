@@ -27,6 +27,13 @@ pub struct Settings {
     pub show_toolbar: bool,
     #[serde(default = "default_editor_mode")]
     pub editor_mode: String,
+    /// Path to the user's own theme file, or null for the built-in themes.
+    ///
+    /// Every field the frontend sends must exist here: settings are saved by
+    /// round-tripping this struct, so a field that is missing is not merely
+    /// unread — it is erased from the file on the next save.
+    #[serde(default)]
+    pub theme_file: Option<String>,
     #[serde(default)]
     pub recent_files: Vec<String>,
 }
@@ -70,6 +77,7 @@ impl Default for Settings {
             show_status_strip: true,
             show_toolbar: true,
             editor_mode: default_editor_mode(),
+            theme_file: None,
             recent_files: Vec::new(),
         }
     }

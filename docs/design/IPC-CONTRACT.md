@@ -51,27 +51,50 @@ interface Draft { docId: string; path: string; baseMtimeMs: number; savedAtMs: n
 interface DraftInfo { docId: string; path: string; baseMtimeMs: number; savedAtMs: number } // без content
 
 // ---- сессия ----
-interface SessionTab { path: string; cursor: number; scrollTop: number }
+// scrollPos — место в тексте, scrollOffset — сколько пикселей над ним; якорь
+// в документе переживает другой размер окна и шрифт. scrollTop писали ранние
+// версии (чистые пиксели), читается только для миграции.
+interface SessionTab {
+  path: string;
+  cursor: number;
+  scrollTop?: number;
+  scrollPos?: number;
+  scrollOffset?: number;
+}
 interface SessionState {
   tabs: SessionTab[];
   activeIndex: number;
-  sidebar: { visible: boolean; panel: 'files' | 'outline'; width: number };
+  sidebar: {
+    visible: boolean;
+    panel: 'files' | 'outline';
+    width: number;
+    outlineVisible?: boolean;
+    outlineWidth?: number;
+  };
   treeRoot: string | null;
 }
 
 // ---- настройки ----
 interface Settings {
   theme: 'light' | 'dark' | 'system';
-  uiLang: 'system' | 'ru' | 'en';
+  uiLang: 'system' | 'uk' | 'en';
   autosaveDraftMs: number;      // 800 по умолчанию; 0 = выкл (не рекомендуем)
   restoreSession: boolean;      // true
   editorFontSize: number;       // 16
   editorMaxWidth: number;       // 760 (px)
   fontFamily: 'default' | string;
   showStatusStrip: boolean;     // true
+  showToolbar: boolean;         // true
+  editorMode: 'live' | 'source';
+  themeFile: string | null;     // своя тема (CSS-файл), null = встроенные
   recentFiles: string[];        // max 10, обновляет Rust при read_file
 }
 ```
+
+Каждое поле здесь обязано существовать в Rust-структуре: настройки и сессия
+сохраняются круговым обходом структуры, и необъявленное поле не просто не
+читается — оно стирается из файла при следующем сохранении. Проверяется тестом
+`tests/settings-contract.test.ts`.
 
 ## 2. Команды (Rust `#[tauri::command]`)
 
