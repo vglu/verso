@@ -23,7 +23,7 @@ tauri-plugin-window-state = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
-notify = "6"
+notify = "8"
 notify-debouncer-full = "0.3"
 encoding_rs = "0.8"
 # Firefox's encoding detector. Guessing a legacy 8-bit encoding cannot be done
