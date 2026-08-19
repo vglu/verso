@@ -78,22 +78,19 @@ export async function restoreSession({ activate = true }: RestoreOptions = {}): 
   if (state.sidebar?.width) workspace.setWidth(state.sidebar.width);
   if (state.sidebar?.outlineWidth) workspace.setOutlineWidth(state.sidebar.outlineWidth);
 
+  // Tabs come back as paths, not as documents. Reading every file here cost an
+  // IPC round trip, an encoding pass and a per-line ending scan each, before
+  // the window was usable — and a single large file in the session slowed the
+  // start for every other one. Each file is read when its tab is first shown.
   let opened = 0;
   for (const tab of state.tabs ?? []) {
-    const ok = await tabs.openPath(tab.path, { activate: false });
-    if (!ok) continue;
-    const index = tabs.indexOfPath(tab.path);
-    const restored = tabs.tabs[index];
-    if (restored) {
-      restored.cursor = tab.cursor ?? 0;
+    tabs.addRestored(tab.path, tab.cursor ?? 0, {
       // Sessions written before positions became anchors carry only a pixel
       // offset; there is nothing to resolve it against, so it is dropped
       // rather than applied to the wrong place.
-      restored.scroll = {
-        pos: tab.scrollPos ?? 0,
-        offset: tab.scrollOffset ?? 0
-      };
-    }
+      pos: tab.scrollPos ?? 0,
+      offset: tab.scrollOffset ?? 0
+    });
     opened += 1;
   }
 

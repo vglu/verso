@@ -125,6 +125,13 @@
       workspace.setOutline([], -1);
       return;
     }
+    // A tab restored from the last session is only a path until now. Reading
+    // it flips `loaded`, which brings this effect back with a document.
+    if (!active.loaded) {
+      void tabs.ensureLoaded(active.id);
+      return;
+    }
+
     if (!opened.includes(active.id)) opened = [...opened, active.id];
 
     const handle = tabs.handleOf(active.id);

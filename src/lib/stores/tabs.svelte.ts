@@ -33,6 +33,15 @@ export interface Tab {
   mixedEol: boolean;
   trailingNewline: boolean;
   dirty: boolean;
+  /**
+   * Whether the file behind this tab has actually been read.
+   *
+   * A restored session is a list of paths, not a list of documents: reading
+   * all of them before the window settles costs an IPC round trip, an encoding
+   * pass and a per-line ending scan each, for documents nobody has looked at
+   * yet. A tab is read the first time it is shown.
+   */
+  loaded: boolean;
   readonly: boolean;
   readonlyReason: string | null;
   external: ExternalState;
@@ -47,6 +56,7 @@ export interface Tab {
 const handles = new Map<string, EditorHandle>();
 
 let untitledCounter = 0;
+let unreadCounter = 0;
 
 function tabFromMeta(meta: FileMeta, content: string): Tab {
   return {
@@ -61,6 +71,7 @@ function tabFromMeta(meta: FileMeta, content: string): Tab {
     mixedEol: meta.mixedEol,
     trailingNewline: meta.trailingNewline,
     dirty: false,
+    loaded: true,
     readonly: meta.readonly,
     readonlyReason: meta.readonly ? 'permissions' : null,
     external: 'none',
@@ -139,20 +150,7 @@ class TabsStore {
     try {
       const opened = await readFile(path);
       const tab = tabFromMeta(opened.meta, opened.content);
-
-      // A newer draft means the app died with unsaved text in this file.
-      const draft = await draftGet(tab.id).catch(() => null);
-      if (draft && draft.content !== opened.content && draft.savedAtMs > opened.meta.mtimeMs) {
-        tab.content = draft.content;
-        tab.dirty = true;
-        // Say so. Opening a file and being handed different text without a
-        // word is the one thing an editor must never do, however well meant.
-        tab.recovered = { savedAtMs: draft.savedAtMs, onDisk: opened.content };
-        // Re-persist it right away. Recovered text is still unsaved text, and
-        // until it is written again it exists only in memory — a second crash,
-        // or a cleanup pass that judges the draft stale, would take it for good.
-        this.scheduleDraft(tab);
-      }
+      await this.applyDraft(tab, opened.content, opened.meta.mtimeMs);
 
       this.tabs.push(tab);
       if (options.activate !== false) this.activateLast();
@@ -160,6 +158,100 @@ class TabsStore {
       void this.syncWatchList();
       return true;
     } catch (error) {
+      this.reportError(error, path);
+      return false;
+    }
+  }
+
+  /**
+   * A draft newer than the file means the app died with unsaved text in it.
+   *
+   * Shared by opening a file and by loading a restored tab, because both are
+   * the moment a document's text first comes into memory — and that is the
+   * moment the draft has to be noticed, or it is silently overwritten later.
+   */
+  private async applyDraft(tab: Tab, onDisk: string, mtimeMs: number): Promise<void> {
+    const draft = await draftGet(tab.id).catch(() => null);
+    if (!draft || draft.content === onDisk || draft.savedAtMs <= mtimeMs) return;
+
+    tab.content = draft.content;
+    tab.dirty = true;
+    // Say so. Opening a file and being handed different text without a word is
+    // the one thing an editor must never do, however well meant.
+    tab.recovered = { savedAtMs: draft.savedAtMs, onDisk };
+    // Re-persist it right away. Recovered text is still unsaved text, and until
+    // it is written again it exists only in memory — a second crash, or a
+    // cleanup pass that judges the draft stale, would take it for good.
+    this.scheduleDraft(tab);
+  }
+
+  /**
+   * A tab from a previous session: its path, and nothing else yet.
+   *
+   * The file is read when the tab is first shown. Restoring twelve documents
+   * eagerly meant twelve IPC round trips, twelve encoding passes and twelve
+   * per-line ending scans before the window was usable — all for documents
+   * behind tabs nobody had chosen.
+   */
+  addRestored(path: string, cursor: number, scroll: ScrollAnchor): void {
+    if (this.indexOfPath(path) >= 0) return;
+
+    unreadCounter += 1;
+    this.tabs.push({
+      // Provisional, and deliberately opaque: the real document id comes from
+      // the file when it is read. It must not be built out of the path —
+      // document ids end up in draft file names, and a path in one is a path
+      // in a file name. Nothing is keyed by this until the file is read: a tab
+      // with no content has no editor, and so no handle to move.
+      id: `unread-${unreadCounter}`,
+      path,
+      fileName: baseName(path),
+      dirPath: dirName(path),
+      content: '',
+      baseMtimeMs: null,
+      encoding: 'utf-8',
+      eol: 'lf',
+      mixedEol: false,
+      trailingNewline: true,
+      dirty: false,
+      loaded: false,
+      readonly: false,
+      readonlyReason: null,
+      external: 'none',
+      recovered: null,
+      cursor,
+      scroll
+    });
+  }
+
+  /**
+   * Read the file behind a restored tab, if it has not been read yet.
+   *
+   * Returns false when the file could not be read — the tab stays, marked as
+   * missing, rather than vanishing without explanation.
+   */
+  async ensureLoaded(id: string): Promise<boolean> {
+    const tab = this.tabs.find((t) => t.id === id);
+    if (!tab) return false;
+    if (tab.loaded) return true;
+    if (!tab.path) return true;
+
+    const path = tab.path;
+    try {
+      const opened = await readFile(path);
+      const cursor = tab.cursor;
+      const scroll = tab.scroll;
+
+      Object.assign(tab, tabFromMeta(opened.meta, opened.content));
+      tab.cursor = cursor;
+      tab.scroll = scroll;
+      await this.applyDraft(tab, opened.content, opened.meta.mtimeMs);
+
+      void this.syncWatchList();
+      return true;
+    } catch (error) {
+      tab.loaded = true; // do not retry on every render
+      tab.external = 'removed';
       this.reportError(error, path);
       return false;
     }
@@ -188,6 +280,7 @@ class TabsStore {
       mixedEol: false,
       trailingNewline: true,
       dirty: false,
+      loaded: true,
       readonly: false,
       readonlyReason: null,
       external: 'none',
@@ -343,7 +436,10 @@ class TabsStore {
     if (!tab) return;
 
     this.cancelDraft(tab.id);
-    if (discardDraft) void draftDelete(tab.id).catch(() => undefined);
+    // A tab whose file was never read has no draft of its own, and its id is
+    // provisional. Any draft on disk belongs to text the reader has not seen,
+    // so it stays and is offered at the next launch.
+    if (discardDraft && tab.loaded) void draftDelete(tab.id).catch(() => undefined);
 
     // The editor instance is torn down by the host element unmounting.
     this.tabs.splice(index, 1);
@@ -360,6 +456,9 @@ class TabsStore {
   async reloadFromDisk(index: number): Promise<void> {
     const tab = this.tabs[index];
     if (!tab?.path) return;
+    // Nothing to reload into: the file has not been read yet, and it will be
+    // read fresh the moment this tab is opened.
+    if (!tab.loaded) return;
     try {
       const opened = await readFile(tab.path);
       const handle = handles.get(tab.id);
@@ -393,6 +492,9 @@ class TabsStore {
     const index = this.indexOfPath(path);
     if (index < 0) return;
     const tab = this.tabs[index]!;
+    // An unread tab has nothing to conflict with; it takes the file as it
+    // finds it when someone opens it.
+    if (!tab.loaded) return;
 
     if (kind === 'removed' || kind === 'renamed') {
       // Confirm before alarming the user: a rename-based save looks like a
@@ -422,7 +524,7 @@ class TabsStore {
   async recheckAll(): Promise<void> {
     for (let i = 0; i < this.tabs.length; i++) {
       const tab = this.tabs[i]!;
-      if (!tab.path || tab.external !== 'none') continue;
+      if (!tab.path || !tab.loaded || tab.external !== 'none') continue;
       const stat = await statFile(tab.path).catch(() => null);
       if (!stat) continue;
       if (!stat.exists) {

@@ -1,4 +1,4 @@
-use crate::error::AppResult;
+use crate::error::{AppError, AppResult};
 use crate::fsops::atomic::{read_json, write_json};
 use crate::paths;
 use serde::{Deserialize, Serialize};
@@ -25,6 +25,25 @@ pub struct DraftInfo {
     pub saved_at_ms: u64,
 }
 
+/// A document id is a file name here, so it may only be one.
+///
+/// Today every id comes from Rust and is a hash, but this is the path that
+/// stands between a crash and someone's typing: an id carrying a separator or
+/// `..` would put — or delete — a file outside the drafts directory. Checked
+/// rather than trusted.
+fn draft_file(dir: &std::path::Path, doc_id: &str) -> AppResult<std::path::PathBuf> {
+    let safe = !doc_id.is_empty()
+        && doc_id.len() <= 128
+        && doc_id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
+
+    if !safe {
+        return Err(AppError::io(format!("invalid document id: {doc_id}")));
+    }
+    Ok(dir.join(format!("{doc_id}.json")))
+}
+
 #[tauri::command]
 pub async fn draft_save(
     app: AppHandle,
@@ -34,7 +53,7 @@ pub async fn draft_save(
     content: String,
 ) -> AppResult<()> {
     let dir = paths::drafts_dir(&app)?;
-    let file = dir.join(format!("{doc_id}.json"));
+    let file = draft_file(&dir, &doc_id)?;
     let draft = Draft {
         doc_id,
         path,
@@ -48,13 +67,13 @@ pub async fn draft_save(
 #[tauri::command]
 pub async fn draft_get(app: AppHandle, doc_id: String) -> AppResult<Option<Draft>> {
     let dir = paths::drafts_dir(&app)?;
-    Ok(read_json(&dir.join(format!("{doc_id}.json"))))
+    Ok(read_json(&draft_file(&dir, &doc_id)?))
 }
 
 #[tauri::command]
 pub async fn draft_delete(app: AppHandle, doc_id: String) -> AppResult<()> {
     let dir = paths::drafts_dir(&app)?;
-    let file = dir.join(format!("{doc_id}.json"));
+    let file = draft_file(&dir, &doc_id)?;
     if file.exists() {
         std::fs::remove_file(&file).map_err(|e| crate::error::AppError::from_io(e, &file))?;
     }
@@ -105,5 +124,43 @@ fn info(d: &Draft) -> DraftInfo {
         path: d.path.clone(),
         base_mtime_ms: d.base_mtime_ms,
         saved_at_ms: d.saved_at_ms,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::draft_file;
+    use std::path::Path;
+
+    /// A document id becomes a file name, so anything that can leave the
+    /// drafts directory has to be refused before it is joined to a path.
+    #[test]
+    fn accepts_the_ids_we_actually_produce() {
+        let dir = Path::new("C:/drafts");
+        let id = "036b618d759f1b06743ad6955235e690ec4f92b6f83bd77894f1f36a7b644471";
+        assert!(draft_file(dir, id).is_ok());
+        assert!(draft_file(dir, "untitled-3-1750000000000").is_ok());
+        assert!(draft_file(dir, "unread-2").is_ok());
+    }
+
+    #[test]
+    fn refuses_an_id_that_could_escape_the_directory() {
+        let dir = Path::new("C:/drafts");
+        for id in [
+            "../../windows/system32/config",
+            "unread:D:/Projects/notes.md",
+            "sub/dir",
+            "back\\slash",
+            "..",
+            "",
+        ] {
+            assert!(draft_file(dir, id).is_err(), "should refuse {id:?}");
+        }
+    }
+
+    #[test]
+    fn refuses_an_absurdly_long_id() {
+        let dir = Path::new("C:/drafts");
+        assert!(draft_file(dir, &"a".repeat(129)).is_err());
     }
 }

@@ -14,7 +14,11 @@
 param(
     [string]$Exe = "src-tauri\target\release\mdviewer.exe",
     [string]$File = "tests\fixtures\sample.md",
-    [int]$Runs = 5
+    [int]$Runs = 5,
+    # Leave the window visible at the left edge instead of hiding it behind
+    # everything. It still never takes the focus. This is the mode that
+    # actually produces a number while someone else is using the screen.
+    [switch]$KeepVisible
 )
 
 if (-not (Test-Path $Exe)) { throw "binary not found: $Exe (run 'npm run tauri build')" }
@@ -48,7 +52,11 @@ function Send-ToBack([IntPtr]$handle) {
     if ($script:Previous -ne [IntPtr]::Zero -and $script:Previous -ne $handle) {
         [Win32Startup]::SetForegroundWindow($script:Previous) | Out-Null
     }
-    [Win32Startup]::SetWindowPos($handle, [Win32Startup]::HWND_BOTTOM, 0, 0, 0, 0,
+    # Moving to the left edge always; going behind everything only when the
+    # caller can spare the screen, because a window covered from its first
+    # frame never paints and there is then nothing to measure.
+    $after = if ($KeepVisible) { [IntPtr]::Zero } else { [Win32Startup]::HWND_BOTTOM }
+    [Win32Startup]::SetWindowPos($handle, $after, 0, 0, 0, 0,
         [Win32Startup]::NOSIZE -bor [Win32Startup]::NOACTIVATE) | Out-Null
 }
 
