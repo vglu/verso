@@ -35,6 +35,8 @@
   let pendingRecovery = $state<DraftInfo[]>([]);
   let closeRequest = $state<{ index: number; quitting: boolean } | null>(null);
   let narrow = $state(false);
+  /** Set once we are on the way out, so the close handler stops intervening. */
+  let quitting = false;
 
   const activeTab = $derived(tabs.active);
 
@@ -93,6 +95,8 @@
     if (!request) return;
     const saved = await tabs.save(request.index);
     if (!saved) return; // conflict or error: keep the tab open, banner explains
+    // When quitting, the tab does not need removing — the window is going away.
+    if (!request.quitting) tabs.close(request.index);
     finishClose(request);
   }
 
@@ -106,14 +110,42 @@
   function finishClose(request: { index: number; quitting: boolean }): void {
     closeRequest = null;
     bump();
-    if (request.quitting) void quitNow();
+    if (!request.quitting) return;
+
+    // Quitting asks about every unsaved document, not just the first one.
+    const nextDirty = tabs.tabs.findIndex((tab) => tab.dirty);
+    if (nextDirty >= 0) {
+      closeRequest = { index: nextDirty, quitting: true };
+      return;
+    }
+    void quitNow();
   }
 
+  /**
+   * Persist everything, then close for real.
+   *
+   * The close handler always cancels the OS request so drafts and the session
+   * are written first, which means this function is the only way out — if it
+   * failed silently the window would refuse to close, so every step is
+   * guarded and there is a fallback path.
+   */
   async function quitNow(): Promise<void> {
-    await tabs.flushDrafts();
-    await settings.flush();
-    await flushSession();
-    await getCurrentWindow().destroy();
+    quitting = true;
+    try {
+      await tabs.flushDrafts();
+      await settings.flush();
+      await flushSession();
+    } catch (error) {
+      console.error('failed to persist state before closing', error);
+    }
+
+    const window = getCurrentWindow();
+    try {
+      await window.destroy();
+    } catch (error) {
+      console.error('destroy failed, falling back to close', error);
+      await window.close().catch(() => undefined);
+    }
   }
 
   // ---- links ----
@@ -301,12 +333,15 @@
 
       unlisteners.push(
         await getCurrentWindow().onCloseRequested(async (event) => {
+          if (quitting) return; // already shutting down — let the close through
+
           const dirtyIndex = tabs.tabs.findIndex((tab) => tab.dirty);
           if (dirtyIndex >= 0) {
             event.preventDefault();
             closeRequest = { index: dirtyIndex, quitting: true };
             return;
           }
+
           event.preventDefault();
           await quitNow();
         })
