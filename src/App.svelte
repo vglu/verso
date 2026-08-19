@@ -6,6 +6,7 @@
 
   import TabBar from './lib/components/TabBar.svelte';
   import Toolbar from './lib/components/Toolbar.svelte';
+  import Breadcrumbs from './lib/components/Breadcrumbs.svelte';
   import Sidebar from './lib/components/Sidebar.svelte';
   import OutlinePanel from './lib/components/OutlinePanel.svelte';
   import EditorHost from './lib/components/EditorHost.svelte';
@@ -171,6 +172,14 @@
     const { joinPath, stripUrlSuffix, decodeUrlPath } = await import('./lib/editor/pathUtil');
     const target = joinPath(dir, decodeUrlPath(stripUrlSuffix(href)));
     await openPath(target);
+  }
+
+  /** Jump to a heading and remember where the reader came from. */
+  function revealHeading(pos: number): void {
+    const handle = activeTab ? tabs.handleOf(activeTab.id) : null;
+    if (!handle) return;
+    pushJump(handle.view);
+    handle.revealPos(pos);
   }
 
   function focusSearch(): void {
@@ -415,6 +424,10 @@
       <Toolbar {revision} />
     {/if}
 
+    {#if tabs.hasTabs}
+      <Breadcrumbs onRevealHeading={revealHeading} />
+    {/if}
+
     {#each pendingRecovery as draft (draft.docId)}
       <Banner
         tone="info"
@@ -495,15 +508,7 @@
   </div>
 
   {#if workspace.outlineVisible && tabs.hasTabs}
-    <OutlinePanel
-      onRevealHeading={(pos) => {
-        const handle = activeTab ? tabs.handleOf(activeTab.id) : null;
-        if (!handle) return;
-        // Record where the reader was, so Back returns them to it.
-        pushJump(handle.view);
-        handle.revealPos(pos);
-      }}
-    />
+    <OutlinePanel onRevealHeading={revealHeading} />
   {/if}
 </div>
 

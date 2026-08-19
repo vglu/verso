@@ -3,7 +3,7 @@
   import { workspace } from '../stores/workspace.svelte';
   import { settings } from '../stores/settings.svelte';
   import { createEditor } from '../editor/createEditor';
-  import { extractOutline, activeOutlineIndex } from '../editor/outline';
+  import { extractOutline } from '../editor/outline';
 
   interface Props {
     onLinkClick: (href: string) => void;
@@ -32,14 +32,23 @@
       const handle = tabs.handleOf(tabId);
       if (!handle || tabs.active?.id !== tabId) return;
       const items = extractOutline(handle.view.state);
-      workspace.setOutline(items, activeOutlineIndex(items, handle.getCursor().pos));
+      workspace.setOutline(items, handle.getActiveOutlineIndex());
     }, 200);
   }
 
+  /**
+   * Which section the reader is in — decided by what is on screen, not by
+   * where the caret happens to sit.
+   *
+   * They are different questions, and answering the second while the reader
+   * is scrolling means the outline highlights a heading nowhere near the
+   * text in front of them.
+   */
   function updateActiveOutlineOnly(tabId: string): void {
     const handle = tabs.handleOf(tabId);
     if (!handle || tabs.active?.id !== tabId) return;
-    workspace.activeOutline = activeOutlineIndex(workspace.outline, handle.getCursor().pos);
+    workspace.activeOutline = handle.getActiveOutlineIndex();
+    workspace.viewportFrom = handle.view.visibleRanges[0]?.from ?? 0;
   }
 
   /** Svelte action: the editor's lifetime is tied to its host element. */
@@ -62,6 +71,8 @@
         updateActiveOutlineOnly(tabId);
         onActivity();
       },
+      onStructureChange: () => scheduleOutlineUpdate(tabId),
+      onViewportChange: () => updateActiveOutlineOnly(tabId),
       onLinkClick: (href) => onLinkClick(href),
       keymapHooks: { onFind, onSave, onToggleSource }
     });

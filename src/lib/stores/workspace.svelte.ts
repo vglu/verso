@@ -30,6 +30,8 @@ class WorkspaceStore {
 
   outline = $state<OutlineItem[]>([]);
   activeOutline = $state(-1);
+  /** First document offset on screen — tells the crumbs what is already visible. */
+  viewportFrom = $state(0);
 
   toggleSidebar(): void {
     this.sidebarVisible = !this.sidebarVisible;

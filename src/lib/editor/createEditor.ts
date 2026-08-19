@@ -1,6 +1,6 @@
 import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, dropCursor } from '@codemirror/view';
-import { bracketMatching, indentOnInput } from '@codemirror/language';
+import { bracketMatching, indentOnInput, syntaxTree } from '@codemirror/language';
 import { highlightSelectionMatches, search } from '@codemirror/search';
 import { markdownSupport } from './markdownLang';
 import { editorTheme } from './cmTheme';
@@ -62,6 +62,10 @@ export interface CreateEditorOptions {
    */
   onChange?: (content: string, meta: { userInitiated: boolean }) => void;
   onSelectionChange?: () => void;
+  /** The parser reached further into the document, so the outline may grow. */
+  onStructureChange?: () => void;
+  /** The reader scrolled; which section they are in may have changed. */
+  onViewportChange?: () => void;
   onLinkClick?: (href: string, event: MouseEvent) => void;
   keymapHooks?: KeymapHooks;
 }
@@ -80,7 +84,28 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
       options.onChange?.(update.state.doc.toString(), { userInitiated });
     }
     if (update.selectionSet) options.onSelectionChange?.();
+
+    // The parser works through a long document in chunks, so headings below
+    // the first screen do not exist yet when the outline is first built.
+    // Without this the panel of a long file stays half empty until something
+    // else happens to rebuild it.
+    if (syntaxTree(update.state) !== syntaxTree(update.startState)) {
+      options.onStructureChange?.();
+    }
   });
+
+  /**
+   * Which section is on screen changes as the reader scrolls, and scrolling
+   * produces no transaction at all — so it needs its own listener.
+   */
+  const onScroll = (): void => {
+    if (scrollTimer !== null) return;
+    scrollTimer = window.setTimeout(() => {
+      scrollTimer = null;
+      options.onViewportChange?.();
+    }, 50);
+  };
+  let scrollTimer: number | null = null;
 
   // Links are spans, not anchors — the document never contains live markup.
   const linkHandler = EditorView.domEventHandlers({
@@ -154,6 +179,7 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     view.dispatch({ selection: view.state.selection });
   };
   window.addEventListener(THEME_CHANGED_EVENT, onThemeChanged);
+  view.scrollDOM.addEventListener('scroll', onScroll, { passive: true });
 
   return {
     view,
@@ -180,15 +206,33 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
 
     destroy: () => {
       window.removeEventListener(THEME_CHANGED_EVENT, onThemeChanged);
+      view.scrollDOM.removeEventListener('scroll', onScroll);
+      if (scrollTimer !== null) clearTimeout(scrollTimer);
       view.destroy();
     },
 
     getOutline: () => extractOutline(view.state),
 
+    /**
+     * The heading whose section fills the top of the screen.
+     *
+     * Measured a fifth of the way down rather than at the very top edge: a
+     * heading scrolled to sit exactly at the boundary would otherwise flicker
+     * between itself and the one before it.
+     */
     getActiveOutlineIndex() {
       const items = extractOutline(view.state);
-      const topLine = view.visibleRanges[0]?.from ?? 0;
-      return activeOutlineIndex(items, topLine);
+      if (items.length === 0) return -1;
+
+      let anchor = view.visibleRanges[0]?.from ?? 0;
+      try {
+        const rect = view.scrollDOM.getBoundingClientRect();
+        const probe = view.posAtCoords({ x: rect.left + 8, y: rect.top + rect.height * 0.2 });
+        if (probe !== null) anchor = probe;
+      } catch {
+        /* no layout yet — the viewport start is a fine answer */
+      }
+      return activeOutlineIndex(items, anchor);
     },
 
     revealPos(pos) {
