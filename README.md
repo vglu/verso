@@ -48,7 +48,8 @@ edit in place, and never damages your file.
   encodings everything written before UTF-8 is in: windows-1251, DOS 866,
   KOI8-R/U, ISO 8859-5, windows-1252 — saved back byte for byte.
 - **3.8 MB installer, ~40 MB of RAM.** Tauri 2 and the system webview, no
-  bundled browser.
+  bundled browser. (The Linux AppImage is the exception at ~79 MB — it carries
+  its own runtime; the `.deb` and `.rpm` are 4.5 MB.)
 
 ### Your file is safe
 
