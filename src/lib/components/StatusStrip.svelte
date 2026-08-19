@@ -1,6 +1,8 @@
 <script lang="ts">
   import { tabs } from '../stores/tabs.svelte';
+  import { settings } from '../stores/settings.svelte';
   import { t } from '../stores/i18n';
+  import { DEFAULT_ZOOM, zoomLabel } from '../ui/zoom';
 
   interface Props {
     /** Bumped by the parent whenever the document or cursor changes. */
@@ -55,6 +57,14 @@
     <span>{info.words} {t('status.words')}</span>
     <span>{info.chars} {t('status.chars')}</span>
     <span>{t('status.line')} {info.line}, {t('status.col')} {info.col}</span>
+    <!-- Only when it is not 100%: a reader who has not zoomed does not need
+         to be told they have not zoomed, and one who has needs to know why
+         everything is suddenly large. Click it to go back. -->
+    {#if settings.value.zoom !== DEFAULT_ZOOM}
+      <button class="zoom" onclick={() => settings.stepZoom(null)} title={t('status.zoomReset')}>
+        {zoomLabel(settings.value.zoom)}
+      </button>
+    {/if}
     <span>{info.encoding}</span>
     <span title={info.mixedEol ? t('status.mixedEolHint') : undefined}>
       {info.eol}{info.mixedEol ? ` ${t('status.mixed')}` : ''}
@@ -63,6 +73,21 @@
 {/if}
 
 <style>
+  .zoom {
+    color: var(--fg-muted);
+    font: inherit;
+    padding: 0 4px;
+    border-radius: var(--radius-s);
+    transition: background-color var(--t-fast) var(--ease);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .zoom:hover {
+      background: var(--bg-hover);
+      color: var(--fg-ui);
+    }
+  }
+
   .strip {
     display: flex;
     align-items: center;

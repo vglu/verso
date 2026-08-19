@@ -129,6 +129,11 @@ export interface Settings {
   restoreSession: boolean;
   editorFontSize: number;
   editorMaxWidth: number;
+  /**
+   * Window zoom, as a factor. Separate from the font size on purpose: that is
+   * how a document is set, this is how large everything on screen is.
+   */
+  zoom: number;
   fontFamily: string;
   showStatusStrip: boolean;
   showToolbar: boolean;
@@ -149,6 +154,7 @@ export const DEFAULT_SETTINGS: Settings = {
   restoreSession: true,
   editorFontSize: 16,
   editorMaxWidth: 760,
+  zoom: 1,
   fontFamily: 'default',
   showStatusStrip: true,
   showToolbar: true,
@@ -184,6 +190,9 @@ export type MenuActionId =
   | 'goToLine'
   | 'foldAll'
   | 'unfoldAll'
+  | 'zoomIn'
+  | 'zoomOut'
+  | 'zoomReset'
   | 'exportHtml'
   | 'print'
   | 'about';

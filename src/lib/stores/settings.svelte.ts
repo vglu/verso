@@ -8,6 +8,7 @@ import { setMenuLabels, settingsLoad, settingsSave } from '../ipc/commands';
 import { getLang, menuLabels, setLang } from './i18n';
 import { clearUserTheme, loadUserTheme } from '../ui/userTheme';
 import { syncWindowTheme } from '../ui/windowTheme';
+import { clampZoom, DEFAULT_ZOOM, nextZoom } from '../ui/zoom';
 import { THEME_CHANGED_EVENT } from '../editor/livePreview/richWidgets';
 
 const THEME_MIRROR_KEY = 'verso.theme';
@@ -31,6 +32,7 @@ class SettingsStore {
     this.syncMenuLanguage();
     this.applyTheme(false);
     this.applyTypography();
+    this.applyZoom();
     this.watchSystemTheme();
     void this.applyUserTheme();
   }
@@ -73,6 +75,7 @@ class SettingsStore {
     if (patch.editorFontSize !== undefined || patch.editorMaxWidth !== undefined) {
       this.applyTypography();
     }
+    if (patch.zoom !== undefined) this.applyZoom();
     this.persist();
   }
 
@@ -144,6 +147,33 @@ class SettingsStore {
     if (previous !== resolved) {
       window.dispatchEvent(new CustomEvent(THEME_CHANGED_EVENT));
     }
+  }
+
+  /** One rung up or down the zoom ladder; `null` resets to 100%. */
+  stepZoom(direction: 1 | -1 | null): void {
+    const zoom = direction === null ? DEFAULT_ZOOM : nextZoom(this.value.zoom, direction);
+    if (zoom === this.value.zoom) return;
+    this.update({ zoom });
+  }
+
+  /**
+   * Hand the zoom to the webview.
+   *
+   * Done through the webview rather than by scaling CSS, so it behaves the way
+   * a browser's zoom does — text reflows at the new size instead of the layout
+   * being stretched, and nothing has to know it is being zoomed.
+   */
+  private applyZoom(): void {
+    const zoom = clampZoom(this.value.zoom);
+    void (async () => {
+      try {
+        const { getCurrentWebview } = await import('@tauri-apps/api/webview');
+        await getCurrentWebview().setZoom(zoom);
+      } catch (e) {
+        // Outside Tauri (vite dev in a browser) there is no webview to zoom.
+        console.warn('zoom failed', e);
+      }
+    })();
   }
 
   private applyTypography(): void {

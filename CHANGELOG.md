@@ -59,6 +59,12 @@ in place, and never lose a byte.
 - Folder tree for the document's directory, showing only Markdown and
   sub-folders; refreshes when the folder changes on disk.
 - Outline panel that tracks the section you are reading.
+- Window zoom (`Ctrl+=`, `Ctrl+-`, `Ctrl+0`, and `Ctrl` with the wheel), from
+  50% to 300%: the whole interface, not only the text — the file tree, the
+  outline and the status strip scale with it. The level is shown in the status
+  strip while it is not 100%, and clicking it goes back. Font size and text
+  width stay in the settings, where they belong: those are how a document is
+  set, this is how large the screen is being asked to be.
 - Session restore for open tabs, caret positions, reading position and sidebar
   state — a long document reopens where you stopped reading, not at line one.
 - Interface in English and Ukrainian, following the system language unless you

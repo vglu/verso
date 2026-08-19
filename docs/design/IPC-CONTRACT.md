@@ -82,6 +82,7 @@ interface Settings {
   restoreSession: boolean;      // true
   editorFontSize: number;       // 16
   editorMaxWidth: number;       // 760 (px)
+  zoom: number;                 // масштаб окна, 1 = 100% (лестница в ui/zoom.ts)
   fontFamily: 'default' | string;
   showStatusStrip: boolean;     // true
   showToolbar: boolean;         // true

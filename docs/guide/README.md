@@ -61,10 +61,18 @@ to restore that text.
 | Bold / italic | `Ctrl+B` / `Ctrl+I` |
 | Link from selection | `Ctrl+K` |
 | Reader mode | `Ctrl+E` |
-| Larger / smaller / reset text | `Ctrl+=` / `Ctrl+-` / `Ctrl+0` |
+| Zoom in / out / actual size | `Ctrl+=` / `Ctrl+-` / `Ctrl+0`, or `Ctrl` + wheel |
+| Export as HTML | `Ctrl+Shift+E` |
+| Print (and Save as PDF) | `Ctrl+Shift+P` |
 | Settings | `Ctrl+,` |
 
 On macOS use `Cmd` instead of `Ctrl`.
+
+Zoom scales the whole window — the file tree and the outline with it — from
+50% to 300%, and the level appears in the status strip while it is not 100%;
+click it to go back. The text size and column width on their own are in
+Settings: those are how a document is set, zoom is how large the screen is
+being asked to be.
 
 The **Files** panel shows the folder your document lives in — only
 sub-folders and Markdown files, so it stays readable inside a code repository.

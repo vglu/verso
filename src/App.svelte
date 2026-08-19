@@ -423,6 +423,15 @@
       case 'print':
         void printActive();
         break;
+      case 'zoomIn':
+        settings.stepZoom(1);
+        break;
+      case 'zoomOut':
+        settings.stepZoom(-1);
+        break;
+      case 'zoomReset':
+        settings.stepZoom(null);
+        break;
       case 'foldAll':
         withEditor((view) => foldAll(view));
         break;
@@ -479,19 +488,22 @@
       toggleReader();
       return;
     }
+    // Zoom, as everywhere else: the whole window, not only the text. The font
+    // size and the text width stay in the settings, where they belong — they
+    // are how a document is set, not how big the screen is being asked to be.
     if (event.key === '=' || event.key === '+') {
       event.preventDefault();
-      settings.update({ editorFontSize: Math.min(24, settings.value.editorFontSize + 1) });
+      settings.stepZoom(1);
       return;
     }
     if (event.key === '-') {
       event.preventDefault();
-      settings.update({ editorFontSize: Math.max(12, settings.value.editorFontSize - 1) });
+      settings.stepZoom(-1);
       return;
     }
     if (event.key === '0') {
       event.preventDefault();
-      settings.update({ editorFontSize: 16 });
+      settings.stepZoom(null);
       return;
     }
     if (/^[1-9]$/.test(event.key)) {
@@ -501,6 +513,20 @@
       return;
     }
     // Ctrl+O/S/W are owned by the native menu; nothing to do here.
+  }
+
+  /**
+   * Ctrl and the wheel, the way every other program does it.
+   *
+   * Passive listeners cannot preventDefault, and without that the webview
+   * does its own zoom on top of ours — two zooms fighting over one gesture.
+   * Svelte marks wheel handlers passive unless told otherwise, hence the
+   * explicit non-passive listener below.
+   */
+  function onWheel(event: WheelEvent): void {
+    if (!event.ctrlKey && !event.metaKey) return;
+    event.preventDefault();
+    settings.stepZoom(event.deltaY < 0 ? 1 : -1);
   }
 
   /**
@@ -529,6 +555,12 @@
   onMount(() => {
     onResize();
     const unlisteners: Array<() => void> = [];
+
+    // Registered by hand rather than through <svelte:window>: wheel handlers
+    // there are passive, a passive handler cannot call preventDefault, and
+    // without that the webview zooms on top of us — two zooms on one gesture.
+    window.addEventListener('wheel', onWheel, { passive: false });
+    unlisteners.push(() => window.removeEventListener('wheel', onWheel));
 
     void (async () => {
       // The document someone double-clicked is what they are waiting for, so

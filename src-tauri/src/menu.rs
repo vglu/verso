@@ -123,6 +123,17 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         MenuItemBuilder::with_id("unfoldAll", label(l, "unfoldAll", "Unfold All Sections"))
             .accelerator("CmdOrCtrl+Alt+]")
             .build(app)?;
+    // The window's own keydown handler does the zooming, so these carry no
+    // accelerators of their own — two owners for one key means the menu wins
+    // and the wheel gesture stops matching the keyboard. They are here to be
+    // discoverable, and to say what the keys are.
+    let zoom_in = MenuItemBuilder::with_id("zoomIn", label(l, "zoomIn", "Zoom In	Ctrl++"))
+        .build(app)?;
+    let zoom_out = MenuItemBuilder::with_id("zoomOut", label(l, "zoomOut", "Zoom Out	Ctrl+-"))
+        .build(app)?;
+    let zoom_reset =
+        MenuItemBuilder::with_id("zoomReset", label(l, "zoomReset", "Actual Size	Ctrl+0"))
+            .build(app)?;
     let settings = MenuItemBuilder::with_id("settings", label(l, "settings", "Settings…"))
         .accelerator("CmdOrCtrl+,")
         .build(app)?;
@@ -133,6 +144,10 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         .separator()
         .item(&fold_all)
         .item(&unfold_all)
+        .separator()
+        .item(&zoom_in)
+        .item(&zoom_out)
+        .item(&zoom_reset)
         .separator()
         .item(&settings)
         .build()?;

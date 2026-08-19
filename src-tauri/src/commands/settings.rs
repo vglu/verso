@@ -19,6 +19,10 @@ pub struct Settings {
     pub editor_font_size: u32,
     #[serde(default = "default_max_width")]
     pub editor_max_width: u32,
+    /// Window zoom factor. Typography (font size, text width) is a separate
+    /// question from how large everything on screen is.
+    #[serde(default = "default_zoom")]
+    pub zoom: f64,
     #[serde(default = "default_font_family")]
     pub font_family: String,
     #[serde(default = "default_true")]
@@ -60,6 +64,9 @@ fn default_font_size() -> u32 {
 fn default_max_width() -> u32 {
     760
 }
+fn default_zoom() -> f64 {
+    1.0
+}
 fn default_font_family() -> String {
     "default".into()
 }
@@ -73,6 +80,7 @@ impl Default for Settings {
             restore_session: true,
             editor_font_size: default_font_size(),
             editor_max_width: default_max_width(),
+            zoom: default_zoom(),
             font_family: default_font_family(),
             show_status_strip: true,
             show_toolbar: true,
