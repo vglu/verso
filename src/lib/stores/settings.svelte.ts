@@ -7,6 +7,7 @@ import { DEFAULT_SETTINGS, type Settings, type ThemeSetting } from '../ipc/types
 import { setMenuLabels, settingsLoad, settingsSave } from '../ipc/commands';
 import { getLang, menuLabels, setLang } from './i18n';
 import { clearUserTheme, loadUserTheme } from '../ui/userTheme';
+import { syncWindowTheme } from '../ui/windowTheme';
 import { THEME_CHANGED_EVENT } from '../editor/livePreview/richWidgets';
 
 const THEME_MIRROR_KEY = 'verso.theme';
@@ -132,6 +133,7 @@ class SettingsStore {
     }
     const previous = root.getAttribute('data-theme');
     root.setAttribute('data-theme', resolved);
+    void syncWindowTheme(resolved);
     try {
       localStorage.setItem(THEME_MIRROR_KEY, this.value.theme);
     } catch {
