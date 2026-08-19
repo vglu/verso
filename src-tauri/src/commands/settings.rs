@@ -25,8 +25,14 @@ pub struct Settings {
     pub show_status_strip: bool,
     #[serde(default = "default_true")]
     pub show_toolbar: bool,
+    #[serde(default = "default_editor_mode")]
+    pub editor_mode: String,
     #[serde(default)]
     pub recent_files: Vec<String>,
+}
+
+fn default_editor_mode() -> String {
+    "live".into()
 }
 
 fn default_theme() -> String {
@@ -63,6 +69,7 @@ impl Default for Settings {
             font_family: default_font_family(),
             show_status_strip: true,
             show_toolbar: true,
+            editor_mode: default_editor_mode(),
             recent_files: Vec::new(),
         }
     }

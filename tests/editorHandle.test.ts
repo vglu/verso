@@ -35,7 +35,7 @@ describe('EditorHandle change reporting', () => {
     // Regression: reloading a file after an external change used to mark the
     // tab dirty, because the app's own write looked like typing.
     const { handle, changes } = setup('old content');
-    handle.setContent('new content from disk', true);
+    handle.setContent('new content from disk');
 
     expect(changes).toHaveLength(1);
     expect(changes[0]!.userInitiated).toBe(false);
@@ -45,7 +45,7 @@ describe('EditorHandle change reporting', () => {
 
   it('ignores a no-op setContent', () => {
     const { handle, changes } = setup('same');
-    handle.setContent('same', true);
+    handle.setContent('same');
     expect(changes).toHaveLength(0);
     handle.destroy();
   });

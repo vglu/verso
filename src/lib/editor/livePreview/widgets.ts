@@ -61,6 +61,11 @@ export class CheckboxWidget extends WidgetType {
 
     input.addEventListener('mousedown', (event) => {
       event.preventDefault();
+      // `readOnly` only stops the editor's own input handling; a widget
+      // dispatching a transaction would sail straight past it, and ticking a
+      // box in a read-only document writes to the file.
+      if (view.state.readOnly) return;
+
       // Resolve the position at click time: the document may have shifted
       // since this widget was created.
       const pos = view.posAtDOM(input);

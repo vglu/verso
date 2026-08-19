@@ -84,6 +84,7 @@ export interface KeymapHooks {
   onSave?: () => void;
   onGoToLine?: () => void;
   onGoToHeading?: () => void;
+  onToggleSource?: () => void;
 }
 
 /**
@@ -165,6 +166,13 @@ export function editorKeymap(hooks: KeymapHooks = {}): Extension {
           key: 'Mod-Shift-o',
           run: () => {
             hooks.onGoToHeading?.();
+            return true;
+          }
+        },
+        {
+          key: 'Mod-/',
+          run: () => {
+            hooks.onToggleSource?.();
             return true;
           }
         },

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tabs } from '../stores/tabs.svelte';
   import { workspace } from '../stores/workspace.svelte';
+  import { settings } from '../stores/settings.svelte';
   import { createEditor } from '../editor/createEditor';
   import { extractOutline, activeOutlineIndex } from '../editor/outline';
 
@@ -8,11 +9,18 @@
     onLinkClick: (href: string) => void;
     onFind: () => void;
     onSave: () => void;
+    onToggleSource: () => void;
     /** Fired on any edit or cursor move, so the chrome can refresh. */
     onActivity: () => void;
   }
 
-  const { onLinkClick, onFind, onSave, onActivity }: Props = $props();
+  const { onLinkClick, onFind, onSave, onToggleSource, onActivity }: Props = $props();
+
+  // A mode switch applies to every open document, not just the active one.
+  $effect(() => {
+    const source = settings.value.editorMode === 'source';
+    for (const tab of tabs.tabs) tabs.handleOf(tab.id)?.setSourceMode(source);
+  });
 
   let outlineTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -44,6 +52,7 @@
       doc: tab.content,
       dir: tab.dirPath,
       readOnly: tab.readonly,
+      sourceMode: settings.value.editorMode === 'source',
       onChange: (content, meta) => {
         tabs.setContent(tabId, content, meta.userInitiated);
         scheduleOutlineUpdate(tabId);
@@ -54,7 +63,7 @@
         onActivity();
       },
       onLinkClick: (href) => onLinkClick(href),
-      keymapHooks: { onFind, onSave }
+      keymapHooks: { onFind, onSave, onToggleSource }
     });
 
     tabs.registerHandle(tabId, handle);

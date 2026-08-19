@@ -27,7 +27,7 @@ export interface DocStats {
 export interface EditorHandle {
   readonly view: EditorView;
   getContent(): string;
-  setContent(content: string, keepHistory?: boolean): void;
+  setContent(content: string): void;
   focus(): void;
   destroy(): void;
   getOutline(): OutlineItem[];
@@ -41,6 +41,8 @@ export interface EditorHandle {
   setReadOnly(value: boolean): void;
   setReaderMode(value: boolean): void;
   isReaderMode(): boolean;
+  setSourceMode(value: boolean): void;
+  isSourceMode(): boolean;
 }
 
 export interface CreateEditorOptions {
@@ -49,6 +51,8 @@ export interface CreateEditorOptions {
   /** Directory of the document, used to resolve relative image paths. */
   dir: string;
   readOnly?: boolean;
+  /** Start in plain Markdown source rather than live preview. */
+  sourceMode?: boolean;
   /**
    * `userInitiated` is false when the change came from the app itself
    * (reloading a file from disk), so a reload never looks like an edit.
@@ -62,8 +66,10 @@ export interface CreateEditorOptions {
 export function createEditor(options: CreateEditorOptions): EditorHandle {
   const readOnlyComp = new Compartment();
   const readerComp = new Compartment();
+  const previewComp = new Compartment();
 
   let readerOn = false;
+  let sourceOn = options.sourceMode ?? false;
 
   const listener = EditorView.updateListener.of((update) => {
     if (update.docChanged) {
@@ -92,13 +98,23 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     }
   });
 
-  const extensions: Extension[] = [
+  /**
+   * Rebuilt rather than captured once: recreating the state from a frozen
+   * array would silently restore every compartment to its *initial* value, so
+   * reader mode, read-only and source mode would quietly revert while the
+   * handle still reported them as set.
+   */
+  const buildExtensions = (): Extension[] => [
     markdownSupport(),
     editorTheme(),
-    livePreview(),
+    // Live preview is one compartment so it can be switched off wholesale.
+    // Source mode is not a degraded view — it is the document exactly as the
+    // file holds it, which is the right tool whenever the rendering gets in
+    // the way of the edit.
+    previewComp.of(sourceOn ? [] : livePreview()),
     documentDir.of(options.dir),
-    readerComp.of(readerMode.of(false)),
-    readOnlyComp.of(EditorState.readOnly.of(options.readOnly ?? false)),
+    readerComp.of(readerMode.of(readerOn)),
+    readOnlyComp.of(EditorState.readOnly.of(readerOn || (options.readOnly ?? false))),
     editorKeymap(options.keymapHooks ?? {}),
     EditorView.lineWrapping,
     // No `drawSelection()` on purpose. It paints the selection as its own
@@ -125,7 +141,7 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
 
   const view = new EditorView({
     parent: options.parent,
-    state: EditorState.create({ doc: options.doc, extensions })
+    state: EditorState.create({ doc: options.doc, extensions: buildExtensions() })
   });
 
   // Theme-dependent widgets (Mermaid) rebuild on a theme switch. Re-issuing
@@ -141,23 +157,20 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
 
     getContent: () => view.state.doc.toString(),
 
-    setContent(content, keepHistory = false) {
+    /**
+     * Replace the buffer.
+     *
+     * `keepHistory` is a lie worth avoiding: replacing the whole document and
+     * keeping the undo stack lets one Ctrl+Z restore text that no longer
+     * matches the file this tab is now guarding — and the next save, passing
+     * the freshly-advanced conflict check, would write it over a newer disk
+     * version without a word. Content that came from somewhere other than the
+     * user therefore starts a fresh history.
+     */
+    setContent(content) {
       if (content === view.state.doc.toString()) return;
-      const selection = view.state.selection.main;
-      const anchor = Math.min(selection.anchor, content.length);
-
-      if (keepHistory) {
-        view.dispatch({
-          changes: { from: 0, to: view.state.doc.length, insert: content },
-          selection: { anchor },
-          userEvent: 'input.reload'
-        });
-        return;
-      }
-
-      // A fresh document starts a fresh history: undo must never walk back
-      // into a different file's content.
-      view.setState(EditorState.create({ doc: content, extensions }));
+      view.setState(EditorState.create({ doc: content, extensions: buildExtensions() }));
+      options.onChange?.(content, { userInitiated: false });
     },
 
     focus: () => view.focus(),
@@ -209,10 +222,28 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
 
     setReaderMode(value) {
       readerOn = value;
-      view.dispatch({ effects: readerComp.reconfigure(readerMode.of(value)) });
+      view.dispatch({
+        effects: [
+          readerComp.reconfigure(readerMode.of(value)),
+          // Reading means reading. Without this the caret is invisible but
+          // the document is still editable — keystrokes, toolbar buttons and
+          // task checkboxes all reached the file with nothing on screen to
+          // show it had happened.
+          readOnlyComp.reconfigure(EditorState.readOnly.of(value || (options.readOnly ?? false)))
+        ]
+      });
     },
 
-    isReaderMode: () => readerOn
+    isReaderMode: () => readerOn,
+
+    setSourceMode(value) {
+      if (value === sourceOn) return;
+      sourceOn = value;
+      view.dispatch({ effects: previewComp.reconfigure(value ? [] : livePreview()) });
+      view.contentDOM.classList.toggle('md-source', value);
+    },
+
+    isSourceMode: () => sourceOn
   };
 }
 

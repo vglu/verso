@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tabs } from '../stores/tabs.svelte';
+  import { settings } from '../stores/settings.svelte';
   import { t } from '../stores/i18n';
   import { toggleWrap, insertLink } from '../editor/keymap';
   import {
@@ -31,13 +32,21 @@
     return handle ? formatStateAt(handle.view.state) : null;
   });
 
-  const readonly = $derived(tabs.active?.readonly ?? false);
+  // Reader mode and a read-only file are different reasons for the same
+  // answer: nothing on this bar may change the document.
+  const readonly = $derived.by(() => {
+    void revision;
+    const tab = tabs.active;
+    if (!tab) return true;
+    if (tab.readonly) return true;
+    return tabs.handleOf(tab.id)?.view.state.readOnly ?? false;
+  });
 
   function run(action: (view: import('@codemirror/view').EditorView) => boolean): void {
     const tab = tabs.active;
     if (!tab) return;
     const handle = tabs.handleOf(tab.id);
-    if (!handle) return;
+    if (!handle || handle.view.state.readOnly) return;
     action(handle.view);
     handle.focus();
   }
@@ -182,6 +191,29 @@
   {@render button(t('toolbar.rule'), '', false, () => run(insertRule), ruleIcon)}
   {@render button(t('toolbar.math'), '', false, () => run(insertMath), mathIcon)}
   {@render button(t('toolbar.diagram'), '', false, () => run(insertDiagram), diagramIcon)}
+
+  <span class="spacer"></span>
+
+  <!-- The way out of live preview, kept visible rather than buried in a menu:
+       whenever the rendering is in the way, this is the answer. -->
+  <div class="mode" role="group" aria-label={t('toolbar.mode')}>
+    <button
+      class="mode-btn"
+      class:on={settings.value.editorMode === 'live'}
+      title={`${t('toolbar.modeLive')}  Ctrl+/`}
+      onclick={() => settings.update({ editorMode: 'live' })}
+    >
+      {t('toolbar.modeLive')}
+    </button>
+    <button
+      class="mode-btn"
+      class:on={settings.value.editorMode === 'source'}
+      title={`${t('toolbar.modeSource')}  Ctrl+/`}
+      onclick={() => settings.update({ editorMode: 'source' })}
+    >
+      {t('toolbar.modeSource')}
+    </button>
+  </div>
 </div>
 
 <style>
@@ -253,6 +285,42 @@
     margin: 0 var(--sp-2);
     background: var(--border);
     flex-shrink: 0;
+  }
+
+  .spacer {
+    flex: 1;
+    min-width: var(--sp-3);
+  }
+
+  .mode {
+    display: flex;
+    gap: 1px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    flex-shrink: 0;
+  }
+
+  .mode-btn {
+    padding: 2px 9px;
+    border-radius: var(--radius-s);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--fg-muted);
+    white-space: nowrap;
+    transition:
+      background-color var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
+  }
+
+  .mode-btn:active {
+    transform: scale(var(--press-scale));
+  }
+
+  .mode-btn.on {
+    background: var(--accent-soft);
+    color: var(--accent);
   }
 
   @media (hover: hover) and (pointer: fine) {

@@ -112,6 +112,8 @@ export interface Settings {
   fontFamily: string;
   showStatusStrip: boolean;
   showToolbar: boolean;
+  /** `live` renders Markdown in place; `source` shows the file as written. */
+  editorMode: 'live' | 'source';
   recentFiles: string[];
 }
 
@@ -125,6 +127,7 @@ export const DEFAULT_SETTINGS: Settings = {
   fontFamily: 'default',
   showStatusStrip: true,
   showToolbar: true,
+  editorMode: 'live',
   recentFiles: []
 };
 

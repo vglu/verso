@@ -29,6 +29,9 @@ const en: Dict = {
   'recovery.title': 'Unsaved changes were recovered',
   'recovery.restore': 'Restore',
   'recovery.discard': 'Discard',
+  'recovery.inTab': 'Showing unsaved changes recovered from {time}, not the file on disk',
+  'recovery.keep': 'Keep them',
+  'recovery.useDisk': 'Use the file',
   'save.prompt': 'Save changes to {name}?',
   'save.body': "If you don't save, your changes will be lost.",
   'save.save': 'Save',
@@ -86,7 +89,11 @@ const en: Dict = {
   'toolbar.rule': 'Horizontal rule',
   'toolbar.math': 'Formula',
   'toolbar.diagram': 'Diagram',
-  'settings.showToolbar': 'Show formatting toolbar'
+  'toolbar.mode': 'View mode',
+  'toolbar.modeLive': 'Preview',
+  'toolbar.modeSource': 'Source',
+  'settings.showToolbar': 'Show formatting toolbar',
+  'settings.editorMode': 'Editing view'
 };
 
 const ru: Dict = {
@@ -112,6 +119,9 @@ const ru: Dict = {
   'recovery.title': 'Восстановлены несохранённые изменения',
   'recovery.restore': 'Восстановить',
   'recovery.discard': 'Удалить черновик',
+  'recovery.inTab': 'Показаны несохранённые изменения от {time}, а не файл с диска',
+  'recovery.keep': 'Оставить их',
+  'recovery.useDisk': 'Взять файл',
   'save.prompt': 'Сохранить изменения в «{name}»?',
   'save.body': 'Если не сохранить, изменения будут потеряны.',
   'save.save': 'Сохранить',
@@ -169,7 +179,11 @@ const ru: Dict = {
   'toolbar.rule': 'Разделитель',
   'toolbar.math': 'Формула',
   'toolbar.diagram': 'Диаграмма',
-  'settings.showToolbar': 'Показывать панель форматирования'
+  'toolbar.mode': 'Режим просмотра',
+  'toolbar.modeLive': 'Вид',
+  'toolbar.modeSource': 'Исходник',
+  'settings.showToolbar': 'Показывать панель форматирования',
+  'settings.editorMode': 'Режим редактирования'
 };
 
 const dicts: Record<'ru' | 'en', Dict> = { ru, en };

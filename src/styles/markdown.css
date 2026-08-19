@@ -346,6 +346,28 @@ input.md-task:checked {
   color: var(--danger);
 }
 
+/* The source line of an image, shown above the picture while it is edited. */
+.cm-line.md-img-src {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--fg-muted);
+  background: var(--bg-code);
+  padding-left: var(--sp-3);
+  padding-right: var(--sp-3);
+  border-radius: var(--radius-s) var(--radius-s) 0 0;
+}
+
+/*
+ * Source mode: the file exactly as it is written. Monospace, because the
+ * point is to see the characters — alignment of table pipes, trailing
+ * spaces, indentation — not the finished page.
+ */
+.md-source {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  line-height: 1.65;
+}
+
 /* — Reader mode: hide the caret entirely — */
 .md-reader .cm-cursor {
   display: none;

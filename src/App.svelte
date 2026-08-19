@@ -178,6 +178,16 @@
     if (handle) openSearchPanel(handle.view);
   }
 
+  /**
+   * Live preview and plain source are two ways of looking at one file, not
+   * two documents. Whatever the rendering makes awkward, source mode makes
+   * ordinary — so it is one key away, and remembered.
+   */
+  function toggleSourceMode(): void {
+    settings.update({ editorMode: settings.value.editorMode === 'source' ? 'live' : 'source' });
+    bump();
+  }
+
   function toggleReader(): void {
     if (!activeTab) return;
     const handle = tabs.handleOf(activeTab.id);
@@ -198,7 +208,7 @@
     if (!tab || !draft) return;
     tab.content = draft.content;
     tab.dirty = true;
-    tabs.handleOf(tab.id)?.setContent(draft.content, true);
+    tabs.handleOf(tab.id)?.setContent(draft.content);
     bump();
   }
 
@@ -397,6 +407,26 @@
       />
     {/each}
 
+    {#if activeTab?.recovered}
+      <Banner
+        tone="info"
+        message={t('recovery.inTab', {
+          time: new Date(activeTab.recovered.savedAtMs).toLocaleString()
+        })}
+        actions={[
+          {
+            label: t('recovery.keep'),
+            primary: true,
+            onClick: () => tabs.acceptRecovered(tabs.activeIndex)
+          },
+          {
+            label: t('recovery.useDisk'),
+            onClick: () => tabs.discardRecovered(tabs.activeIndex)
+          }
+        ]}
+      />
+    {/if}
+
     {#if activeTab && activeTab.external === 'modified'}
       <Banner
         message={t('conflict.changed')}
@@ -406,7 +436,7 @@
             primary: true,
             onClick: () => void tabs.reloadFromDisk(tabs.activeIndex)
           },
-          { label: t('conflict.keepMine'), onClick: () => tabs.keepMine(tabs.activeIndex) }
+          { label: t('conflict.keepMine'), onClick: () => void tabs.keepMine(tabs.activeIndex) }
         ]}
       />
     {:else if activeTab && activeTab.external === 'removed'}
@@ -426,6 +456,7 @@
         onLinkClick={(href) => void handleLink(href)}
         onFind={focusSearch}
         onSave={() => void save()}
+        onToggleSource={toggleSourceMode}
         onActivity={bump}
       />
 

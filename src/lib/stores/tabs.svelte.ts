@@ -34,6 +34,8 @@ export interface Tab {
   readonly: boolean;
   readonlyReason: string | null;
   external: ExternalState;
+  /** Set when the buffer came from a recovered draft rather than the file. */
+  recovered: { savedAtMs: number; onDisk: string } | null;
   cursor: number;
   scrollTop: number;
 }
@@ -58,6 +60,7 @@ function tabFromMeta(meta: FileMeta, content: string): Tab {
     readonly: meta.readonly,
     readonlyReason: meta.readonly ? 'permissions' : null,
     external: 'none',
+    recovered: null,
     cursor: 0,
     scrollTop: 0
   };
@@ -123,6 +126,9 @@ class TabsStore {
       if (draft && draft.content !== opened.content && draft.savedAtMs > opened.meta.mtimeMs) {
         tab.content = draft.content;
         tab.dirty = true;
+        // Say so. Opening a file and being handed different text without a
+        // word is the one thing an editor must never do, however well meant.
+        tab.recovered = { savedAtMs: draft.savedAtMs, onDisk: opened.content };
         // Re-persist it right away. Recovered text is still unsaved text, and
         // until it is written again it exists only in memory — a second crash,
         // or a cleanup pass that judges the draft stale, would take it for good.
@@ -156,6 +162,7 @@ class TabsStore {
       readonly: false,
       readonlyReason: null,
       external: 'none',
+      recovered: null,
       cursor: 0,
       scrollTop: 0
     });
@@ -242,6 +249,7 @@ class TabsStore {
       tab.baseMtimeMs = result.mtimeMs;
       tab.dirty = false;
       tab.external = 'none';
+      tab.recovered = null; // the draft is now the file
       this.selfWrites.set(normalizePath(tab.path), result.mtimeMs);
       await draftDelete(tab.id).catch(() => undefined);
       return true;
@@ -339,7 +347,7 @@ class TabsStore {
       tab.dirty = false;
       tab.external = 'none';
 
-      handle?.setContent(opened.content, true);
+      handle?.setContent(opened.content);
       handle?.setCursor(Math.min(cursor, opened.content.length));
       await draftDelete(tab.id).catch(() => undefined);
     } catch (error) {
@@ -397,12 +405,44 @@ class TabsStore {
     }
   }
 
-  keepMine(index: number): void {
+  /**
+   * "Keep my version": acknowledge what is on disk and carry on from here.
+   *
+   * The guard is re-armed against the current state of the file rather than
+   * switched off. Disabling it left the tab permanently unguarded, so a
+   * *later*, unrelated change by another program would be overwritten without
+   * a word.
+   */
+  /** Drop recovered text and go back to what the file on disk holds. */
+  discardRecovered(index: number): void {
+    const tab = this.tabs[index];
+    if (!tab?.recovered) return;
+
+    const onDisk = tab.recovered.onDisk;
+    tab.recovered = null;
+    tab.content = onDisk;
+    tab.dirty = false;
+    handles.get(tab.id)?.setContent(onDisk);
+    void draftDelete(tab.id).catch(() => undefined);
+  }
+
+  /** Keep the recovered text; it becomes an ordinary unsaved change. */
+  acceptRecovered(index: number): void {
+    const tab = this.tabs[index];
+    if (tab) tab.recovered = null;
+  }
+
+  async keepMine(index: number): Promise<void> {
     const tab = this.tabs[index];
     if (!tab) return;
     tab.external = 'none';
-    // Drop the conflict guard so the next save overwrites deliberately.
-    tab.baseMtimeMs = null;
+
+    if (!tab.path) {
+      tab.baseMtimeMs = null;
+      return;
+    }
+    const stat = await statFile(tab.path).catch(() => null);
+    tab.baseMtimeMs = stat?.exists ? stat.mtimeMs : null;
   }
 
   /** Tell the backend which paths to observe (open files + their folders). */

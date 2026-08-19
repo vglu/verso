@@ -14,7 +14,8 @@ import {
   ViewPlugin,
   type DecorationSet,
   type PluginValue,
-  type ViewUpdate
+  type ViewUpdate,
+  type WidgetType
 } from '@codemirror/view';
 import { computeActive, isLineActive, isRangeActive, type ActiveContext } from './active';
 import {
@@ -216,7 +217,7 @@ export function buildInlineForRange(state: EditorState, from: number, to: number
 function isMathOpen(prev: string, next: string): boolean {
   if (next === '' || /\s/.test(next)) return false;
   if (prev === '') return true;
-  return /[\s(["'“«\[{,;:—–-]/.test(prev);
+  return /[\s(["'“«[{,;:—–-]/.test(prev);
 }
 
 function isMathClose(prev: string, next: string): boolean {
@@ -592,15 +593,18 @@ const inlinePreview = ViewPlugin.fromClass(InlinePreviewPlugin, {
 // Block layer (state field — tables span line breaks)
 // ---------------------------------------------------------------------------
 
-type BlockKind = 'table' | 'mermaid' | 'math';
+type BlockKind = 'table' | 'mermaid' | 'math' | 'image';
 
 interface BlockRange {
   kind: BlockKind;
   from: number;
   to: number;
+  /** For an image this is the destination; otherwise the block's body. */
   source: string;
   /** Source-only class applied while the block is being edited. */
   srcClass: string;
+  /** Images only. */
+  alt?: string;
 }
 
 interface BlockState {
@@ -622,6 +626,31 @@ function scanBlocks(state: EditorState, allowForce = true): BlockRange[] {
           to: node.to,
           source: state.doc.sliceString(node.from, node.to),
           srcClass: 'md-table-src'
+        });
+        return false;
+      }
+
+      // An image alone on its line is a block, not a word: it is the only
+      // inline element big enough that replacing it with its own URL would
+      // move the page. Handled here so it can show source and picture at once.
+      if (node.name === 'Image') {
+        const line = state.doc.lineAt(node.from);
+        const alone = line.text.trim() === state.doc.sliceString(node.from, node.to).trim();
+        if (!alone) return false;
+
+        const url = node.node.getChild('URL');
+        if (!url) return false;
+        const marks = node.node.getChildren('LinkMark');
+        const altFrom = marks[0]?.to ?? node.from + 2;
+        const altTo = marks[1]?.from ?? altFrom;
+
+        found.push({
+          kind: 'image',
+          from: line.from,
+          to: line.to,
+          source: state.doc.sliceString(url.from, url.to).replace(/^<|>$/g, ''),
+          alt: altTo > altFrom ? state.doc.sliceString(altFrom, altTo) : '',
+          srcClass: 'md-img-src'
         });
         return false;
       }
@@ -716,7 +745,19 @@ function scanDisplayMath(state: EditorState, tree: Tree): BlockRange[] {
   return found;
 }
 
-function blockWidget(block: BlockRange): Decoration {
+/** The rendered result shown beneath a generated block while it is edited. */
+function previewWidget(block: BlockRange, dir: string): WidgetType {
+  switch (block.kind) {
+    case 'mermaid':
+      return new MermaidWidget(block.source);
+    case 'image':
+      return new ImageWidget(block.source, block.alt ?? '', dir);
+    default:
+      return new MathWidget(block.source, true);
+  }
+}
+
+function blockWidget(block: BlockRange, dir: string): Decoration {
   switch (block.kind) {
     case 'table':
       return Decoration.replace({
@@ -728,6 +769,11 @@ function blockWidget(block: BlockRange): Decoration {
         widget: new MermaidWidget(block.source, block.from),
         block: true
       });
+    case 'image':
+      return Decoration.replace({
+        widget: new ImageWidget(block.source, block.alt ?? '', dir, block.from),
+        block: true
+      });
     case 'math':
       return Decoration.replace({
         widget: new MathWidget(block.source, true, block.from),
@@ -736,8 +782,22 @@ function blockWidget(block: BlockRange): Decoration {
   }
 }
 
+/**
+ * Whether a block's source is a *description* of its content rather than the
+ * content itself (ADR-003).
+ *
+ * `\int_{-\infty}^{\infty}` and `graph TD; A-->B` cannot be judged by reading
+ * them, so while they are edited the rendered result stays on screen beside
+ * the source. A table is the opposite case: the cell text *is* the content,
+ * so showing both would only duplicate it.
+ */
+function isGenerated(kind: BlockKind): boolean {
+  return kind === 'math' || kind === 'mermaid' || kind === 'image';
+}
+
 function blockDecorations(state: EditorState, blocks: BlockRange[]): DecorationSet {
   const active = computeActive(state, isFrozen(state));
+  const dir = state.facet(documentDir);
   const ranges: Range<Decoration>[] = [];
 
   for (const block of blocks) {
@@ -748,9 +808,22 @@ function blockDecorations(state: EditorState, blocks: BlockRange[]): DecorationS
       for (let n = first; n <= last; n++) {
         ranges.push(Decoration.line({ class: block.srcClass }).range(state.doc.line(n).from));
       }
+
+      // …and, for a generated block, keep the result underneath it as a live
+      // preview. Placing the widget after the block rather than over it means
+      // the caret never causes the page to collapse.
+      if (isGenerated(block.kind)) {
+        ranges.push(
+          Decoration.widget({
+            widget: previewWidget(block, dir),
+            block: true,
+            side: 1
+          }).range(block.to)
+        );
+      }
       continue;
     }
-    ranges.push(blockWidget(block).range(block.from, block.to));
+    ranges.push(blockWidget(block, dir).range(block.from, block.to));
   }
 
   return Decoration.set(ranges, true);
