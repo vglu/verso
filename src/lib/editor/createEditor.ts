@@ -6,7 +6,7 @@ import { createSearchPanel } from './searchPanel';
 import { searchRail } from './searchRail';
 import { markdownSupport } from './markdownLang';
 import { editorTheme } from './cmTheme';
-import { documentDir, livePreview, readerMode } from './livePreview';
+import { blocksRendered, documentDir, livePreview, readerMode } from './livePreview';
 import { editingField, setEditing } from './livePreview/editing';
 import { editorKeymap, type KeymapHooks } from './keymap';
 import { activeOutlineIndex, extractOutline, type OutlineItem } from './outline';
@@ -58,6 +58,8 @@ export interface EditorHandle {
   setReadOnly(value: boolean): void;
   setReaderMode(value: boolean): void;
   isReaderMode(): boolean;
+  /** False on a document too large to scan for tables, formulas and diagrams. */
+  rendersBlocks(): boolean;
   setSourceMode(value: boolean): void;
   isSourceMode(): boolean;
   /** Declare that what follows is the user editing, not reading. */
@@ -299,6 +301,8 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     },
 
     isReaderMode: () => readerOn,
+
+    rendersBlocks: () => blocksRendered(view.state),
 
     setSourceMode(value) {
       if (value === sourceOn) return;

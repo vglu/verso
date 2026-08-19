@@ -49,6 +49,9 @@ const en: Dict = {
   'status.col': 'Col',
   'status.readonly': 'read-only',
   'status.reader': 'reading',
+  'status.plainBlocks': 'blocks as source',
+  'status.plainBlocksHint':
+    'This document is large enough that tables, formulas and diagrams are left as their Markdown source — scanning for them on every keystroke would make typing lag.',
   'status.mixed': '(mixed)',
   'status.mixedEolHint':
     'This file mixes line endings. Lines you do not edit keep the endings they had.',
@@ -163,6 +166,9 @@ const ru: Dict = {
   'status.col': 'Кол',
   'status.readonly': 'только чтение',
   'status.reader': 'чтение',
+  'status.plainBlocks': 'блоки как есть',
+  'status.plainBlocksHint':
+    'Документ настолько большой, что таблицы, формулы и диаграммы оставлены исходным текстом: искать их на каждое нажатие клавиши — это лаг при наборе.',
   'status.mixed': '(смешанные)',
   'status.mixedEolHint':
     'В файле смешаны окончания строк. Строки, которые вы не правите, сохранят свои прежние окончания.',

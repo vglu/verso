@@ -59,8 +59,18 @@ function isFrozen(state: EditorState): boolean {
  * Above this size we stop scanning for blocks on every edit; the scan is
  * whole-document and would show up as typing lag. Inline rendering, which is
  * viewport-bound, keeps working.
+ *
+ * This is a real loss, not a graceful one: past this point tables, formulas
+ * and diagrams stay as their source. The status strip says so — a document
+ * that quietly stops rendering half its content reads as the renderer being
+ * broken. See `blocksRendered`.
  */
 const TABLE_SCAN_LIMIT_BYTES = 2 * 1024 * 1024;
+
+/** Whether this document is small enough for blocks to be rendered at all. */
+export function blocksRendered(state: EditorState): boolean {
+  return state.doc.length <= TABLE_SCAN_LIMIT_BYTES;
+}
 
 /**
  * Documents up to this size are parsed to the end before scanning for blocks.

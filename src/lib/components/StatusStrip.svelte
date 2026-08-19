@@ -28,7 +28,11 @@
       eol: tab.eol.toUpperCase(),
       mixedEol: tab.mixedEol,
       readonly: tab.readonly,
-      reader: tabs.handleOf(tab.id)?.isReaderMode() ?? false
+      reader: handle.isReaderMode(),
+      // Past a certain size the editor stops looking for tables, formulas and
+      // diagrams — they stay as their source. Saying so is the difference
+      // between a known limit and a renderer that looks broken.
+      plainBlocks: !handle.rendersBlocks()
     };
   });
 </script>
@@ -44,6 +48,9 @@
     {/if}
     {#if info.readonly}
       <span class="badge">{t('status.readonly')}</span>
+    {/if}
+    {#if info.plainBlocks}
+      <span class="badge" title={t('status.plainBlocksHint')}>{t('status.plainBlocks')}</span>
     {/if}
     <span>{info.words} {t('status.words')}</span>
     <span>{info.chars} {t('status.chars')}</span>
