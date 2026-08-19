@@ -26,7 +26,9 @@
       col: cursor.col,
       encoding: tab.encoding.toUpperCase(),
       eol: tab.eol.toUpperCase(),
-      readonly: tab.readonly
+      mixedEol: tab.mixedEol,
+      readonly: tab.readonly,
+      reader: tabs.handleOf(tab.id)?.isReaderMode() ?? false
     };
   });
 </script>
@@ -37,6 +39,9 @@
 
     <span class="spacer"></span>
 
+    {#if info.reader}
+      <span class="badge accent">{t('status.reader')}</span>
+    {/if}
     {#if info.readonly}
       <span class="badge">{t('status.readonly')}</span>
     {/if}
@@ -44,7 +49,9 @@
     <span>{info.chars} {t('status.chars')}</span>
     <span>{t('status.line')} {info.line}, {t('status.col')} {info.col}</span>
     <span>{info.encoding}</span>
-    <span>{info.eol}</span>
+    <span title={info.mixedEol ? t('status.mixedEolHint') : undefined}>
+      {info.eol}{info.mixedEol ? ` ${t('status.mixed')}` : ''}
+    </span>
   </div>
 {/if}
 
@@ -81,5 +88,10 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-s);
     color: var(--warning);
+  }
+
+  .badge.accent {
+    color: var(--accent);
+    border-color: var(--accent-soft);
   }
 </style>

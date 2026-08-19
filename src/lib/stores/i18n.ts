@@ -22,6 +22,10 @@ const en: Dict = {
   'status.line': 'Ln',
   'status.col': 'Col',
   'status.readonly': 'read-only',
+  'status.reader': 'reading',
+  'status.mixed': '(mixed)',
+  'status.mixedEolHint':
+    'This file mixes line endings. Lines you do not edit keep the endings they had.',
   'conflict.changed': 'This file was changed by another program',
   'conflict.reload': 'Reload from disk',
   'conflict.keepMine': 'Keep my version',
@@ -112,6 +116,10 @@ const ru: Dict = {
   'status.line': 'Стр',
   'status.col': 'Кол',
   'status.readonly': 'только чтение',
+  'status.reader': 'чтение',
+  'status.mixed': '(смешанные)',
+  'status.mixedEolHint':
+    'В файле смешаны окончания строк. Строки, которые вы не правите, сохранят свои прежние окончания.',
   'conflict.changed': 'Файл изменён другой программой',
   'conflict.reload': 'Перезагрузить с диска',
   'conflict.keepMine': 'Оставить моё',

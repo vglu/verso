@@ -1,6 +1,6 @@
 use crate::error::{AppError, AppResult};
 use crate::fsops::atomic::atomic_write;
-use crate::fsops::encoding::{decode, encode, Encoding, Eol};
+use crate::fsops::encoding::{decode, encode_lines, endings_for, Encoding, Eol};
 use crate::paths;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -21,6 +21,8 @@ pub struct FileMeta {
     pub readonly: bool,
     pub encoding: Encoding,
     pub eol: Eol,
+    /// The file mixes line endings; the status bar says so.
+    pub mixed_eol: bool,
     pub trailing_newline: bool,
     pub size_bytes: u64,
 }
@@ -94,6 +96,7 @@ pub async fn read_file(app: AppHandle, path: String) -> AppResult<OpenedFile> {
             readonly: meta.permissions().readonly(),
             encoding: decoded.encoding,
             eol: decoded.eol,
+            mixed_eol: decoded.mixed_eol,
             trailing_newline: decoded.trailing_newline,
             size_bytes: meta.len(),
             path: path.to_string_lossy().to_string(),
@@ -127,7 +130,20 @@ pub async fn save_file(
         }
     }
 
-    let bytes = encode(&content, meta.encoding, meta.eol, meta.trailing_newline);
+    // Take the line endings from the file itself rather than assuming one
+    // kind throughout. Files with inconsistent endings are common, and a save
+    // that quietly rewrote the minority of them would change bytes the user
+    // never typed.
+    let endings = std::fs::read(&path)
+        .ok()
+        .and_then(|old| decode(&old, &path).ok())
+        .map(|old| endings_for(&content, &old.content, &old.line_endings, meta.eol))
+        .unwrap_or_else(|| {
+            let breaks = content.split('\n').count().saturating_sub(1);
+            vec![meta.eol; breaks]
+        });
+
+    let bytes = encode_lines(&content, meta.encoding, &endings, meta.eol, meta.trailing_newline);
     atomic_write(&path, &bytes)?;
 
     let after = std::fs::metadata(&path).map_err(|e| AppError::from_io(e, &path))?;

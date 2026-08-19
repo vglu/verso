@@ -29,6 +29,8 @@ export interface FileMeta {
   readonly: boolean;
   encoding: Encoding;
   eol: Eol;
+  /** The file mixes line endings; unchanged lines keep their own on save. */
+  mixedEol: boolean;
   trailingNewline: boolean;
   sizeBytes: number;
 }

@@ -29,6 +29,7 @@ export interface Tab {
   baseMtimeMs: number | null;
   encoding: Encoding;
   eol: Eol;
+  mixedEol: boolean;
   trailingNewline: boolean;
   dirty: boolean;
   readonly: boolean;
@@ -55,6 +56,7 @@ function tabFromMeta(meta: FileMeta, content: string): Tab {
     baseMtimeMs: meta.mtimeMs,
     encoding: meta.encoding,
     eol: meta.eol,
+    mixedEol: meta.mixedEol,
     trailingNewline: meta.trailingNewline,
     dirty: false,
     readonly: meta.readonly,
@@ -157,6 +159,7 @@ class TabsStore {
       baseMtimeMs: null,
       encoding: 'utf-8',
       eol: 'lf',
+      mixedEol: false,
       trailingNewline: true,
       dirty: false,
       readonly: false,
