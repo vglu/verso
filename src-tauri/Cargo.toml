@@ -32,7 +32,7 @@ encoding_rs = "0.8"
 chardetng = "0.1"
 sha2 = "0.10"
 # Pictures are embedded into exported documents as data URIs.
-base64 = "0.22"
+base64 = "0.23"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = "2"
