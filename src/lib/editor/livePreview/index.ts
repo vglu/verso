@@ -1,4 +1,5 @@
-import { syntaxTree } from '@codemirror/language';
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
+import type { Tree } from '@lezer/common';
 import {
   Facet,
   StateEffect,
@@ -70,11 +71,40 @@ function isFrozen(state: EditorState): boolean {
 }
 
 /**
- * Above this size we stop scanning for tables on every edit; the scan is
+ * Above this size we stop scanning for blocks on every edit; the scan is
  * whole-document and would show up as typing lag. Inline rendering, which is
  * viewport-bound, keeps working.
  */
 const TABLE_SCAN_LIMIT_BYTES = 2 * 1024 * 1024;
+
+/**
+ * Documents up to this size are parsed to the end before scanning for blocks.
+ *
+ * This is not a nicety. CodeMirror parses lazily, so `syntaxTree(state)` covers
+ * only as much as has been worked through so far — a few thousand characters
+ * on a fresh document. A table below that point is simply absent from the
+ * tree, and a whole-document scan finds nothing while inline decorations,
+ * which never look past the viewport, keep working perfectly. That asymmetry
+ * is what made a real 12 KB document render its emphasis and its code spans
+ * but show its table as raw pipes.
+ */
+const FORCE_PARSE_LIMIT_BYTES = 512 * 1024;
+
+/** Milliseconds the forced parse may spend before we settle for what exists. */
+const FORCE_PARSE_BUDGET_MS = 60;
+
+/**
+ * The best tree available for a whole-document scan: complete for ordinary
+ * documents, whatever the parser has reached for very large ones (where the
+ * field re-scans as the parse advances).
+ */
+function scanTree(state: EditorState): Tree {
+  if (state.doc.length <= FORCE_PARSE_LIMIT_BYTES) {
+    const complete = ensureSyntaxTree(state, state.doc.length, FORCE_PARSE_BUDGET_MS);
+    if (complete) return complete;
+  }
+  return syntaxTree(state);
+}
 
 const HIDDEN = Decoration.replace({});
 
@@ -175,8 +205,8 @@ function addInlineMath(
   }
 }
 
-function isInsideCode(state: EditorState, pos: number): boolean {
-  let node = syntaxTree(state).resolveInner(pos, 1);
+function isInsideCode(state: EditorState, pos: number, tree = syntaxTree(state)): boolean {
+  let node = tree.resolveInner(pos, 1);
   while (node) {
     if (/Code/.test(node.name)) return true;
     if (!node.parent) return false;
@@ -410,7 +440,12 @@ class InlinePreviewPlugin implements PluginValue {
   }
 
   update(update: ViewUpdate): void {
-    if (update.docChanged || update.selectionSet || update.viewportChanged) {
+    // `treeAdvanced` matters as much as the rest: until the parser reaches a
+    // region there are no nodes there to decorate, and nothing else would
+    // prompt a rebuild once it gets there.
+    const treeAdvanced = syntaxTree(update.state) !== syntaxTree(update.startState);
+
+    if (update.docChanged || update.selectionSet || update.viewportChanged || treeAdvanced) {
       const built = buildInline(update.view);
       this.decorations = Decoration.set(built.decorations, true);
       this.atomics = Decoration.set(built.atomics, true);
@@ -447,8 +482,9 @@ interface BlockState {
 function scanBlocks(state: EditorState): BlockRange[] {
   if (state.doc.length > TABLE_SCAN_LIMIT_BYTES) return [];
   const found: BlockRange[] = [];
+  const tree = scanTree(state);
 
-  syntaxTree(state).iterate({
+  tree.iterate({
     enter: (node) => {
       if (node.name === 'Table') {
         found.push({
@@ -481,20 +517,20 @@ function scanBlocks(state: EditorState): BlockRange[] {
     }
   });
 
-  found.push(...scanDisplayMath(state));
+  found.push(...scanDisplayMath(state, tree));
   found.sort((a, b) => a.from - b.from);
   return found;
 }
 
 /** `$$` on its own line opens and closes a display formula. */
-function scanDisplayMath(state: EditorState): BlockRange[] {
+function scanDisplayMath(state: EditorState, tree: Tree): BlockRange[] {
   const found: BlockRange[] = [];
   let openLine = -1;
 
   for (let n = 1; n <= state.doc.lines; n++) {
     const line = state.doc.line(n);
     if (line.text.trim() !== '$$') continue;
-    if (isInsideCode(state, line.from)) continue;
+    if (isInsideCode(state, line.from, tree)) continue;
 
     if (openLine < 0) {
       openLine = n;
@@ -556,11 +592,15 @@ const blockPreview = StateField.define<BlockState>({
   },
 
   update(value, tr) {
-    // Re-scanning is whole-document, so it only happens when the text changes.
-    // A pure selection move just re-evaluates which blocks are open.
-    if (!tr.docChanged && !tr.selection && !tr.reconfigured) return value;
+    // The parser works through a document in chunks, so a block further down
+    // simply does not exist in the tree yet when this field is first created.
+    // Watching for the tree to advance is therefore not an optimisation — it
+    // is the only reason blocks below the first parsed region ever appear.
+    const treeAdvanced = syntaxTree(tr.state) !== syntaxTree(tr.startState);
 
-    const blocks = tr.docChanged ? scanBlocks(tr.state) : value.blocks;
+    if (!tr.docChanged && !tr.selection && !tr.reconfigured && !treeAdvanced) return value;
+
+    const blocks = tr.docChanged || treeAdvanced ? scanBlocks(tr.state) : value.blocks;
     return { blocks, decorations: blockDecorations(tr.state, blocks) };
   },
 
