@@ -46,8 +46,13 @@
     stripUrlSuffix
   } from './lib/editor/pathUtil';
   import { pushJump } from './lib/editor/history';
+  import { isMarkdownFile } from './lib/editor/language';
   import { exportToHtml, printDocument, type ExportRequest } from './lib/export';
   import { formatDocument } from './lib/format';
+
+  /** What the window accepts by drag and drop. Mirrors the open dialog. */
+  const OPENABLE =
+    /\.(md|markdown|mdown|mkd|mdx|txt|csv|tsv|json|jsonc|ya?ml|toml|xml|html?|css|js|ts|sql|ini|log)$/i;
 
   let revision = $state(0);
   let showSettings = $state(false);
@@ -71,6 +76,7 @@
   let quitting = false;
 
   const activeTab = $derived(tabs.active);
+  const activeIsMarkdown = $derived(isMarkdownFile(activeTab?.fileName ?? 'untitled.md'));
 
   // The folder on screen is watched for as long as it is on screen, whatever
   // happens to the tabs in the meantime. The user's theme file joins it, so
@@ -649,7 +655,10 @@
         await getCurrentWebview().onDragDropEvent(async (event) => {
           if (event.payload.type !== 'drop') return;
           for (const path of event.payload.paths) {
-            if (/\.(md|markdown|mdown|mkd|txt)$/i.test(path)) await openPath(path);
+            // Anything textual: Markdown renders, the rest opens as itself.
+            // The reader dropped it on the window — refusing it silently is
+            // the one response that explains nothing.
+            if (OPENABLE.test(path)) await openPath(path);
           }
         })
       );
@@ -696,7 +705,9 @@
   <div class="app-main">
     <TabBar onCloseTab={requestClose} onCloseTabs={closeTabs} />
 
-    {#if settings.value.showToolbar && tabs.hasTabs}
+    <!-- Bold, headings and tables mean nothing in a JSON file, and neither
+         does a preview of it: the toolbar belongs to Markdown. -->
+    {#if settings.value.showToolbar && tabs.hasTabs && activeIsMarkdown}
       <Toolbar {revision} />
     {/if}
 

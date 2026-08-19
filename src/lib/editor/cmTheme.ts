@@ -27,6 +27,15 @@ const base = EditorView.theme({
     padding: '0 var(--sp-6)',
     caretColor: 'var(--caret)'
   },
+  // A data file is not a page of prose. The measure that makes Markdown
+  // pleasant to read makes JSON hard to follow: it wants the full width, the
+  // left margin, and the font its own tools use.
+  '&.cm-code .cm-content': {
+    maxWidth: 'none',
+    margin: '0',
+    fontFamily: 'var(--font-mono)',
+    fontSize: 'calc(var(--font-size) * 0.9)'
+  },
   '.cm-line': {
     padding: '0',
     // Anchors the fold chevron, which sits in the margin beside its heading.

@@ -3,6 +3,7 @@
   import { settings } from '../stores/settings.svelte';
   import { t } from '../stores/i18n';
   import { DEFAULT_ZOOM, zoomLabel } from '../ui/zoom';
+  import { languageLabel } from '../editor/language';
 
   interface Props {
     /** Bumped by the parent whenever the document or cursor changes. */
@@ -26,6 +27,7 @@
       chars: stats.chars,
       line: cursor.line,
       col: cursor.col,
+      language: languageLabel(tab.fileName),
       encoding: tab.encoding.toUpperCase(),
       eol: tab.eol.toUpperCase(),
       mixedEol: tab.mixedEol,
@@ -65,6 +67,7 @@
         {zoomLabel(settings.value.zoom)}
       </button>
     {/if}
+    <span>{info.language}</span>
     <span>{info.encoding}</span>
     <span title={info.mixedEol ? t('status.mixedEolHint') : undefined}>
       {info.eol}{info.mixedEol ? ` ${t('status.mixed')}` : ''}

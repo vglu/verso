@@ -74,8 +74,19 @@ Math and diagrams render inline, and only load when a document actually uses the
 
 ## Install
 
-There is no release to download yet — 0.1 has not been published. Build it
-yourself:
+Download the installer for your system from the
+[latest release](https://github.com/vglu/verso/releases/latest):
+
+| System | File |
+| --- | --- |
+| Windows | `Verso_0.1.0_x64-setup.exe` (3.7 MB) or the `.msi` |
+| macOS | `Verso_0.1.0_x64.dmg`, or `_aarch64.dmg` on Apple silicon |
+| Linux | `.deb`, `.rpm`, or the `.AppImage` if your distribution is neither |
+
+Every file is listed in `SHA256SUMS.txt` beside them; check it if you like:
+`sha256sum -c SHA256SUMS.txt`.
+
+Or build it yourself:
 
 ```bash
 npm ci
@@ -120,10 +131,12 @@ Decisions are recorded as [ADRs](.cursor/decisions/).
 
 ## Status
 
-**0.1, unreleased.** Everything described above works, and is built and used
-on Windows every day. macOS and Linux are wired into CI but have not been run
-by hand yet — treat them as untested rather than supported until the first
-release says otherwise.
+**0.1, released.** Everything described above works, and is built and used on
+Windows every day: the Windows installer has been installed from the release
+and checked — file association, "Open with", and a clean uninstall. macOS and
+Linux are built by CI on every commit, and their installers have not yet been
+run by hand — treat those two as untested rather than unsupported, and please
+open an issue if something there is wrong.
 
 Not there yet: plugins, folder-wide search, and renaming or deleting files
 from the tree. See the [changelog](CHANGELOG.md) for the current limits.

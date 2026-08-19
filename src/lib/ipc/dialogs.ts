@@ -7,14 +7,43 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 
 const MARKDOWN_FILTER = {
   name: 'Markdown',
-  extensions: ['md', 'markdown', 'mdown', 'mkd', 'txt']
+  extensions: ['md', 'markdown', 'mdown', 'mkd', 'mdx', 'txt']
+};
+
+/**
+ * The rest of what a Markdown editor ends up next to: the data file a table
+ * came from, the configuration beside the document, the page someone saved.
+ * They open as themselves — highlighted, not rendered as Markdown — and the
+ * ones a formatter understands can be reformatted in place.
+ */
+const TEXT_FILTER = {
+  name: 'Text and data',
+  extensions: [
+    'txt',
+    'csv',
+    'tsv',
+    'json',
+    'jsonc',
+    'yaml',
+    'yml',
+    'toml',
+    'xml',
+    'html',
+    'htm',
+    'css',
+    'js',
+    'ts',
+    'sql',
+    'ini',
+    'log'
+  ]
 };
 
 export async function pickFile(defaultDir?: string | null): Promise<string | null> {
   const picked = await open({
     multiple: false,
     directory: false,
-    filters: [MARKDOWN_FILTER],
+    filters: [MARKDOWN_FILTER, TEXT_FILTER],
     ...(defaultDir ? { defaultPath: defaultDir } : {})
   });
   return typeof picked === 'string' ? picked : null;
@@ -57,7 +86,7 @@ export async function pickSaveTarget(
   defaultDir?: string | null
 ): Promise<string | null> {
   const picked = await save({
-    filters: [MARKDOWN_FILTER],
+    filters: [MARKDOWN_FILTER, TEXT_FILTER],
     defaultPath: defaultDir ? `${defaultDir}/${suggestedName}` : suggestedName
   });
   return picked ?? null;

@@ -12,6 +12,7 @@ import { editingField, setEditing } from './livePreview/editing';
 import { editorKeymap, type KeymapHooks } from './keymap';
 import { activeOutlineIndex, extractOutline, type OutlineItem } from './outline';
 import { resetMermaid, THEME_CHANGED_EVENT } from './livePreview/richWidgets';
+import { isMarkdownFile, languageFor } from './language';
 
 export interface CursorInfo {
   line: number;
@@ -74,6 +75,12 @@ export interface CreateEditorOptions {
   doc: string;
   /** Directory of the document, used to resolve relative image paths. */
   dir: string;
+  /**
+   * The document's file name. Anything that is not Markdown is opened as what
+   * it actually is — highlighted, and with none of the live preview, which
+   * would otherwise read a `#` inside a JSON string as a heading.
+   */
+  fileName?: string;
   readOnly?: boolean;
   /** Start in plain Markdown source rather than live preview. */
   sourceMode?: boolean;
@@ -95,6 +102,9 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
   const readOnlyComp = new Compartment();
   const readerComp = new Compartment();
   const previewComp = new Compartment();
+  const languageComp = new Compartment();
+
+  const markdown = isMarkdownFile(options.fileName ?? 'untitled.md');
 
   let readerOn = false;
   let sourceOn = options.sourceMode ?? false;
@@ -154,13 +164,15 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
    * handle still reported them as set.
    */
   const buildExtensions = (): Extension[] => [
-    markdownSupport(),
+    // Markdown is built in; any other language arrives asynchronously and is
+    // dropped into this compartment when it does.
+    languageComp.of(markdown ? markdownSupport() : []),
     editorTheme(),
     // Live preview is one compartment so it can be switched off wholesale.
     // Source mode is not a degraded view — it is the document exactly as the
     // file holds it, which is the right tool whenever the rendering gets in
     // the way of the edit.
-    previewComp.of(sourceOn ? [] : livePreview()),
+    previewComp.of(sourceOn || !markdown ? [] : livePreview()),
     documentDir.of(options.dir),
     readerComp.of(readerMode.of(readerOn)),
     readOnlyComp.of(EditorState.readOnly.of(readerOn || (options.readOnly ?? false))),
@@ -175,13 +187,14 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     dropCursor(),
     bracketMatching(),
     indentOnInput(),
-    markdownFolding(),
+    markdown ? markdownFolding() : [],
     highlightSelectionMatches(),
     search({ top: true, createPanel: createSearchPanel }),
     searchRail,
     EditorState.allowMultipleSelections.of(true),
+    markdown ? [] : EditorView.editorAttributes.of({ class: 'cm-code' }),
     EditorView.contentAttributes.of({
-      class: 'md-doc',
+      class: markdown ? 'md-doc' : 'md-doc cm-code-content',
       spellcheck: 'false',
       autocorrect: 'off',
       autocapitalize: 'off'
@@ -194,6 +207,15 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     parent: options.parent,
     state: EditorState.create({ doc: options.doc, extensions: buildExtensions() })
   });
+
+  // A non-Markdown file gets its grammar as soon as it arrives. The document
+  // is already on screen by then, as plain text — which is what it would have
+  // been anyway, so nothing waits for this.
+  if (!markdown && options.fileName) {
+    void languageFor(options.fileName).then((support) => {
+      if (support) view.dispatch({ effects: languageComp.reconfigure(support) });
+    });
+  }
 
   // Theme-dependent widgets (Mermaid) rebuild on a theme switch. Re-issuing
   // the current selection is enough to make the block field recompute.

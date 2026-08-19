@@ -66,6 +66,7 @@
       parent: node,
       doc: tab.content,
       dir: tab.dirPath,
+      fileName: tab.fileName,
       readOnly: tab.readonly,
       sourceMode: settings.value.editorMode === 'source',
       onChange: (content, meta) => {
