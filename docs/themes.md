@@ -17,8 +17,19 @@ editor, the sidebar, the tabs and the code highlighting.
 Choose your file in **Settings → Your own theme**. It is applied over the
 built-in theme and remembered between sessions, and Verso watches it: save
 the file in your editor and the window repaints, which is the difference
-between writing a theme and guessing at one. `docs/themes/paper.css` is a
-complete example to start from.
+between writing a theme and guessing at one.
+
+Three complete themes ship in `docs/themes/`, and any of them is a reasonable
+place to start:
+
+| Theme | |
+| --- | --- |
+| [`paper.css`](themes/paper.css) | Warm light paper, burnt-orange accent |
+| [`overworld.css`](themes/overworld.css) | Minecraft's palette: sandstone by day, deepslate underground, diamond as the accent |
+| [`blush.css`](themes/blush.css) | Soft rose with a sage complement; wine-dark in the evening |
+
+Each carries its colour reasoning in its own comments — which hues, why those,
+and the measured contrast of every pair.
 
 ## Rules
 
@@ -27,7 +38,19 @@ complete example to start from.
 2. **Define every token you change in both light and dark** if your theme
    supports both, using `:root` and `[data-theme='dark']`.
 3. **Measure contrast.** Body text against `--bg` must reach at least 4.5:1.
-   A theme that looks moody but cannot be read is a broken theme.
+   A theme that looks moody but cannot be read is a broken theme — and this is
+   measurable, so measure it:
+
+   ```bash
+   node scripts/check-theme-contrast.mjs docs/themes/blush.css
+   node scripts/check-theme-contrast.mjs --all      # every theme that ships
+   ```
+
+   It reads the tokens out of your file, resolves `var()` chains, composites
+   translucent colours over what is behind them, and reports the WCAG ratio of
+   all eighteen pairs a reader actually has to read — in both the light block
+   and the dark one. It found three failures in this project's own example
+   theme the first time it was run.
 4. **No network.** Fonts and images must be local or data URIs; the app blocks
    outbound requests.
 

@@ -1,0 +1,117 @@
+/*
+ * Overworld — a Minecraft-coloured theme for Verso.
+ *
+ * The palette is taken from the game and then made to behave like a reading
+ * surface, which are two different jobs. The colour relationships come from
+ * the wheel; the lightness of every one of them was solved against its own
+ * background until it met WCAG, and the measured ratios are in the comments.
+ *
+ *   Earth      25°   dirt, oak, sandstone — the ground everything sits on
+ *   Grass      95°   analogous to earth: the landscape's own harmony
+ *   Diamond   176°   split-complementary to earth, which is exactly why it
+ *                    reads as treasure against it. It is the accent.
+ *   Redstone  358°   danger, opposite the grass
+ *   Gold       45°   warning, between earth and grass
+ *   Emerald   145°   success, between grass and diamond
+ *
+ * Surfaces stay desaturated and the accents carry the identity. A theme that
+ * paints large areas in saturated grass green is a costume; this one is meant
+ * to be read in for hours.
+ *
+ * Light is a sandstone day, dark is deepslate underground. Verify with:
+ *   node scripts/check-theme-contrast.mjs docs/themes/overworld.css
+ */
+
+:root {
+  /* — Surfaces: sandstone, hue 40, almost no saturation — */
+  --bg: #faf8f2;
+  --bg-app: #f0ebe3;
+  --bg-panel: #e9e4da;
+  --bg-hover: rgba(54, 66, 48, 0.06);
+  --bg-active: rgba(54, 66, 48, 0.1);
+  --bg-code: #ede8de;
+  --bg-field: #fffdf8;
+
+  /* — Text: stone with a green cast, so it belongs to the landscape — */
+  --fg: #364230; /* 10.05:1 on --bg */
+  --fg-ui: #45523e; /*  7.01:1 on --bg-app */
+  --fg-muted: #5a694f; /*  4.63:1 on --bg-panel */
+  --fg-faint: #748569; /*  3.12:1 on --bg-panel */
+  --heading: #314424; /* 10.00:1 — grass, darkened until it is type */
+
+  /* — Accent: diamond — */
+  --accent: #1a706b; /* 4.62:1 on --bg, 4.62:1 on --bg-panel */
+  --accent-hover: #145955;
+  --accent-soft: rgba(26, 112, 107, 0.13);
+
+  /* — Utility — */
+  --border: rgba(54, 66, 48, 0.14);
+  --selection: rgba(26, 112, 107, 0.2);
+  --caret: #1a706b;
+  --warning: #7c6214; /* gold, 4.60:1 */
+  --danger: #c1282d; /* redstone, 4.60:1 */
+  --success: #217343; /* emerald, 4.63:1 */
+  --quote-border: #c9c3b4;
+  --search-match: rgba(252, 238, 75, 0.42); /* gold ore in the dark */
+  --search-match-current: rgba(232, 176, 32, 0.62);
+  --scrollbar: rgba(54, 66, 48, 0.22);
+  --scrollbar-hover: rgba(54, 66, 48, 0.34);
+  --shadow-panel: 0 12px 32px rgba(40, 48, 34, 0.16), 0 2px 8px rgba(40, 48, 34, 0.08);
+  --scrim: rgba(24, 27, 29, 0.5);
+
+  /* — Code: the same six hues, solved against --bg-code — */
+  --syn-keyword: #a031c5; /* 4.60:1 */
+  --syn-string: #3a751d; /* 4.61:1 — grass */
+  --syn-number: #99561b; /* 4.63:1 — copper */
+  --syn-comment: #7a8b69; /* 3.01:1 */
+  --syn-function: #226ca1; /* 4.62:1 — lapis */
+  --syn-type: #866118; /* 4.62:1 — gold */
+  --syn-property: #c13035; /* 4.61:1 — redstone */
+  --syn-operator: #45523e;
+}
+
+/* Deepslate: the same palette underground. The stone turns cool and the
+   diamond starts to glow, which is the one thing the game does that a dark
+   theme should copy exactly. */
+[data-theme='dark'] {
+  --bg: #181b1d;
+  --bg-app: #121416;
+  --bg-panel: #15171a;
+  --bg-hover: rgba(202, 208, 198, 0.07);
+  --bg-active: rgba(202, 208, 198, 0.11);
+  --bg-code: #1e2227;
+  --bg-field: #1b1f22;
+
+  --fg: #cad0c6; /* 11.02:1 on --bg */
+  --fg-ui: #abb3a5; /*  8.51:1 on --bg-app */
+  --fg-muted: #7d8c72; /*  5.00:1 on --bg-panel */
+  --fg-faint: #626b5b; /*  3.22:1 on --bg-panel */
+  --heading: #a2c688; /*  9.01:1 — grass, lit */
+
+  --accent: #31c4ba; /* 8.01:1 — diamond glowing */
+  --accent-hover: #59d8d0;
+  --accent-soft: rgba(49, 196, 186, 0.16);
+
+  --border: rgba(202, 208, 198, 0.13);
+  --selection: rgba(49, 196, 186, 0.26);
+  --caret: #31c4ba;
+  --warning: #9a7f16;
+  --danger: #e04e53;
+  --success: #259453;
+  --quote-border: #39423a;
+  --search-match: rgba(252, 238, 75, 0.28);
+  --search-match-current: rgba(232, 176, 32, 0.5);
+  --scrollbar: rgba(202, 208, 198, 0.2);
+  --scrollbar-hover: rgba(202, 208, 198, 0.32);
+  --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.4);
+  --scrim: rgba(8, 10, 11, 0.6);
+
+  --syn-keyword: #b96ad4; /* 4.61:1 */
+  --syn-string: #5d9933; /* 4.63:1 */
+  --syn-number: #c5772a; /* 4.61:1 */
+  --syn-comment: #606d7a; /* 3.00:1 */
+  --syn-function: #3192c3; /* 4.60:1 */
+  --syn-type: #a68729; /* 4.64:1 */
+  --syn-property: #d46a6d; /* 4.61:1 */
+  --syn-operator: #abb3a5;
+}

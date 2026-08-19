@@ -1,0 +1,118 @@
+/*
+ * Blush — a soft rose theme for Verso.
+ *
+ * Tenderness is easy to reach for and easy to get wrong: pink used generously
+ * turns sugary, and pink used timidly turns grey. The way through is the
+ * wheel and then the arithmetic.
+ *
+ *   Rose      345°   the theme's voice. Surfaces carry it at almost no
+ *                    saturation, so the colour is felt rather than seen;
+ *                    the accent carries it at full strength.
+ *   Plum      330°   analogous, darkened into type — warm dark rather than
+ *                    black, which is what keeps the softness at reading size
+ *   Mulberry  340°   headings: rose taken down until it is type, not decoration
+ *   Sage      165°   the complement. One cool note against all that warmth
+ *                    stops the page from cloying, and it is the classic
+ *                    partner to rose for exactly that reason.
+ *   Amber      38°   warning
+ *   Terracotta 10°   danger — deliberately warmer than the accent, because an
+ *                    error that looks like a link is not an error anyone sees
+ *
+ * Every colour's lightness was solved against the surface it sits on until it
+ * met WCAG; the measured ratios are in the comments. Verify with:
+ *   node scripts/check-theme-contrast.mjs docs/themes/blush.css
+ */
+
+:root {
+  /* — Surfaces: rose at 0.4 saturation, so the white is warm, not pink — */
+  --bg: #fdf9fa;
+  --bg-app: #f8eff1;
+  --bg-panel: #f5e8eb;
+  --bg-hover: rgba(77, 49, 63, 0.055);
+  --bg-active: rgba(77, 49, 63, 0.09);
+  --bg-code: #f8eff1;
+  --bg-field: #fffcfd;
+
+  /* — Text: plum. Warm dark reads soft where black would read severe — */
+  --fg: #4d313f; /* 11.04:1 on --bg */
+  --fg-ui: #684858; /*  7.03:1 on --bg-app */
+  --fg-muted: #835f6e; /*  4.63:1 on --bg-panel */
+  --fg-faint: #9c7c8a; /*  3.10:1 on --bg-panel */
+  --heading: #723146; /*  9.01:1 — mulberry */
+
+  /* — Accent: rose, at the strength type can carry — */
+  --accent: #bf3356; /* 4.62:1 on --bg-panel, 5.9:1 on --bg */
+  --accent-hover: #a52846;
+  --accent-soft: rgba(191, 51, 86, 0.12);
+
+  /* — Utility — */
+  --border: rgba(77, 49, 63, 0.13);
+  --selection: rgba(191, 51, 86, 0.16);
+  --caret: #bf3356;
+  --warning: #876222; /* amber,      4.62:1 */
+  --danger: #b7422b; /* terracotta, 4.61:1 */
+  --success: #2c7563; /* sage,       4.61:1 */
+  --quote-border: #e3ccd3;
+  --search-match: rgba(240, 176, 100, 0.4);
+  --search-match-current: rgba(226, 140, 60, 0.6);
+  --scrollbar: rgba(77, 49, 63, 0.2);
+  --scrollbar-hover: rgba(77, 49, 63, 0.32);
+  --shadow-panel: 0 12px 32px rgba(77, 49, 63, 0.14), 0 2px 8px rgba(77, 49, 63, 0.07);
+  --scrim: rgba(40, 24, 32, 0.42);
+
+  /* — Code: rose and its neighbours, with sage for strings — */
+  --syn-keyword: #aa41aa; /* 4.61:1 — orchid */
+  --syn-string: #2e7966; /* 4.63:1 — sage */
+  --syn-number: #a15a28; /* 4.63:1 */
+  --syn-comment: #9f848d; /* 3.02:1 */
+  --syn-function: #8156bf; /* 4.64:1 — violet */
+  --syn-type: #876727; /* 4.64:1 */
+  --syn-property: #bd3f5e; /* 4.61:1 — rose */
+  --syn-operator: #684858;
+}
+
+/* Evening: the same rose, held against deep wine rather than paper. The
+   surfaces keep a trace of the hue so the dark is warm — a neutral black
+   under this palette looks like a different program with the lights off. */
+[data-theme='dark'] {
+  --bg: #1e1317;
+  --bg-app: #170e12;
+  --bg-panel: #1b1115;
+  --bg-hover: rgba(220, 196, 202, 0.07);
+  --bg-active: rgba(220, 196, 202, 0.11);
+  --bg-code: #261a1f;
+  --bg-field: #221519;
+
+  --fg: #dcc4ca; /* 11.04:1 on --bg */
+  --fg-ui: #c2a7ae; /*  8.52:1 on --bg-app */
+  --fg-muted: #a37b85; /*  5.02:1 on --bg-panel */
+  --fg-faint: #7c5e66; /*  3.21:1 on --bg-panel */
+  --heading: #e5a6b6; /*  9.05:1 — rose, lit */
+
+  --accent: #e48ca2; /* 7.55:1 */
+  --accent-hover: #eda9ba;
+  --accent-soft: rgba(228, 140, 162, 0.16);
+
+  --border: rgba(220, 196, 202, 0.13);
+  --selection: rgba(228, 140, 162, 0.22);
+  --caret: #e48ca2;
+  --warning: #a47729;
+  --danger: #d25840;
+  --success: #3a8d78;
+  --quote-border: #3d2a31;
+  --search-match: rgba(240, 176, 100, 0.26);
+  --search-match-current: rgba(226, 140, 60, 0.48);
+  --scrollbar: rgba(220, 196, 202, 0.2);
+  --scrollbar-hover: rgba(220, 196, 202, 0.32);
+  --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.35);
+  --scrim: rgba(12, 7, 9, 0.58);
+
+  --syn-keyword: #c85bc8; /* 4.62:1 */
+  --syn-string: #39957e; /* 4.64:1 — sage */
+  --syn-number: #c67032; /* 4.60:1 */
+  --syn-comment: #7f606a; /* 3.01:1 */
+  --syn-function: #9b72d6; /* 4.60:1 */
+  --syn-type: #a88031; /* 4.63:1 */
+  --syn-property: #d1627e; /* 4.60:1 — rose */
+  --syn-operator: #c2a7ae;
+}

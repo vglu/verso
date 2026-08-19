@@ -22,18 +22,18 @@
   --fg: #2b2118;
   --fg-ui: #43362a;
   --fg-muted: #6d5b4a;
-  --fg-faint: #9a8a76;
+  --fg-faint: #8f7a63;
   --heading: #1f1710;
 
   /* — Accent — */
-  --accent: #b5651d;
-  --accent-hover: #985314;
-  --accent-soft: rgba(181, 101, 29, 0.14);
+  --accent: #a1511a;
+  --accent-hover: #874414;
+  --accent-soft: rgba(161, 81, 26, 0.14);
 
   /* — Utility — */
   --border: rgba(70, 50, 25, 0.16);
-  --selection: rgba(181, 101, 29, 0.22);
-  --caret: #b5651d;
+  --selection: rgba(161, 81, 26, 0.22);
+  --caret: #a1511a;
   --quote-border: #d8cbb2;
   --search-match: rgba(240, 190, 70, 0.4);
   --search-match-current: rgba(230, 150, 20, 0.6);
