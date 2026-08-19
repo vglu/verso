@@ -29,7 +29,7 @@
   const langs: { value: LangSetting; label: string }[] = [
     { value: 'system', label: 'System' },
     { value: 'en', label: 'English' },
-    { value: 'ru', label: 'Русский' }
+    { value: 'uk', label: 'Українська' }
   ];
 </script>
 

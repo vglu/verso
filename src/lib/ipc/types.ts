@@ -120,7 +120,7 @@ export interface SessionState {
 
 // ---- settings ----
 export type ThemeSetting = 'light' | 'dark' | 'system';
-export type LangSetting = 'system' | 'ru' | 'en';
+export type LangSetting = 'system' | 'uk' | 'en';
 
 export interface Settings {
   theme: ThemeSetting;

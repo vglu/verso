@@ -5,20 +5,20 @@ describe('i18n', () => {
   beforeEach(() => setLang('en'));
 
   it('resolves explicit languages', () => {
-    expect(resolveLang('ru')).toBe('ru');
+    expect(resolveLang('uk')).toBe('uk');
     expect(resolveLang('en')).toBe('en');
   });
 
   it('falls back to a supported language for system', () => {
-    expect(['ru', 'en']).toContain(resolveLang('system'));
+    expect(['uk', 'en']).toContain(resolveLang('system'));
   });
 
   it('translates known keys per language', () => {
     setLang('en');
     expect(t('empty.openFile')).toBe('Open file');
-    setLang('ru');
-    expect(t('empty.openFile')).toBe('Открыть файл');
-    expect(getLang()).toBe('ru');
+    setLang('uk');
+    expect(t('empty.openFile')).toBe('Відкрити файл');
+    expect(getLang()).toBe('uk');
   });
 
   it('substitutes placeholders', () => {
@@ -31,8 +31,31 @@ describe('i18n', () => {
   });
 
   it('falls back to english when a key is missing in the active language', () => {
-    setLang('ru');
-    // Every ru key must exist; this guards against silent dictionary drift.
+    setLang('uk');
+    // Every uk key must exist; this guards against silent dictionary drift.
     expect(t('empty.title')).not.toBe('empty.title');
+  });
+});
+
+describe('the two dictionaries stay in step', () => {
+  it('has a Ukrainian string for every English one', async () => {
+    // A missing key falls back to English silently, so half a translated
+    // interface looks like a finished one until someone reads it.
+    const source = await import('node:fs').then((fs) =>
+      fs.readFileSync('src/lib/stores/i18n.ts', 'utf8')
+    );
+
+    const keysOf = (name: string): string[] => {
+      const start = source.indexOf(`const ${name}: Dict = {`);
+      const end = source.indexOf('\n};', start);
+      return [...source.slice(start, end).matchAll(/^ {2}'([^']+)':/gm)].map((m) => m[1]!);
+    };
+
+    const en = keysOf('en');
+    const uk = keysOf('uk');
+
+    expect(en.length).toBeGreaterThan(100);
+    expect(uk.filter((k) => !en.includes(k))).toEqual([]);
+    expect(en.filter((k) => !uk.includes(k))).toEqual([]);
   });
 });
