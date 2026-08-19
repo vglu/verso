@@ -114,7 +114,8 @@ pub async fn drafts_list(app: AppHandle) -> AppResult<Vec<DraftInfo>> {
         }
     }
 
-    out.sort_by(|a, b| b.saved_at_ms.cmp(&a.saved_at_ms));
+    // Newest first: the draft someone is most likely to want back.
+    out.sort_by_key(|d| std::cmp::Reverse(d.saved_at_ms));
     Ok(out)
 }
 

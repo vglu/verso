@@ -17,7 +17,11 @@ You need Node 22+ and a stable Rust toolchain. On Linux, also
 in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 `npm run check:all` is lint, formatting, types, the theme-token guard, both test
-suites and `cargo clippy -D warnings`. If it is green locally, CI will be green.
+suites and `cargo clippy -D warnings`. If it is green locally, CI will be green
+— with one caveat worth knowing: **CI runs the latest stable Rust**, and each
+release brings new Clippy lints. Run `rustup update` before you push, or a
+change that is clean on your machine can be rejected for a lint your toolchain
+has never heard of.
 
 ## The rules this project actually holds to
 
