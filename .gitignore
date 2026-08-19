@@ -16,12 +16,14 @@ src-tauri/gen/schemas/
 .DS_Store
 Thumbs.db
 
-# Editor
+# Editor / agent tooling (local only)
 .vscode/*
 !.vscode/extensions.json
 .idea/
+.cursor/
 
 # Claude Code local
 .claude/settings.local.json
 .claude/personal/
 .claude/worktrees/
+.claude/agents/
