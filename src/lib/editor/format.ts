@@ -1,5 +1,6 @@
 import { EditorSelection, type ChangeSpec, type EditorState } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
+import { blankRowLike } from './tableNav';
 
 /**
  * Editing commands behind the toolbar and its shortcuts.
@@ -95,14 +96,22 @@ export function toggleQuote(view: EditorView): boolean {
 }
 
 /** Insert text, then place the caret where the user has to type next. */
-function insertTemplate(view: EditorView, build: (selected: string) => { text: string; caret: number }): boolean {
+function insertTemplate(
+  view: EditorView,
+  build: (selected: string) => { text: string; caret: number; length?: number }
+): boolean {
   const range = view.state.selection.main;
   const selected = view.state.doc.sliceString(range.from, range.to);
-  const { text, caret } = build(selected);
+  const { text, caret, length = 0 } = build(selected);
 
   view.dispatch({
     changes: { from: range.from, to: range.to, insert: text },
-    selection: EditorSelection.cursor(range.from + caret),
+    // A template that comes with placeholder text selects it, so the first
+    // keystroke replaces the placeholder instead of typing next to it.
+    selection:
+      length > 0
+        ? EditorSelection.range(range.from + caret, range.from + caret + length)
+        : EditorSelection.cursor(range.from + caret),
     userEvent: 'input.insert',
     scrollIntoView: true
   });
@@ -127,19 +136,25 @@ function blockPadding(state: EditorState, from: number): { before: string; after
   return { before, after };
 }
 
+/** A fresh table, already aligned, with the first column name selected. */
 export function insertTable(view: EditorView, columns = 3, rows = 2): boolean {
   const { before, after } = blockPadding(view.state, view.state.selection.main.from);
 
-  const header = `| ${Array.from({ length: columns }, (_, i) => `Column ${i + 1}`).join(' | ')} |`;
-  const divider = `| ${Array.from({ length: columns }, () => '---').join(' | ')} |`;
-  const body = Array.from(
-    { length: rows },
-    () => `| ${Array.from({ length: columns }, () => ' ').join(' | ')} |`
-  ).join('\n');
+  const names = Array.from({ length: columns }, (_, i) => `Column ${i + 1}`);
+  const header = `| ${names.join(' | ')} |`;
+  // Dashes as wide as the names, and empty rows with the pipes in the same
+  // columns: an inserted table should already look like one in the source.
+  const divider = `| ${names.map((n) => '-'.repeat(n.length)).join(' | ')} |`;
+  const body = Array.from({ length: rows }, () => blankRowLike(header)).join('\n');
 
   const text = `${before}${header}\n${divider}\n${body}\n${after}`;
-  // Caret on the first header cell, which is the first thing anyone renames.
-  return insertTemplate(view, () => ({ text, caret: before.length + 2 }));
+  // The first header name is selected: it is the first thing anyone renames,
+  // and Tab from there walks the rest of the table the same way.
+  return insertTemplate(view, () => ({
+    text,
+    caret: before.length + 2,
+    length: 'Column 1'.length
+  }));
 }
 
 export function insertCodeBlock(view: EditorView, language = ''): boolean {

@@ -4,6 +4,7 @@ import { setEditing } from './editing';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { renderInline } from './inline';
 import { parseTable } from './table';
+import { cellsOfRow } from '../tableNav';
 import { decodeUrlPath, isRemoteUrl, joinPath, stripUrlSuffix } from '../pathUtil';
 
 /**
@@ -322,7 +323,13 @@ export class TableWidget extends WidgetType {
     return wrap;
   }
 
-  /** Map a clicked cell back to an offset inside the table source. */
+  /**
+   * Map a clicked cell back to an offset inside the table source.
+   *
+   * Both coordinates matter. Landing on the right line but at its start means
+   * clicking the third column drops the caret in the first, and the reader has
+   * to find their way back to the cell they were already pointing at.
+   */
   private sourcePosForCell(cell: HTMLTableCellElement | null): number {
     if (!cell) return this.from;
 
@@ -337,7 +344,13 @@ export class TableWidget extends WidgetType {
     for (let i = 0; i < Math.min(lineIndex, lines.length - 1); i++) {
       offset += (lines[i]?.length ?? 0) + 1;
     }
-    return this.from + offset;
+
+    const text = lines[Math.min(lineIndex, lines.length - 1)] ?? '';
+    const cells = cellsOfRow(text, this.from + offset);
+    // A short source row is padded out when rendered, so the rendered table
+    // can have columns this line does not.
+    const target = cells[Math.min(cell.cellIndex, cells.length - 1)];
+    return target ? target.from : this.from + offset;
   }
 
   ignoreEvent(): boolean {

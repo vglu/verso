@@ -4,6 +4,7 @@
   import { settings } from '../stores/settings.svelte';
   import { createEditor } from '../editor/createEditor';
   import { extractOutline } from '../editor/outline';
+  import { createOutlineSync } from '../editor/outlineSync';
 
   interface Props {
     onLinkClick: (href: string) => void;
@@ -22,18 +23,21 @@
     for (const tab of tabs.tabs) tabs.handleOf(tab.id)?.setSourceMode(source);
   });
 
-  let outlineTimer: ReturnType<typeof setTimeout> | null = null;
-
   /** Outline refresh is debounced: typing must not pay for a tree walk. */
+  const outlineSync = createOutlineSync(
+    {
+      activeId: () => tabs.active?.id ?? null,
+      outlineOf: (id) => {
+        const handle = tabs.handleOf(id);
+        return handle ? extractOutline(handle.view.state) : null;
+      },
+      activeIndexOf: (id) => tabs.handleOf(id)?.getActiveOutlineIndex() ?? -1
+    },
+    (items, activeIndex) => workspace.setOutline(items, activeIndex)
+  );
+
   function scheduleOutlineUpdate(tabId: string): void {
-    if (outlineTimer) clearTimeout(outlineTimer);
-    outlineTimer = setTimeout(() => {
-      outlineTimer = null;
-      const handle = tabs.handleOf(tabId);
-      if (!handle || tabs.active?.id !== tabId) return;
-      const items = extractOutline(handle.view.state);
-      workspace.setOutline(items, handle.getActiveOutlineIndex());
-    }, 200);
+    outlineSync.schedule(tabId);
   }
 
   /**
@@ -101,7 +105,10 @@
     if (!handle) return;
     handle.focus();
     if (active.scroll.pos > 0 || active.scroll.offset !== 0) handle.setScrollAnchor(active.scroll);
-    scheduleOutlineUpdate(active.id);
+    // Switching documents refreshes the panel at once: a debounce here would
+    // leave the previous document's headings on screen next to this one's text.
+    outlineSync.schedule(active.id);
+    outlineSync.flush();
   });
 </script>
 

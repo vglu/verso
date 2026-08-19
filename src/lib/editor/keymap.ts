@@ -16,6 +16,7 @@ import {
 } from './blockNav';
 import { setHeading, toggleList, toggleQuote } from './format';
 import { cancelJump, jumpBack, jumpForward, jumpHistoryKeeper, pushJump } from './history';
+import { exitTable, nextTableCell, prevTableCell } from './tableNav';
 
 /**
  * Editor-level shortcuts. Application-level ones (open, save, close tab) live
@@ -166,6 +167,13 @@ export function editorKeymap(hooks: KeymapHooks = {}): Extension {
         //   would move the caret a word sideways, which reads as a bug. —
         { key: 'Alt-ArrowLeft', run: (view) => (jumpBack(view), true) },
         { key: 'Alt-ArrowRight', run: (view) => (jumpForward(view), true) },
+
+        // — Tables. All three fall through when the caret is elsewhere, so Tab
+        //   still indents, Shift+Tab still outdents and Escape still closes
+        //   whatever is open. —
+        { key: 'Tab', run: nextTableCell },
+        { key: 'Shift-Tab', run: prevTableCell },
+        { key: 'Escape', run: exitTable },
 
         { key: 'Mod-f', run: fromHook(hooks.onFind) },
         { key: 'Mod-g', run: fromHook(hooks.onGoToLine) },
