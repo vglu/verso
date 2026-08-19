@@ -42,8 +42,18 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           set -euxo pipefail
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          # The runner boots with unattended-upgrades holding the dpkg lock,
+          # and apt waits for that lock with no deadline at all: the job sits
+          # in this step until the timeout kills it, which it has now done
+          # twice. Stop the updater, and give apt a deadline so a lock it
+          # cannot get fails the step in five minutes instead of staring at
+          # the wall for forty.
+          sudo systemctl stop unattended-upgrades apt-daily.service \
+            apt-daily-upgrade.service apt-daily.timer apt-daily-upgrade.timer || true
+          sudo pkill -9 -f 'apt-get|unattended-upgrade' || true
+          sudo dpkg --configure -a || true
+          sudo apt-get -o DPkg::Lock::Timeout=300 update
+          sudo apt-get -o DPkg::Lock::Timeout=300 install -y --no-install-recommends \
             -o Dpkg::Options::=--force-confdef \
             -o Dpkg::Options::=--force-confold \
             libwebkit2gtk-4.1-dev librsvg2-dev patchelf build-essential \

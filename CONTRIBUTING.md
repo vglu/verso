@@ -16,9 +16,12 @@ You need Node 22+ and a stable Rust toolchain. On Linux, also
 `libwebkit2gtk-4.1-dev` and the usual GTK build dependencies — the exact list is
 in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
-`npm run check:all` is lint, formatting, types, the theme-token guard, both test
-suites and `cargo clippy -D warnings`. If it is green locally, CI will be green
-— with one caveat worth knowing: **CI runs the latest stable Rust**, and each
+`npm run check:all` is lint, formatting, types, the theme-token guard, all three
+test suites and `cargo clippy -D warnings`. One of those suites is the
+performance budgets, which time a keystroke against a 16ms frame; they run on
+their own so the stopwatch is not measuring the rest of the suite, and they are
+not run in CI, where a shared two-core runner would measure the runner. If
+check:all is green locally, CI will be green — with one caveat worth knowing: **CI runs the latest stable Rust**, and each
 release brings new Clippy lints. Run `rustup update` before you push, or a
 change that is clean on your machine can be rejected for a lint your toolchain
 has never heard of.
