@@ -1,4 +1,4 @@
-# Claude Code agent roster — MDViewer
+# Claude Code agent roster — Verso
 
 Claude Code читает `.claude/agents/`; полные персоны живут в `.cursor/agents/<name>.md` (single source — стабы указывают туда). Frontmatter каждого стаба реплицирует канон из `.cursor/agents/README.md` (таблица-истина).
 

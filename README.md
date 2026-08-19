@@ -1,13 +1,13 @@
 <div align="center">
 
-# MDViewer
+# Verso
 
 **A beautiful, instant Markdown viewer and editor for Windows, macOS and Linux.**
 
 Double-click a `.md` file — it opens in well under a second and looks like a
 finished document, not like source code.
 
-![MDViewer rendering a document](docs/screenshots/light.png)
+![Verso rendering a document](docs/screenshots/light.png)
 
 </div>
 
@@ -19,7 +19,7 @@ finished document, not like source code.
 | **MarkText** | Electron, ~150 MB, and years of dormancy behind it. |
 | **Obsidian** | A vault-shaped knowledge base, not "just open this file". |
 
-MDViewer is viewer-first: it opens instantly, renders beautifully, lets you
+Verso is viewer-first: it opens instantly, renders beautifully, lets you
 edit in place, and never damages your file.
 
 ## What it does

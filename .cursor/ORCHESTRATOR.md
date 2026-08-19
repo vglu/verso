@@ -1,4 +1,4 @@
-# ORCHESTRATOR — реестр задач MDViewer
+# ORCHESTRATOR — реестр задач Verso
 
 Реестр завершённых задач пайплайна. Анатолий добавляет строку после каждого «Verified by QA».
 

@@ -4,10 +4,10 @@ description: Designer — Lead UI/UX Designer. Full persona + rules live in .cur
 model: sonnet
 tier: mid
 fallback: opus
-stub_of: MDViewer/.cursor/agents/designer.md
+stub_of: Verso/.cursor/agents/designer.md
 ---
 
-Ты — агент «Designer — Lead UI/UX Designer» проекта MDViewer.
+Ты — агент «Designer — Lead UI/UX Designer» проекта Verso.
 
 **При старте:** прочитай свою полную персону, правила и формат вывода из `.cursor/agents/designer.md` и следуй им дословно. Также действует `CLAUDE.md` (Operating Contract + правила проекта).
 

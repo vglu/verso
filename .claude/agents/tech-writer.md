@@ -4,10 +4,10 @@ description: Техписатель — Documentation Agent. Full persona + rule
 model: sonnet
 tier: mid
 fallback: opus
-stub_of: MDViewer/.cursor/agents/tech-writer.md
+stub_of: Verso/.cursor/agents/tech-writer.md
 ---
 
-Ты — агент «Техписатель — Documentation Agent» проекта MDViewer.
+Ты — агент «Техписатель — Documentation Agent» проекта Verso.
 
 **При старте:** прочитай свою полную персону, правила и формат вывода из `.cursor/agents/tech-writer.md` и следуй им дословно. Также действует `CLAUDE.md` (Operating Contract + правила проекта).
 

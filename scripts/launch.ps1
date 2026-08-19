@@ -1,4 +1,4 @@
-# Launch MDViewer without it landing on top of whatever you are doing.
+# Launch Verso without it landing on top of whatever you are doing.
 #
 # Two things have to happen, and only doing one of them is why the window kept
 # appearing in the middle of the screen anyway:
@@ -12,7 +12,7 @@
 # startup measurement keep working from down there.
 param(
     [string]$Path,
-    [string]$Exe = "src-tauri\target\release\mdviewer.exe",
+    [string]$Exe = "src-tauri\target\release\verso.exe",
     [int]$X = 0,
     [int]$Y = 0,
     [int]$TimeoutMs = 20000
@@ -58,12 +58,16 @@ function Set-OutOfTheWay([IntPtr]$handle, [IntPtr]$previous, [int]$x, [int]$y) {
 
 # The webview settles over several hundred milliseconds and can raise itself
 # again on the way, so keep putting it back.
+. (Join-Path $PSScriptRoot 'lib\window.ps1')
+
 $watch = [System.Diagnostics.Stopwatch]::StartNew()
 $pushes = 0
 while ($watch.ElapsedMilliseconds -lt $TimeoutMs -and $pushes -lt 15) {
-    $proc.Refresh()
-    if ($proc.MainWindowHandle -ne 0) {
-        Set-OutOfTheWay $proc.MainWindowHandle $previous $X $Y
+    # Not MainWindowHandle: a Tauri process owns a couple of 16x16 helpers as
+    # well, and moving one of those leaves the document window where it was.
+    $handle = [VersoWindows]::MainWindow($proc.Id)
+    if ($handle -ne [IntPtr]::Zero) {
+        Set-OutOfTheWay $handle $previous $X $Y
         $pushes++
     }
     Start-Sleep -Milliseconds 100

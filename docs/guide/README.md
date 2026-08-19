@@ -1,8 +1,8 @@
-# MDViewer — user guide
+# Verso — user guide
 
 ## Opening documents
 
-- **Double-click a `.md` file.** MDViewer registers itself for `.md`,
+- **Double-click a `.md` file.** Verso registers itself for `.md`,
   `.markdown`, `.mdown` and `.mkd`. If the app is already running, the file
   opens as a new tab in the existing window instead of starting a second copy.
 - **Drag a file onto the window.**
@@ -12,7 +12,7 @@
 
 ## Reading and editing
 
-MDViewer renders Markdown in place: headings, bold, links, tables, code and
+Verso renders Markdown in place: headings, bold, links, tables, code and
 formulas all look like the finished document, not like source.
 
 The moment you click or type, the line your caret is on shows its raw
@@ -86,7 +86,7 @@ autolinks. On top of that:
 - **Images** — relative paths resolve against the document's folder; remote
   `https://` images load, everything else stays local.
 - **Raw HTML is shown as text, never executed.** A Markdown file cannot run
-  code in MDViewer.
+  code in Verso.
 
 ## Settings
 
@@ -98,7 +98,7 @@ apply immediately.
 
 | What | Windows | macOS | Linux |
 | --- | --- | --- | --- |
-| Settings, session | `%APPDATA%\app.mdviewer.desktop` | `~/Library/Application Support/app.mdviewer.desktop` | `~/.config/app.mdviewer.desktop` |
+| Settings, session | `%APPDATA%\com.verso.app` | `~/Library/Application Support/com.verso.app` | `~/.config/com.verso.app` |
 | Recovery drafts | same folder, `drafts/` | same | same |
 
-Deleting those files resets MDViewer; your documents are never stored there.
+Deleting those files resets Verso; your documents are never stored there.

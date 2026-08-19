@@ -1,15 +1,15 @@
 [package]
-name = "mdviewer"
+name = "verso"
 version = "0.1.0"
 description = "Beautiful, instant, cross-platform Markdown viewer & editor"
 authors = ["SIMS tech"]
 license = "MIT"
-repository = "https://github.com/sims-tech/mdviewer"
+repository = "https://github.com/sims-tech/verso"
 edition = "2021"
 rust-version = "1.77"
 
 [lib]
-name = "mdviewer_lib"
+name = "verso_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

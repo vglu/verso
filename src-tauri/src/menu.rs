@@ -123,7 +123,7 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         .build()?;
 
     let about =
-        MenuItemBuilder::with_id("about", label(l, "about", "About MDViewer")).build(app)?;
+        MenuItemBuilder::with_id("about", label(l, "about", "About Verso")).build(app)?;
     let help = SubmenuBuilder::new(app, label(l, "menu.help", "Help"))
         .item(&about)
         .build()?;

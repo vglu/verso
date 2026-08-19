@@ -1,5 +1,5 @@
 /*
- * MDViewer design tokens — the theme contract.
+ * Verso design tokens — the theme contract.
  * A theme overrides values here and nothing else. Components must never
  * contain literal colors; scripts/check-colors.mjs enforces this.
  */

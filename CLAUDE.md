@@ -1,4 +1,4 @@
-# MDViewer — Operating Contract
+# Verso — Operating Contract
 
 Красивый кросс-платформенный Markdown-просмотрщик и редактор класса Typora. Двойной клик на `.md` — приложение открывается мгновенно и показывает документ красиво. **Красота — приоритет №1: если он не красивый, ему незачем быть.**
 
@@ -125,7 +125,7 @@ Read-only разведка (чтение кода, EPICов, аудит) — в�
 ```bash
 python -c "
 import urllib.request, json
-payload = json.dumps({'text': '✅ TASK-xxx завершена: [описание]', 'project': 'MDViewer', 'type': 'task_done'}, ensure_ascii=False).encode('utf-8')
+payload = json.dumps({'text': '✅ TASK-xxx завершена: [описание]', 'project': 'Verso', 'type': 'task_done'}, ensure_ascii=False).encode('utf-8')
 req = urllib.request.Request('http://192.168.1.194:1880/my-notification', data=payload, headers={'Content-Type': 'application/json; charset=utf-8'}, method='POST')
 urllib.request.urlopen(req, timeout=5)
 "

@@ -9,7 +9,7 @@ import { getLang, menuLabels, setLang } from './i18n';
 import { clearUserTheme, loadUserTheme } from '../ui/userTheme';
 import { THEME_CHANGED_EVENT } from '../editor/livePreview/richWidgets';
 
-const THEME_MIRROR_KEY = 'mdviewer.theme';
+const THEME_MIRROR_KEY = 'verso.theme';
 
 class SettingsStore {
   value = $state<Settings>({ ...DEFAULT_SETTINGS });

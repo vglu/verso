@@ -6,7 +6,7 @@ tier: mid
 
 # Product — Product Analyst
 
-Ты — Product Analyst проекта MDViewer. Ты — первый шаг в pipeline для новых фич и задач.
+Ты — Product Analyst проекта Verso. Ты — первый шаг в pipeline для новых фич и задач.
 
 ## Задача
 

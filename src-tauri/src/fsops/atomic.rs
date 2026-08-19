@@ -99,7 +99,7 @@ fn temp_sibling(path: &Path) -> PathBuf {
         .unwrap_or(0);
     let pid = std::process::id();
     let dir = path.parent().unwrap_or_else(|| Path::new("."));
-    dir.join(format!(".{name}.mdviewer-tmp-{pid}-{nanos}"))
+    dir.join(format!(".{name}.verso-tmp-{pid}-{nanos}"))
 }
 
 /// Remove leftover temp files (a crash between write and rename).
@@ -110,7 +110,7 @@ pub fn sweep_temp_files(dir: &Path) {
     for entry in entries.flatten() {
         let name = entry.file_name();
         let name = name.to_string_lossy();
-        if name.starts_with('.') && name.contains(".mdviewer-tmp-") {
+        if name.starts_with('.') && name.contains(".verso-tmp-") {
             let _ = fs::remove_file(entry.path());
         }
     }
@@ -135,7 +135,7 @@ pub fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Option<T> {
     match serde_json::from_slice(bytes) {
         Ok(v) => Some(v),
         Err(e) => {
-            eprintln!("[mdviewer] ignoring corrupt {}: {e}", path.display());
+            eprintln!("[verso] ignoring corrupt {}: {e}", path.display());
             None
         }
     }
@@ -146,7 +146,7 @@ mod tests {
     use super::*;
 
     fn tmpdir(tag: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("mdviewer-test-{tag}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("verso-test-{tag}-{}", std::process::id()));
         let _ = fs::create_dir_all(&dir);
         dir
     }
@@ -174,7 +174,7 @@ mod tests {
         let leftovers: Vec<_> = fs::read_dir(&dir)
             .unwrap()
             .flatten()
-            .filter(|e| e.file_name().to_string_lossy().contains("mdviewer-tmp"))
+            .filter(|e| e.file_name().to_string_lossy().contains("verso-tmp"))
             .collect();
         assert!(leftovers.is_empty(), "temp file left behind");
 
@@ -184,7 +184,7 @@ mod tests {
     #[test]
     fn sweep_removes_orphans() {
         let dir = tmpdir("sweep");
-        let orphan = dir.join(".c.md.mdviewer-tmp-1-2");
+        let orphan = dir.join(".c.md.verso-tmp-1-2");
         fs::write(&orphan, b"junk").unwrap();
         let keep = dir.join("keep.md");
         fs::write(&keep, b"keep").unwrap();

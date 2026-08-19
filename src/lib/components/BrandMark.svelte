@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * The MDViewer mark, reduced to what survives at 14px: a page whose first
+   * The Verso mark, reduced to what survives at 14px: a page whose first
    * line has already become a heading. Drawn in `currentColor` so it belongs
    * to whatever surface it sits on, in either theme.
    */

@@ -21,9 +21,9 @@
 
 ### MVP-0 — Каркас (≈ 1 сессия)
 
-1. `npm create tauri-app` → svelte-ts шаблон, имя `mdviewer`; выровнять структуру под ARCHITECTURE §2.
+1. `npm create tauri-app` → svelte-ts шаблон, имя `verso`; выровнять структуру под ARCHITECTURE §2.
 2. TS strict, ESLint (svelte plugin) + Prettier, `cargo clippy -D warnings` в CI-скрипте.
-3. `tauri.conf.json`: окно 1200×800 min 640×480, `title: MDViewer`, CSP из ARCHITECTURE §6, `fileAssociations` (.md, .markdown → text/markdown), иконка-плейсхолдер.
+3. `tauri.conf.json`: окно 1200×800 min 640×480, `title: Verso`, CSP из ARCHITECTURE §6, `fileAssociations` (.md, .markdown → text/markdown), иконка-плейсхолдер.
 4. Плагины Rust: single-instance (+обработчик argv→emit `open-file`), dialog, opener, window-state.
 5. `styles/tokens.css` + `base.css` + `themes/dark.css` по DESIGN-SYSTEM §2 (полный список токенов), инлайн-скрипт темы до первого кадра.
 6. Каркас `App.svelte`: layout-грид §5 (пустые компоненты-заглушки с осмысленным EmptyState).
@@ -97,4 +97,4 @@
 - Все AC волн MVP-0…5 закрыты вердиктами QA c live-evidence
 - 0 известных сценариев потери данных; round-trip тест зелёный
 - Перф-паспорт в норме на Windows
-- Фаундер пользуется MDViewer вместо Typora ≥ 1 день без желания вернуться
+- Фаундер пользуется Verso вместо Typora ≥ 1 день без желания вернуться

@@ -647,7 +647,7 @@ class TabsStore {
   private reportError(error: unknown, path: string | null): void {
     const message = describeError(error, path);
     this.lastError = message;
-    console.error('[mdviewer]', message, error);
+    console.error('[verso]', message, error);
   }
 }
 

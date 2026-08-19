@@ -4,10 +4,10 @@ description: Coder — Senior Engineer. Full persona + rules live in .cursor/age
 model: sonnet
 tier: mid
 fallback: opus
-stub_of: MDViewer/.cursor/agents/coder.md
+stub_of: Verso/.cursor/agents/coder.md
 ---
 
-Ты — агент «Coder — Senior Engineer» проекта MDViewer.
+Ты — агент «Coder — Senior Engineer» проекта Verso.
 
 **При старте:** прочитай свою полную персону, правила и формат вывода из `.cursor/agents/coder.md` и следуй им дословно. Также действует `CLAUDE.md` (Operating Contract + правила проекта).
 

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "MDViewer",
+  "productName": "Verso",
   "version": "0.1.0",
-  "identifier": "app.mdviewer.desktop",
+  "identifier": "com.verso.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "MDViewer",
+        "title": "Verso",
         "width": 1200,
         "height": 800,
         "minWidth": 640,
@@ -48,7 +48,7 @@
     ],
     "category": "Productivity",
     "shortDescription": "Beautiful Markdown viewer & editor",
-    "longDescription": "MDViewer opens Markdown files instantly and renders them beautifully, with live WYSIWYG editing, tabs, a folder tree and an outline.",
+    "longDescription": "Verso opens Markdown files instantly and renders them beautifully, with live WYSIWYG editing, tabs, a folder tree and an outline.",
     "fileAssociations": [
       {
         "ext": ["md", "markdown", "mdown", "mkd"],

@@ -4,7 +4,7 @@
 # first, then closes itself. That path is easy to break silently, so it is
 # exercised here with a real WM_CLOSE instead of killing the process.
 param(
-    [string]$Exe = "src-tauri\target\release\mdviewer.exe",
+    [string]$Exe = "src-tauri\target\release\verso.exe",
     [string]$File = "tests\fixtures\sample.md",
     [int]$TimeoutMs = 10000
 )
@@ -17,7 +17,7 @@ public class Win32Close {
 }
 "@
 
-Get-Process mdviewer -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process verso -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 1200
 
 $proc = Start-Process -FilePath $Exe -ArgumentList (Resolve-Path $File) -PassThru
@@ -49,5 +49,5 @@ while ($watch.ElapsedMilliseconds -lt $TimeoutMs) {
 }
 
 Write-Output "FAIL: window ignored the close request for ${TimeoutMs} ms"
-Get-Process mdviewer -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process verso -ErrorAction SilentlyContinue | Stop-Process -Force
 exit 1

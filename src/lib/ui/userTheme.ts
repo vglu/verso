@@ -13,7 +13,7 @@ import { readTheme } from '../ipc/commands';
  * an id so applying a different one replaces it rather than stacking.
  */
 
-const ELEMENT_ID = 'mdviewer-user-theme';
+const ELEMENT_ID = 'verso-user-theme';
 
 export function clearUserTheme(): void {
   document.getElementById(ELEMENT_ID)?.remove();

@@ -11,7 +11,7 @@ pub async fn reveal_in_os(app: AppHandle, path: String) -> AppResult<()> {
 }
 
 /// Only web-ish schemes leave the app. Anything else is a document path and
-/// must be handled inside MDViewer, not handed to the OS shell.
+/// must be handled inside Verso, not handed to the OS shell.
 #[tauri::command]
 pub async fn open_external(app: AppHandle, url: String) -> AppResult<()> {
     let lower = url.to_lowercase();

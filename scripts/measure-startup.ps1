@@ -12,7 +12,7 @@
 # when the desktop is free; use scripts/screenshot.ps1 the rest of the time,
 # which reads a window that is behind everything perfectly well.
 param(
-    [string]$Exe = "src-tauri\target\release\mdviewer.exe",
+    [string]$Exe = "src-tauri\target\release\verso.exe",
     [string]$File = "tests\fixtures\sample.md",
     [int]$Runs = 5,
     # Leave the window visible at the left edge instead of hiding it behind
@@ -22,6 +22,8 @@ param(
 )
 
 if (-not (Test-Path $Exe)) { throw "binary not found: $Exe (run 'npm run tauri build')" }
+
+. (Join-Path $PSScriptRoot 'lib\window.ps1')
 
 Add-Type -AssemblyName System.Drawing
 
@@ -110,7 +112,7 @@ function Get-InkFraction([IntPtr]$handle) {
 $painted = @()
 
 for ($i = 1; $i -le $Runs; $i++) {
-    Get-Process mdviewer -ErrorAction SilentlyContinue | Stop-Process -Force
+    Get-Process verso -ErrorAction SilentlyContinue | Stop-Process -Force
     Start-Sleep -Milliseconds 1500
 
     # Whoever is in front keeps the screen for the whole run.
@@ -118,12 +120,14 @@ for ($i = 1; $i -le $Runs; $i++) {
     $watch = [System.Diagnostics.Stopwatch]::StartNew()
     $proc = Start-Process -FilePath $Exe -ArgumentList (Resolve-Path $File) -PassThru
 
+    # The document window, not whichever helper Windows enumerates first.
+    $handle = [IntPtr]::Zero
     $windowMs = $null
     while ($watch.ElapsedMilliseconds -lt 20000) {
-        $proc.Refresh()
-        if ($proc.MainWindowHandle -ne 0) {
+        $handle = [VersoWindows]::MainWindow($proc.Id)
+        if ($handle -ne [IntPtr]::Zero) {
             $windowMs = $watch.ElapsedMilliseconds
-            Send-ToBack $proc.MainWindowHandle
+            Send-ToBack $handle
             break
         }
         Start-Sleep -Milliseconds 10
@@ -132,12 +136,12 @@ for ($i = 1; $i -le $Runs; $i++) {
 
     $paintedMs = $null
     while ($watch.ElapsedMilliseconds -lt 20000) {
-        if ((Get-InkFraction $proc.MainWindowHandle) -ge $InkThreshold) {
+        if ((Get-InkFraction $handle) -ge $InkThreshold) {
             $paintedMs = $watch.ElapsedMilliseconds
             break
         }
         # The webview can raise itself as it settles; keep it down.
-        Send-ToBack $proc.MainWindowHandle
+        Send-ToBack $handle
     }
 
     $watch.Stop()
@@ -145,7 +149,7 @@ for ($i = 1; $i -le $Runs; $i++) {
     Write-Output ("run {0}: window {1} ms, document painted {2} ms" -f $i, $windowMs, $paintedMs)
 }
 
-Get-Process mdviewer -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process verso -ErrorAction SilentlyContinue | Stop-Process -Force
 
 if ($painted.Count -gt 0) {
     $sorted = $painted | Sort-Object

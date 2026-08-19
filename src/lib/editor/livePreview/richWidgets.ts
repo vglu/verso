@@ -156,7 +156,7 @@ export class MermaidWidget extends WidgetType {
     host.appendChild(placeholder);
 
     mermaidCounter += 1;
-    const id = `mdviewer-mermaid-${mermaidCounter}`;
+    const id = `verso-mermaid-${mermaidCounter}`;
 
     void loadMermaid()
       .then((mod) => mod.default.render(id, this.source))
@@ -196,4 +196,4 @@ export function resetMermaid(): void {
 }
 
 /** Event the app fires after switching themes. */
-export const THEME_CHANGED_EVENT = 'mdviewer:theme-changed';
+export const THEME_CHANGED_EVENT = 'verso:theme-changed';

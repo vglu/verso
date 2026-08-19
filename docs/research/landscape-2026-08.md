@@ -1,6 +1,6 @@
 # Исследование ландшафта — open-source Markdown-редакторы (август 2026)
 
-Глубокое исследование перед стартом MDViewer. Вывод: **строить с нуля на Tauri 2 + CodeMirror 6 live-preview, не форкать.** Решение зафиксировано в `.cursor/decisions/ADR-001-stack.md`.
+Глубокое исследование перед стартом Verso. Вывод: **строить с нуля на Tauri 2 + CodeMirror 6 live-preview, не форкать.** Решение зафиксировано в `.cursor/decisions/ADR-001-stack.md`.
 
 ## 1. Существующие Typora-подобные приложения
 

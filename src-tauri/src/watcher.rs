@@ -43,7 +43,7 @@ impl WatchManager {
                 Ok(events) => events,
                 Err(errors) => {
                     for e in errors {
-                        eprintln!("[mdviewer] watch error: {e}");
+                        eprintln!("[verso] watch error: {e}");
                     }
                     return;
                 }
@@ -93,7 +93,7 @@ impl WatchManager {
         let mode = RecursiveMode::NonRecursive;
         for added in next.difference(&self.watched) {
             if let Err(e) = debouncer.watcher().watch(added, mode) {
-                eprintln!("[mdviewer] cannot watch {}: {e}", added.display());
+                eprintln!("[verso] cannot watch {}: {e}", added.display());
                 continue;
             }
             debouncer.cache().add_root(added, mode);

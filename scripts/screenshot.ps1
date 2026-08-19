@@ -1,11 +1,11 @@
-# Capture the MDViewer window to a PNG for QA evidence.
+# Capture the Verso window to a PNG for QA evidence.
 #
 # Two strategies: PrintWindow asks the window to render itself into a bitmap
 # (works when the desktop is not composited to a real display), falling back
 # to a screen grab.
 param(
     [string]$Out = "shot.png",
-    [string]$ProcessName = "mdviewer",
+    [string]$ProcessName = "verso",
     [int]$DelayMs = 0,
     # Grab the screen instead of asking the window to draw itself. Native
     # popups — the menu bar's dropdowns, a file dialog — are separate windows,
@@ -30,11 +30,11 @@ public class Win32Cap {
 
 if ($DelayMs -gt 0) { Start-Sleep -Milliseconds $DelayMs }
 
-$proc = Get-Process -Name $ProcessName -ErrorAction SilentlyContinue |
-        Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
-if (-not $proc) { throw "process '$ProcessName' has no visible window" }
+. (Join-Path $PSScriptRoot 'lib\window.ps1')
 
-$handle = $proc.MainWindowHandle
+$found = Get-VersoWindow -ProcessName $ProcessName -TimeoutMs 5000
+if (-not $found) { throw "process '$ProcessName' has no visible window" }
+$handle = $found.Handle
 
 # PrintWindow renders a window that is behind others, so the default path never
 # disturbs what is in front. Only the screen grab needs the window raised, and

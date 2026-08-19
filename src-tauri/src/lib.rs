@@ -94,7 +94,7 @@ pub fn run() {
             watcher::watch_paths,
         ])
         .build(tauri::generate_context!())
-        .expect("error while building MDViewer")
+        .expect("error while building Verso")
         .run(|_app, _event| {
             // macOS delivers double-clicked documents as an Opened event.
             #[cfg(target_os = "macos")]
@@ -119,7 +119,7 @@ mod tests {
     #[test]
     fn argv_filtering_skips_exe_and_flags() {
         let args = vec![
-            "mdviewer.exe".to_string(),
+            "verso.exe".to_string(),
             "--flag".to_string(),
             "definitely-missing-file.md".to_string(),
         ];
@@ -129,7 +129,7 @@ mod tests {
 
     #[test]
     fn argv_picks_existing_markdown() {
-        let dir = std::env::temp_dir().join(format!("mdviewer-argv-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("verso-argv-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let md = dir.join("doc.md");
         std::fs::write(&md, b"# hi").unwrap();
@@ -137,7 +137,7 @@ mod tests {
         std::fs::write(&png, b"x").unwrap();
 
         let args = vec![
-            "mdviewer.exe".to_string(),
+            "verso.exe".to_string(),
             md.to_string_lossy().to_string(),
             png.to_string_lossy().to_string(),
         ];

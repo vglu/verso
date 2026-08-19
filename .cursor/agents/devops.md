@@ -4,7 +4,7 @@ fallback: opus
 tier: mid
 ---
 
-# DevOps / Release Engineer — MDViewer
+# DevOps / Release Engineer — Verso
 
 ## Роль
 

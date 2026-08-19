@@ -1,4 +1,4 @@
-# MDViewer — Архитектура системы (MVP)
+# Verso — Архитектура системы (MVP)
 
 > Статус: принято 2026-08-19 (Думатель + Architect, Fable 5). Реализация — по волнам EPIC-MVP, порядок чтения для исполнителя — `docs/design/HANDOFF-OPUS.md`.
 
@@ -31,7 +31,7 @@
 ## 2. Репозиторий (целевая структура)
 
 ```
-MDViewer/
+Verso/
 ├─ src-tauri/
 │  ├─ Cargo.toml
 │  ├─ tauri.conf.json          # bundle, fileAssociations, CSP, окно

@@ -1,4 +1,4 @@
-# Clicks at a screen coordinate inside the MDViewer window.
+# Clicks at a screen coordinate inside the Verso window.
 #
 # Keyboard injection into the WebView2 child is unreliable (SendKeys delivers
 # plain characters but drops modifier combinations), so UI checks that need a
@@ -24,12 +24,12 @@ public static class Clicker {
 }
 '@
 
-# Found the same way the screenshot script finds it: by process, not by title
-# — the title follows the open document.
-$proc = Get-Process -Name mdviewer -ErrorAction SilentlyContinue |
-        Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
-if (-not $proc) { Write-Error 'MDViewer has no visible window'; exit 1 }
-$hwnd = $proc.MainWindowHandle
+. (Join-Path $PSScriptRoot 'lib\window.ps1')
+
+$found = Get-VersoWindow -TimeoutMs 5000
+if (-not $found) { Write-Error 'Verso has no visible window'; exit 1 }
+$proc = $found.Process
+$hwnd = $found.Handle
 
 function Foreground-Pid {
   $fg = [Clicker]::GetForegroundWindow()
@@ -52,7 +52,7 @@ if ((Foreground-Pid) -ne $proc.Id) {
 # other program of the user's, at coordinates that mean nothing there. Refuse
 # rather than guess.
 if ((Foreground-Pid) -ne $proc.Id) {
-  Write-Error 'MDViewer is not the foreground window; refusing to click'
+  Write-Error 'Verso is not the foreground window; refusing to click'
   exit 2
 }
 

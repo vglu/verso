@@ -1,4 +1,4 @@
-# Writing a theme for MDViewer
+# Writing a theme for Verso
 
 A theme is **one CSS file**. It overrides design tokens; it never restyles
 components directly. That is the whole contract — if a token exists for
@@ -15,7 +15,7 @@ editor, the sidebar, the tabs and the code highlighting.
 ```
 
 Choose your file in **Settings → Your own theme**. It is applied over the
-built-in theme and remembered between sessions, and MDViewer watches it: save
+built-in theme and remembered between sessions, and Verso watches it: save
 the file in your editor and the window repaints, which is the difference
 between writing a theme and guessing at one. `docs/themes/paper.css` is a
 complete example to start from.

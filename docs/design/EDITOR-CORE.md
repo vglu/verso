@@ -1,4 +1,4 @@
-# MDViewer — Editor Core: live-preview движок на CodeMirror 6
+# Verso — Editor Core: live-preview движок на CodeMirror 6
 
 > Самый важный документ пакета. Здесь описана «магия Typora»: как markdown-разметка превращается в оформленный текст на месте и раскрывается под курсором. Реализация — волна MVP-1 (+ виджеты в MVP-1/4).
 

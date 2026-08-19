@@ -59,7 +59,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}
-          releaseName: 'MDViewer __VERSION__'
+          releaseName: 'Verso __VERSION__'
           releaseBody: 'See CHANGELOG.md for details. Installers are attached below.'
           releaseDraft: true
           prerelease: false

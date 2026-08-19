@@ -7,7 +7,7 @@
  */
 import { getVersion } from '@tauri-apps/api/app';
 
-export const APP_NAME = 'MDViewer';
+export const APP_NAME = 'Verso';
 export const APP_SUBTITLE = 'Markdown viewer & editor';
 export const APP_AUTHOR = 'SIMS tech';
 export const APP_OWNER_URL = 'https://sims-service.com/';

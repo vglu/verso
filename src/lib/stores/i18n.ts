@@ -32,7 +32,7 @@ const en: Dict = {
   'menu.foldAll': 'Fold All Sections',
   'menu.unfoldAll': 'Unfold All Sections',
   'menu.settings': 'Settings…',
-  'menu.about': 'About MDViewer',
+  'menu.about': 'About Verso',
   'sidebar.filter': 'Filter headings',
   'tab.close': 'Close',
   'tab.closeOthers': 'Close others',
@@ -128,7 +128,7 @@ const en: Dict = {
   'error.notFound': 'File not found',
   'error.permission': 'Permission denied',
   'error.tooLarge': 'File is too large to open',
-  'about.title': 'About MDViewer',
+  'about.title': 'About Verso',
   'about.tagline':
     'Opens a Markdown file instantly and renders it like a finished document. Your text stays exactly as you wrote it — same encoding, same line endings, byte for byte.',
   'about.owner': 'Software owner',

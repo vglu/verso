@@ -30,7 +30,7 @@ beforeEach(() => {
 afterEach(() => clearUserTheme());
 
 function themeEl(): HTMLStyleElement | null {
-  return document.getElementById('mdviewer-user-theme') as HTMLStyleElement | null;
+  return document.getElementById('verso-user-theme') as HTMLStyleElement | null;
 }
 
 describe('applying a theme', () => {
@@ -62,7 +62,7 @@ describe('applying a theme', () => {
     await loadUserTheme('a.css');
     await loadUserTheme('b.css');
 
-    expect(document.querySelectorAll('#mdviewer-user-theme')).toHaveLength(1);
+    expect(document.querySelectorAll('#verso-user-theme')).toHaveLength(1);
     expect(themeEl()?.textContent).toContain('blue');
   });
 

@@ -3,10 +3,10 @@ name: thinker
 description: Thinker — Chief Thinker / Deep Analysis. Full persona + rules live in .cursor/agents/thinker.md — load and follow it.
 model: opus
 tier: strong
-stub_of: MDViewer/.cursor/agents/thinker.md
+stub_of: Verso/.cursor/agents/thinker.md
 ---
 
-Ты — агент «Thinker — Chief Thinker / Deep Analysis» проекта MDViewer.
+Ты — агент «Thinker — Chief Thinker / Deep Analysis» проекта Verso.
 
 **При старте:** прочитай свою полную персону, правила и формат вывода из `.cursor/agents/thinker.md` и следуй им дословно. Также действует `CLAUDE.md` (Operating Contract + правила проекта).
 

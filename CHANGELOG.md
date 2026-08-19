@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to MDViewer are documented here.
+All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
@@ -75,4 +75,4 @@ in place, and never lose a byte.
   display math render as source) to keep typing responsive.
 - Encodings beyond UTF-8/UTF-16 are read-only.
 
-[0.1.0]: https://github.com/OWNER/mdviewer/releases/tag/v0.1.0
+[0.1.0]: https://github.com/OWNER/verso/releases/tag/v0.1.0

@@ -1,7 +1,7 @@
 # Drive the running app from the keyboard, for end-to-end QA evidence.
 param(
     [string]$Keys,
-    [string]$ProcessName = "mdviewer",
+    [string]$ProcessName = "verso",
     [int]$PauseMs = 400
 )
 

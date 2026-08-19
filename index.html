@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MDViewer</title>
+    <title>Verso</title>
     <script>
       // Anti-FOUC: paint the correct theme before the first frame.
       // Mirrors settings.theme; the real settings file is loaded async by the app.
       (function () {
         try {
-          var stored = localStorage.getItem('mdviewer.theme') || 'system';
+          var stored = localStorage.getItem('verso.theme') || 'system';
           var dark =
             stored === 'dark' ||
             (stored === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
