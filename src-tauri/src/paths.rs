@@ -23,7 +23,8 @@ pub fn canonicalize_parent(path: &Path) -> AppResult<PathBuf> {
     let name = path
         .file_name()
         .ok_or_else(|| AppError::io(format!("no file name in {}", path.display())))?;
-    let canonical_parent = std::fs::canonicalize(parent).map_err(|e| AppError::from_io(e, parent))?;
+    let canonical_parent =
+        std::fs::canonicalize(parent).map_err(|e| AppError::from_io(e, parent))?;
     Ok(strip_verbatim(canonical_parent).join(name))
 }
 

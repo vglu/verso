@@ -17,6 +17,7 @@ import { pickSaveTarget } from '../ipc/dialogs';
 import type { EditorHandle, ScrollAnchor } from '../editor/createEditor';
 import { settings } from './settings.svelte';
 import { baseName, dirName } from '../editor/pathUtil';
+import { createDraftQueue } from './draftQueue';
 
 export type ExternalState = 'none' | 'modified' | 'removed';
 
@@ -76,7 +77,22 @@ class TabsStore {
   saving = $state(false);
   lastError = $state<string | null>(null);
 
-  private draftTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  /** Draft writes and their debounce; the rules are in draftQueue.ts. */
+  private drafts = createDraftQueue({
+    snapshot: (id) => {
+      const tab = this.tabs.find((t) => t.id === id);
+      if (!tab) return null;
+      return {
+        path: tab.path,
+        baseMtimeMs: tab.baseMtimeMs,
+        content: tab.content,
+        dirty: tab.dirty
+      };
+    },
+    write: draftSave,
+    delay: () => settings.value.autosaveDraftMs
+  });
+
   /** mtimes we produced ourselves — used to ignore our own watch events. */
   private selfWrites = new Map<string, number>();
 
@@ -149,14 +165,23 @@ class TabsStore {
     }
   }
 
-  openUntitled(): void {
+  /**
+   * A new, empty document. Nothing is written to disk until the first save:
+   * a file created the moment someone presses Ctrl+N would leave a trail of
+   * empty files behind every time they changed their mind.
+   *
+   * `dirPath` is where the save dialog will open, so "new file here" in the
+   * tree lands in the folder the reader pointed at.
+   */
+  openUntitled(dirPath = '', id?: string, content = ''): string {
     untitledCounter += 1;
+    const tabId = id ?? `untitled-${untitledCounter}-${Date.now()}`;
     this.tabs.push({
-      id: `untitled-${untitledCounter}-${Date.now()}`,
+      id: tabId,
       path: null,
-      fileName: 'Untitled.md',
-      dirPath: '',
-      content: '',
+      fileName: this.nextUntitledName(),
+      dirPath,
+      content,
       baseMtimeMs: null,
       encoding: 'utf-8',
       eol: 'lf',
@@ -171,6 +196,17 @@ class TabsStore {
       scroll: { pos: 0, offset: 0 }
     });
     this.activateLast();
+    return tabId;
+  }
+
+  /** `Untitled.md`, then `Untitled 2.md`: two tabs must not share a name. */
+  private nextUntitledName(): string {
+    const taken = new Set(this.tabs.filter((t) => !t.path).map((t) => t.fileName));
+    if (!taken.has('Untitled.md')) return 'Untitled.md';
+    for (let n = 2; ; n++) {
+      const name = `Untitled ${n}.md`;
+      if (!taken.has(name)) return name;
+    }
   }
 
   activate(index: number): void {
@@ -212,26 +248,14 @@ class TabsStore {
     this.scheduleDraft(tab);
   }
 
-  /**
-   * Queue a draft write for this tab's current buffer. Debounced, so typing
-   * costs one write per pause rather than one per keystroke.
-   */
+  /** Queue a draft write for this tab's current buffer. */
   private scheduleDraft(tab: Tab): void {
-    if (!tab.path || settings.value.autosaveDraftMs <= 0) return;
+    this.drafts.schedule(tab.id);
+  }
 
-    const existing = this.draftTimers.get(tab.id);
-    if (existing) clearTimeout(existing);
-
-    this.draftTimers.set(
-      tab.id,
-      setTimeout(() => {
-        this.draftTimers.delete(tab.id);
-        if (!tab.dirty || !tab.path) return;
-        void draftSave(tab.id, tab.path, tab.baseMtimeMs ?? 0, tab.content).catch((e) =>
-          console.warn('draft save failed', e)
-        );
-      }, settings.value.autosaveDraftMs)
-    );
+  /** Drop a queued draft write — the buffer and the file now agree. */
+  private cancelDraft(id: string): void {
+    this.drafts.cancel(id);
   }
 
   // ---- saving ----
@@ -255,6 +279,7 @@ class TabsStore {
       tab.external = 'none';
       tab.recovered = null; // the draft is now the file
       this.selfWrites.set(normalizePath(tab.path), result.mtimeMs);
+      this.cancelDraft(tab.id);
       await draftDelete(tab.id).catch(() => undefined);
       return true;
     } catch (error) {
@@ -285,6 +310,7 @@ class TabsStore {
       });
 
       const oldId = tab.id;
+      this.cancelDraft(oldId);
       // Re-read so the tab picks up the canonical path and fresh identity.
       const opened = await readFile(target);
       const handle = handles.get(oldId);
@@ -316,11 +342,7 @@ class TabsStore {
     const tab = this.tabs[index];
     if (!tab) return;
 
-    const timer = this.draftTimers.get(tab.id);
-    if (timer) {
-      clearTimeout(timer);
-      this.draftTimers.delete(tab.id);
-    }
+    this.cancelDraft(tab.id);
     if (discardDraft) void draftDelete(tab.id).catch(() => undefined);
 
     // The editor instance is torn down by the host element unmounting.
@@ -359,6 +381,7 @@ class TabsStore {
         pos: Math.min(scroll.pos, opened.content.length),
         offset: scroll.offset
       });
+      this.cancelDraft(tab.id);
       await draftDelete(tab.id).catch(() => undefined);
     } catch (error) {
       this.reportError(error, tab.path);
@@ -433,6 +456,7 @@ class TabsStore {
     tab.content = onDisk;
     tab.dirty = false;
     handles.get(tab.id)?.setContent(onDisk);
+    this.cancelDraft(tab.id);
     void draftDelete(tab.id).catch(() => undefined);
   }
 
@@ -466,14 +490,7 @@ class TabsStore {
 
   /** Flush pending drafts — called before the window closes. */
   async flushDrafts(): Promise<void> {
-    for (const [id, timer] of this.draftTimers) {
-      clearTimeout(timer);
-      this.draftTimers.delete(id);
-      const tab = this.tabs.find((t) => t.id === id);
-      if (tab?.dirty && tab.path) {
-        await draftSave(tab.id, tab.path, tab.baseMtimeMs ?? 0, tab.content).catch(() => undefined);
-      }
-    }
+    await this.drafts.flush();
   }
 
   private reportError(error: unknown, path: string | null): void {

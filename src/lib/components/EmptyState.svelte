@@ -3,12 +3,13 @@
 
   interface Props {
     recent?: string[];
+    onNewFile?: () => void;
     onOpenFile?: () => void;
     onOpenFolder?: () => void;
     onOpenRecent?: (path: string) => void;
   }
 
-  const { recent = [], onOpenFile, onOpenFolder, onOpenRecent }: Props = $props();
+  const { recent = [], onNewFile, onOpenFile, onOpenFolder, onOpenRecent }: Props = $props();
 
   function baseName(p: string): string {
     const parts = p.split(/[\\/]/);
@@ -31,7 +32,8 @@
   <p>{t('empty.hint')}</p>
 
   <div class="actions">
-    <button class="btn btn-primary" onclick={() => onOpenFile?.()}>{t('empty.openFile')}</button>
+    <button class="btn btn-primary" onclick={() => onNewFile?.()}>{t('empty.newFile')}</button>
+    <button class="btn" onclick={() => onOpenFile?.()}>{t('empty.openFile')}</button>
     <button class="btn" onclick={() => onOpenFolder?.()}>{t('empty.openFolder')}</button>
   </div>
 

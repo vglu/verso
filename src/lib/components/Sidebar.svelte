@@ -9,10 +9,11 @@
 
   interface Props {
     onOpenFile: (path: string) => void;
+    onNewFile: (dirPath: string) => void;
     onAbout: () => void;
   }
 
-  const { onOpenFile, onAbout }: Props = $props();
+  const { onOpenFile, onNewFile, onAbout }: Props = $props();
 
   let version = $state('');
   void loadVersion().then((v) => (version = v));
@@ -56,7 +57,24 @@
   style="width: {workspace.width}px"
   aria-label="Sidebar"
 >
-  <div class="head">{t('sidebar.files')}</div>
+  <div class="head">
+    <span>{t('sidebar.files')}</span>
+    <button
+      class="head-action"
+      onclick={() => onNewFile(workspace.treeRoot ?? '')}
+      title={t('sidebar.newFile')}
+      aria-label={t('sidebar.newFile')}
+    >
+      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path
+          d="M8 3.5v9M3.5 8h9"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        />
+      </svg>
+    </button>
+  </div>
 
   <div class="body">
     {#if workspace.treeRoot}
@@ -119,12 +137,54 @@
 
   .head {
     flex-shrink: 0;
-    padding: var(--sp-3) var(--sp-3) var(--sp-2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    padding: var(--sp-3) var(--sp-2) var(--sp-2) var(--sp-3);
     font-size: 10.5px;
     font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     color: var(--fg-faint);
+  }
+
+  /* Quiet until wanted: the panel is for reading, and a button competing with
+     the file names would be the loudest thing in it. */
+  .head-action {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-s);
+    color: var(--fg-faint);
+    opacity: 0.65;
+    transition:
+      opacity var(--t-fast) var(--ease),
+      background-color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
+  }
+
+  .head-action svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .head-action:active {
+    transform: scale(0.94);
+  }
+
+  .head-action:focus-visible {
+    opacity: 1;
+    color: var(--fg-ui);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .head-action:hover {
+      opacity: 1;
+      color: var(--fg-ui);
+      background: var(--bg-hover);
+    }
   }
 
   .body {

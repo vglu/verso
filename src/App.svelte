@@ -206,10 +206,37 @@
     handle.view.contentDOM.classList.toggle('md-reader', next);
   }
 
+  /**
+   * A new document, opened where the reader is looking.
+   *
+   * Nothing is written until they save it — an empty file created on Ctrl+N
+   * would litter the folder every time someone changed their mind — but the
+   * save dialog opens in the folder the tree is showing, which is almost
+   * always where they meant to put it.
+   */
+  function newFile(dirPath?: string): void {
+    tabs.openUntitled(dirPath ?? tabs.active?.dirPath ?? workspace.treeRoot ?? '');
+    bump();
+  }
+
   // ---- recovery ----
 
   async function restoreDraft(info: DraftInfo): Promise<void> {
     pendingRecovery = pendingRecovery.filter((d) => d.docId !== info.docId);
+
+    // A draft with no path was a document that had never been saved. It is
+    // the one with nowhere else to survive, so it comes back as itself —
+    // same id, so it keeps its own draft rather than orphaning it.
+    if (!info.path) {
+      const draft = await draftGet(info.docId).catch(() => null);
+      if (!draft) return;
+      const id = tabs.openUntitled('', info.docId, draft.content);
+      const tab = tabs.tabs.find((t) => t.id === id);
+      if (tab) tab.dirty = true;
+      bump();
+      return;
+    }
+
     await openPath(info.path);
     const index = tabs.indexOfPath(info.path);
     const tab = tabs.tabs[index];
@@ -230,6 +257,9 @@
 
   function runAction(id: MenuActionId): void {
     switch (id) {
+      case 'newFile':
+        newFile();
+        break;
       case 'open':
         void chooseFile();
         break;
@@ -414,7 +444,11 @@
 
 <div class="app-shell">
   {#if workspace.sidebarVisible}
-    <Sidebar onOpenFile={(path) => void openPath(path)} onAbout={() => (showAbout = true)} />
+    <Sidebar
+      onOpenFile={(path) => void openPath(path)}
+      onNewFile={(dirPath) => newFile(dirPath)}
+      onAbout={() => (showAbout = true)}
+    />
   {/if}
 
   <div class="app-main">
@@ -431,7 +465,7 @@
     {#each pendingRecovery as draft (draft.docId)}
       <Banner
         tone="info"
-        message={`${t('recovery.title')}: ${baseName(draft.path)}`}
+        message={`${t('recovery.title')}: ${draft.path ? baseName(draft.path) : t('recovery.untitled')}`}
         actions={[
           { label: t('recovery.restore'), primary: true, onClick: () => void restoreDraft(draft) },
           { label: t('recovery.discard'), onClick: () => discardDraft(draft) }
@@ -495,6 +529,7 @@
       {#if booted && !tabs.hasTabs}
         <EmptyState
           recent={settings.value.recentFiles}
+          onNewFile={() => newFile()}
           onOpenFile={() => void chooseFile()}
           onOpenFolder={() => void chooseFolder()}
           onOpenRecent={(path) => void openPath(path)}

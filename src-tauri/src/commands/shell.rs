@@ -19,7 +19,9 @@ pub async fn open_external(app: AppHandle, url: String) -> AppResult<()> {
         || lower.starts_with("https://")
         || lower.starts_with("mailto:");
     if !allowed {
-        return Err(AppError::io(format!("refusing to open external url: {url}")));
+        return Err(AppError::io(format!(
+            "refusing to open external url: {url}"
+        )));
     }
     app.opener()
         .open_url(&url, None::<&str>)

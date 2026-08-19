@@ -136,7 +136,9 @@ pub fn endings_for(
     let mut endings = vec![dominant; breaks];
 
     let mut prefix = 0;
-    while prefix < new_lines.len() && prefix < old_lines.len() && new_lines[prefix] == old_lines[prefix]
+    while prefix < new_lines.len()
+        && prefix < old_lines.len()
+        && new_lines[prefix] == old_lines[prefix]
     {
         prefix += 1;
     }
@@ -149,9 +151,8 @@ pub fn endings_for(
         suffix += 1;
     }
 
-    for i in 0..prefix.min(breaks).min(original.len()) {
-        endings[i] = original[i];
-    }
+    let kept = prefix.min(breaks).min(original.len());
+    endings[..kept].copy_from_slice(&original[..kept]);
     for k in 0..suffix {
         let new_line = new_lines.len() - 1 - k;
         let old_line = old_lines.len() - 1 - k;
@@ -163,7 +164,12 @@ pub fn endings_for(
     endings
 }
 
-/// Encode editor content back to the file's original byte shape.
+/// Encode with one ending for the whole file.
+///
+/// Saving goes through `encode_lines`, which preserves each line's own ending;
+/// this is the simple case, kept for the round-trip tests that need to state
+/// what "all LF" or "all CRLF" should produce.
+#[cfg(test)]
 pub fn encode(content: &str, encoding: Encoding, eol: Eol, trailing_newline: bool) -> Vec<u8> {
     let breaks = content.split('\n').count().saturating_sub(1);
     encode_lines(content, encoding, &vec![eol; breaks], eol, trailing_newline)
@@ -233,7 +239,11 @@ fn decode_utf16(body: &[u8], little_endian: bool, path: &Path) -> AppResult<Stri
 
 fn encode_utf16(text: &str, little_endian: bool) -> Vec<u8> {
     let mut out = Vec::with_capacity(text.len() * 2 + 2);
-    out.extend_from_slice(if little_endian { BOM_UTF16LE } else { BOM_UTF16BE });
+    out.extend_from_slice(if little_endian {
+        BOM_UTF16LE
+    } else {
+        BOM_UTF16BE
+    });
     for unit in text.encode_utf16() {
         let bytes = if little_endian {
             unit.to_le_bytes()
@@ -401,7 +411,10 @@ mod tests {
     #[test]
     fn a_uniform_file_stays_uniform_when_lines_are_added() {
         let original = b"one\ntwo\n";
-        assert_eq!(save_over(original, "one\ntwo\nthree\n"), b"one\ntwo\nthree\n");
+        assert_eq!(
+            save_over(original, "one\ntwo\nthree\n"),
+            b"one\ntwo\nthree\n"
+        );
 
         let crlf = b"one\r\ntwo\r\n";
         assert_eq!(

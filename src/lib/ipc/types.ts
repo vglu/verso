@@ -150,6 +150,7 @@ export interface FsChangedPayload {
 }
 
 export type MenuActionId =
+  | 'newFile'
   | 'open'
   | 'openFolder'
   | 'save'
