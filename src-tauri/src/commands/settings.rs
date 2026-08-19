@@ -23,6 +23,8 @@ pub struct Settings {
     pub font_family: String,
     #[serde(default = "default_true")]
     pub show_status_strip: bool,
+    #[serde(default = "default_true")]
+    pub show_toolbar: bool,
     #[serde(default)]
     pub recent_files: Vec<String>,
 }
@@ -60,6 +62,7 @@ impl Default for Settings {
             editor_max_width: default_max_width(),
             font_family: default_font_family(),
             show_status_strip: true,
+            show_toolbar: true,
             recent_files: Vec::new(),
         }
     }

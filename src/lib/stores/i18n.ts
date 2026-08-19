@@ -66,7 +66,27 @@ const en: Dict = {
   'about.copied': 'Copied',
   'about.license': '{license} license',
   'about.versionHint': 'Installed version',
-  'about.open': 'About'
+  'about.open': 'About',
+  'toolbar.label': 'Formatting',
+  'toolbar.h1': 'Heading 1',
+  'toolbar.h2': 'Heading 2',
+  'toolbar.h3': 'Heading 3',
+  'toolbar.bold': 'Bold',
+  'toolbar.italic': 'Italic',
+  'toolbar.strike': 'Strikethrough',
+  'toolbar.code': 'Inline code',
+  'toolbar.bullet': 'Bulleted list',
+  'toolbar.ordered': 'Numbered list',
+  'toolbar.task': 'Task list',
+  'toolbar.quote': 'Quote',
+  'toolbar.link': 'Link',
+  'toolbar.image': 'Image',
+  'toolbar.table': 'Table',
+  'toolbar.codeBlock': 'Code block',
+  'toolbar.rule': 'Horizontal rule',
+  'toolbar.math': 'Formula',
+  'toolbar.diagram': 'Diagram',
+  'settings.showToolbar': 'Show formatting toolbar'
 };
 
 const ru: Dict = {
@@ -129,7 +149,27 @@ const ru: Dict = {
   'about.copied': 'Скопировано',
   'about.license': 'Лицензия {license}',
   'about.versionHint': 'Установленная версия',
-  'about.open': 'О программе'
+  'about.open': 'О программе',
+  'toolbar.label': 'Форматирование',
+  'toolbar.h1': 'Заголовок 1',
+  'toolbar.h2': 'Заголовок 2',
+  'toolbar.h3': 'Заголовок 3',
+  'toolbar.bold': 'Жирный',
+  'toolbar.italic': 'Курсив',
+  'toolbar.strike': 'Зачёркнутый',
+  'toolbar.code': 'Код в строке',
+  'toolbar.bullet': 'Маркированный список',
+  'toolbar.ordered': 'Нумерованный список',
+  'toolbar.task': 'Список задач',
+  'toolbar.quote': 'Цитата',
+  'toolbar.link': 'Ссылка',
+  'toolbar.image': 'Картинка',
+  'toolbar.table': 'Таблица',
+  'toolbar.codeBlock': 'Блок кода',
+  'toolbar.rule': 'Разделитель',
+  'toolbar.math': 'Формула',
+  'toolbar.diagram': 'Диаграмма',
+  'settings.showToolbar': 'Показывать панель форматирования'
 };
 
 const dicts: Record<'ru' | 'en', Dict> = { ru, en };

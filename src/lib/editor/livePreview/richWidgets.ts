@@ -1,4 +1,21 @@
-import { WidgetType } from '@codemirror/view';
+import { EditorSelection } from '@codemirror/state';
+import { EditorView, WidgetType } from '@codemirror/view';
+
+/**
+ * Clicking a rendered block puts the caret into its source.
+ *
+ * Without this a widget is a dead end: the block looks finished, and there is
+ * no way to get at the text behind it — which is how a Mermaid diagram or a
+ * display formula becomes uneditable.
+ */
+function editOnClick(host: HTMLElement, view: EditorView, from: number): void {
+  host.addEventListener('mousedown', (event) => {
+    event.preventDefault();
+    const pos = Math.min(from + 1, view.state.doc.length);
+    view.dispatch({ selection: EditorSelection.cursor(pos), scrollIntoView: false });
+    view.focus();
+  });
+}
 
 /**
  * Widgets whose renderers are heavy (KaTeX, Mermaid). Both are imported
@@ -42,7 +59,8 @@ function currentThemeIsDark(): boolean {
 export class MathWidget extends WidgetType {
   constructor(
     readonly formula: string,
-    readonly display: boolean
+    readonly display: boolean,
+    readonly from = -1
   ) {
     super();
   }
@@ -55,8 +73,9 @@ export class MathWidget extends WidgetType {
     return this.display ? 48 : -1;
   }
 
-  toDOM(): HTMLElement {
+  toDOM(view: EditorView): HTMLElement {
     const host = document.createElement(this.display ? 'div' : 'span');
+    if (this.display && this.from >= 0) editOnClick(host, view, this.from);
     host.className = this.display ? 'md-math md-math-display' : 'md-math';
     // Until KaTeX arrives, show the source: never a blank gap.
     host.textContent = this.formula;
@@ -88,7 +107,10 @@ export class MathWidget extends WidgetType {
 export class MermaidWidget extends WidgetType {
   readonly theme: string;
 
-  constructor(readonly source: string) {
+  constructor(
+    readonly source: string,
+    readonly from = -1
+  ) {
     super();
     this.theme = currentThemeIsDark() ? 'dark' : 'light';
   }
@@ -101,9 +123,10 @@ export class MermaidWidget extends WidgetType {
     return Math.max(120, this.source.split('\n').length * 26);
   }
 
-  toDOM(): HTMLElement {
+  toDOM(view: EditorView): HTMLElement {
     const host = document.createElement('div');
     host.className = 'md-mermaid';
+    if (this.from >= 0) editOnClick(host, view, this.from);
 
     const placeholder = document.createElement('pre');
     placeholder.className = 'md-mermaid-loading';
@@ -132,8 +155,9 @@ export class MermaidWidget extends WidgetType {
     return host;
   }
 
+  /** Let clicks through, so the diagram can be opened for editing. */
   ignoreEvent(): boolean {
-    return true;
+    return false;
   }
 }
 

@@ -559,9 +559,15 @@ function blockWidget(block: BlockRange): Decoration {
         block: true
       });
     case 'mermaid':
-      return Decoration.replace({ widget: new MermaidWidget(block.source), block: true });
+      return Decoration.replace({
+        widget: new MermaidWidget(block.source, block.from),
+        block: true
+      });
     case 'math':
-      return Decoration.replace({ widget: new MathWidget(block.source, true), block: true });
+      return Decoration.replace({
+        widget: new MathWidget(block.source, true, block.from),
+        block: true
+      });
   }
 }
 
@@ -605,8 +611,16 @@ const blockPreview = StateField.define<BlockState>({
   },
 
   provide: (field) => [
-    EditorView.decorations.from(field, (value) => value.decorations),
-    EditorView.atomicRanges.of((view) => view.state.field(field).decorations)
+    EditorView.decorations.from(field, (value) => value.decorations)
+    // Deliberately NOT contributed to `atomicRanges`.
+    //
+    // An atomic block is one the caret steps over, which is right for a hidden
+    // `**` marker and completely wrong for a table: pressing Down once would
+    // leap the entire table, twenty rows at a time, and there would be no way
+    // to walk into it at all. Left non-atomic, the caret enters the range, the
+    // selection turns the block active on the same transaction, and its source
+    // is showing by the time the frame is drawn — so Down steps into the table
+    // and then through it line by line, as it does in every other editor.
   ]
 });
 

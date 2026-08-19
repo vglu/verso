@@ -37,7 +37,7 @@ const base = EditorView.theme({
     borderLeftColor: 'var(--caret)',
     borderLeftWidth: '2px'
   },
-  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
+  '.cm-content ::selection, .cm-content::selection': {
     backgroundColor: 'var(--selection)'
   },
   '.cm-selectionMatch': {

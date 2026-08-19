@@ -105,6 +105,15 @@
     </label>
 
     <label class="row check">
+      <span class="label">{t('settings.showToolbar')}</span>
+      <input
+        type="checkbox"
+        checked={settings.value.showToolbar}
+        onchange={(e) => settings.update({ showToolbar: e.currentTarget.checked })}
+      />
+    </label>
+
+    <label class="row check">
       <span class="label">{t('settings.showStatus')}</span>
       <input
         type="checkbox"

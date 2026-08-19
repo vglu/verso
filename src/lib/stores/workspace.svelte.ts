@@ -5,16 +5,22 @@ import { listDir, resolveTreeRoot } from '../ipc/commands';
 import type { TreeEntry } from '../ipc/types';
 import type { OutlineItem } from '../editor/outline';
 
-export type SidebarPanel = 'files' | 'outline';
-
 const MIN_WIDTH = 180;
 const MAX_WIDTH = 480;
+const MIN_OUTLINE_WIDTH = 160;
+const MAX_OUTLINE_WIDTH = 380;
 
 class WorkspaceStore {
+  /** Files live on the left, the outline on the right: they are different
+   *  questions — "which document?" and "where am I in it?" — and sharing one
+   *  panel forced the reader to give up one to see the other. */
   sidebarVisible = $state(true);
-  panel = $state<SidebarPanel>('files');
   width = $state(260);
-  /** Narrow windows float the sidebar over the document instead of pushing it. */
+
+  outlineVisible = $state(true);
+  outlineWidth = $state(240);
+
+  /** Narrow windows float the panels over the document instead of pushing it. */
   overlayMode = $state(false);
 
   treeRoot = $state<string | null>(null);
@@ -29,13 +35,19 @@ class WorkspaceStore {
     this.sidebarVisible = !this.sidebarVisible;
   }
 
-  showPanel(panel: SidebarPanel): void {
-    this.panel = panel;
-    this.sidebarVisible = true;
+  toggleOutline(): void {
+    this.outlineVisible = !this.outlineVisible;
   }
 
   setWidth(value: number): void {
     this.width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, Math.round(value)));
+  }
+
+  setOutlineWidth(value: number): void {
+    this.outlineWidth = Math.max(
+      MIN_OUTLINE_WIDTH,
+      Math.min(MAX_OUTLINE_WIDTH, Math.round(value))
+    );
   }
 
   async setRootFromFile(filePath: string): Promise<void> {

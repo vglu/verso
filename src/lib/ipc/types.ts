@@ -89,8 +89,11 @@ export interface SessionState {
   activeIndex: number;
   sidebar: {
     visible: boolean;
+    /** Kept for sessions written before the outline moved to its own panel. */
     panel: 'files' | 'outline';
     width: number;
+    outlineVisible?: boolean;
+    outlineWidth?: number;
   };
   treeRoot: string | null;
 }
@@ -108,6 +111,7 @@ export interface Settings {
   editorMaxWidth: number;
   fontFamily: string;
   showStatusStrip: boolean;
+  showToolbar: boolean;
   recentFiles: string[];
 }
 
@@ -120,6 +124,7 @@ export const DEFAULT_SETTINGS: Settings = {
   editorMaxWidth: 760,
   fontFamily: 'default',
   showStatusStrip: true,
+  showToolbar: true,
   recentFiles: []
 };
 
@@ -143,6 +148,7 @@ export type MenuActionId =
   | 'closeTab'
   | 'settings'
   | 'toggleSidebar'
+  | 'toggleOutline'
   | 'find'
   | 'about';
 

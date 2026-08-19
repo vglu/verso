@@ -30,8 +30,10 @@ export function snapshotSession(): SessionState {
     activeIndex,
     sidebar: {
       visible: workspace.sidebarVisible,
-      panel: workspace.panel,
-      width: workspace.width
+      panel: 'files',
+      width: workspace.width,
+      outlineVisible: workspace.outlineVisible,
+      outlineWidth: workspace.outlineWidth
     },
     treeRoot: workspace.treeRoot
   };
@@ -59,8 +61,9 @@ export async function restoreSession(): Promise<boolean> {
   if (!state) return false;
 
   workspace.sidebarVisible = state.sidebar?.visible ?? true;
-  workspace.panel = state.sidebar?.panel === 'outline' ? 'outline' : 'files';
+  workspace.outlineVisible = state.sidebar?.outlineVisible ?? true;
   if (state.sidebar?.width) workspace.setWidth(state.sidebar.width);
+  if (state.sidebar?.outlineWidth) workspace.setOutlineWidth(state.sidebar.outlineWidth);
 
   let opened = 0;
   for (const tab of state.tabs ?? []) {

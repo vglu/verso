@@ -5,7 +5,9 @@
   import { getCurrentWebview } from '@tauri-apps/api/webview';
 
   import TabBar from './lib/components/TabBar.svelte';
+  import Toolbar from './lib/components/Toolbar.svelte';
   import Sidebar from './lib/components/Sidebar.svelte';
+  import OutlinePanel from './lib/components/OutlinePanel.svelte';
   import EditorHost from './lib/components/EditorHost.svelte';
   import StatusStrip from './lib/components/StatusStrip.svelte';
   import EmptyState from './lib/components/EmptyState.svelte';
@@ -30,6 +32,7 @@
   import { pickFile, pickFolder } from './lib/ipc/dialogs';
   import type { DraftInfo, MenuActionId } from './lib/ipc/types';
   import { baseName, isRemoteUrl } from './lib/editor/pathUtil';
+  import { pushJump } from './lib/editor/history';
 
   let revision = $state(0);
   let showSettings = $state(false);
@@ -71,7 +74,7 @@
     const picked = await pickFolder(workspace.treeRoot);
     if (!picked) return;
     await workspace.setRoot(picked);
-    workspace.showPanel('files');
+    workspace.sidebarVisible = true;
     bump();
   }
 
@@ -230,6 +233,10 @@
         workspace.toggleSidebar();
         bump();
         break;
+      case 'toggleOutline':
+        workspace.toggleOutline();
+        bump();
+        break;
       case 'find':
         focusSearch();
         break;
@@ -250,7 +257,8 @@
     }
     if (event.key === '\\') {
       event.preventDefault();
-      if (event.shiftKey) workspace.showPanel(workspace.panel === 'files' ? 'outline' : 'files');
+      // Files on the left, outline on the right — one key each, no mode switch.
+      if (event.shiftKey) workspace.toggleOutline();
       else workspace.toggleSidebar();
       bump();
       return;
@@ -368,18 +376,15 @@
 
 <div class="app-shell">
   {#if workspace.sidebarVisible}
-    <Sidebar
-      onOpenFile={(path) => void openPath(path)}
-      onRevealHeading={(pos) => {
-        const handle = activeTab ? tabs.handleOf(activeTab.id) : null;
-        handle?.revealPos(pos);
-      }}
-      onAbout={() => (showAbout = true)}
-    />
+    <Sidebar onOpenFile={(path) => void openPath(path)} onAbout={() => (showAbout = true)} />
   {/if}
 
   <div class="app-main">
     <TabBar onCloseTab={requestClose} />
+
+    {#if settings.value.showToolbar && tabs.hasTabs}
+      <Toolbar {revision} />
+    {/if}
 
     {#each pendingRecovery as draft (draft.docId)}
       <Banner
@@ -438,6 +443,18 @@
       <StatusStrip {revision} />
     {/if}
   </div>
+
+  {#if workspace.outlineVisible && tabs.hasTabs}
+    <OutlinePanel
+      onRevealHeading={(pos) => {
+        const handle = activeTab ? tabs.handleOf(activeTab.id) : null;
+        if (!handle) return;
+        // Record where the reader was, so Back returns them to it.
+        pushJump(handle.view);
+        handle.revealPos(pos);
+      }}
+    />
+  {/if}
 </div>
 
 {#if showSettings}

@@ -9,11 +9,10 @@
 
   interface Props {
     onOpenFile: (path: string) => void;
-    onRevealHeading: (pos: number) => void;
     onAbout: () => void;
   }
 
-  const { onOpenFile, onRevealHeading, onAbout }: Props = $props();
+  const { onOpenFile, onAbout }: Props = $props();
 
   let version = $state('');
   void loadVersion().then((v) => (version = v));
@@ -57,59 +56,22 @@
   style="width: {workspace.width}px"
   aria-label="Sidebar"
 >
-  <div class="segment" role="tablist">
-    <button
-      class="seg-btn"
-      class:on={workspace.panel === 'files'}
-      role="tab"
-      aria-selected={workspace.panel === 'files'}
-      onclick={() => workspace.showPanel('files')}
-    >
-      {t('sidebar.files')}
-    </button>
-    <button
-      class="seg-btn"
-      class:on={workspace.panel === 'outline'}
-      role="tab"
-      aria-selected={workspace.panel === 'outline'}
-      onclick={() => workspace.showPanel('outline')}
-    >
-      {t('sidebar.outline')}
-    </button>
-  </div>
+  <div class="head">{t('sidebar.files')}</div>
 
   <div class="body">
-    {#if workspace.panel === 'files'}
-      {#if workspace.treeRoot}
-        <div class="root-name" title={workspace.treeRoot}>{baseName(workspace.treeRoot)}</div>
-        {#if rootEntries.length === 0}
-          <div class="hint">{t('sidebar.emptyTree')}</div>
-        {:else}
-          <div role="tree" aria-label="Files">
-            {#each rootEntries as entry (entry.path)}
-              <FileTreeNode {entry} depth={0} {activePath} onOpen={onOpenFile} />
-            {/each}
-          </div>
-        {/if}
+    {#if workspace.treeRoot}
+      <div class="root-name" title={workspace.treeRoot}>{baseName(workspace.treeRoot)}</div>
+      {#if rootEntries.length === 0}
+        <div class="hint">{t('sidebar.emptyTree')}</div>
       {:else}
-        <div class="hint">{t('empty.hint')}</div>
+        <div role="tree" aria-label={t('sidebar.files')}>
+          {#each rootEntries as entry (entry.path)}
+            <FileTreeNode {entry} depth={0} {activePath} onOpen={onOpenFile} />
+          {/each}
+        </div>
       {/if}
-    {:else if workspace.outline.length === 0}
-      <div class="hint">{t('sidebar.noOutline')}</div>
     {:else}
-      <nav aria-label="Outline">
-        {#each workspace.outline as item, index (item.from)}
-          <button
-            class="outline-item"
-            class:active={index === workspace.activeOutline}
-            style="padding-left: {8 + (item.level - 1) * 12}px"
-            onclick={() => onRevealHeading(item.from)}
-            title={item.text}
-          >
-            {item.text}
-          </button>
-        {/each}
-      </nav>
+      <div class="hint">{t('empty.hint')}</div>
     {/if}
   </div>
 
@@ -155,33 +117,14 @@
     box-shadow: var(--shadow-panel);
   }
 
-  .segment {
-    display: flex;
-    gap: 2px;
-    padding: var(--sp-2);
+  .head {
     flex-shrink: 0;
-  }
-
-  .seg-btn {
-    flex: 1;
-    padding: 5px var(--sp-2);
-    border-radius: var(--radius-s);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--fg-muted);
-    transition:
-      background-color var(--t-fast) var(--ease),
-      color var(--t-fast) var(--ease),
-      transform var(--t-press) var(--ease-out);
-  }
-
-  .seg-btn:active {
-    transform: scale(var(--press-scale));
-  }
-
-  .seg-btn.on {
-    background: var(--bg-active);
-    color: var(--fg-ui);
+    padding: var(--sp-3) var(--sp-3) var(--sp-2);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
   }
 
   .body {
@@ -210,38 +153,7 @@
     line-height: 1.5;
   }
 
-  .outline-item {
-    display: block;
-    width: 100%;
-    padding: 4px var(--sp-2);
-    border-radius: var(--radius-s);
-    text-align: left;
-    font-size: 12.5px;
-    color: var(--fg-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    border-left: 2px solid transparent;
-    transition:
-      background-color var(--t-fast) var(--ease),
-      color var(--t-fast) var(--ease);
-  }
-
-  .outline-item.active {
-    color: var(--accent);
-    border-left-color: var(--accent);
-  }
-
   @media (hover: hover) and (pointer: fine) {
-    .seg-btn:hover {
-      background: var(--bg-hover);
-    }
-
-    .outline-item:hover {
-      background: var(--bg-hover);
-      color: var(--fg-ui);
-    }
-
     .resizer:hover {
       background: var(--accent-soft);
     }

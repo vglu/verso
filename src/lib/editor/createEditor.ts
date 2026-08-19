@@ -1,5 +1,5 @@
 import { Compartment, EditorState, type Extension } from '@codemirror/state';
-import { EditorView, drawSelection, dropCursor, rectangularSelection } from '@codemirror/view';
+import { EditorView, dropCursor } from '@codemirror/view';
 import { bracketMatching, indentOnInput } from '@codemirror/language';
 import { highlightSelectionMatches, search } from '@codemirror/search';
 import { markdownSupport } from './markdownLang';
@@ -101,9 +101,13 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     readOnlyComp.of(EditorState.readOnly.of(options.readOnly ?? false)),
     editorKeymap(options.keymapHooks ?? {}),
     EditorView.lineWrapping,
-    drawSelection(),
+    // No `drawSelection()` on purpose. It paints the selection as its own
+    // absolutely-positioned rectangles, and it computes those from line
+    // geometry it cannot know for block widgets — a selection crossing a
+    // rendered table or code panel came out as slabs of colour sitting on top
+    // of the text. The browser's own selection knows the real layout of every
+    // element we render, so it stays correct by construction.
     dropCursor(),
-    rectangularSelection(),
     bracketMatching(),
     indentOnInput(),
     highlightSelectionMatches(),
