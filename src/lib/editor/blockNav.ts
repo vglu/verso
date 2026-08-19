@@ -176,24 +176,49 @@ export function moveBlockDown(view: EditorView): boolean {
  */
 function stepIntoBlock(view: EditorView, direction: 1 | -1): boolean {
   const state = view.state;
-  const head = state.selection.main.head;
-  if (!state.selection.main.empty) return false;
+  const range = state.selection.main;
+  if (!range.empty) return false;
 
-  const line = state.doc.lineAt(head);
-  const targetNumber = line.number + direction;
-  if (targetNumber < 1 || targetNumber > state.doc.lines) return false;
+  const head = range.head;
+  const blocks = renderedBlocks(state);
+  if (blocks.length === 0) return false;
 
-  const target = state.doc.line(targetNumber);
-  const block = renderedBlocks(state).find(
-    (b) => target.from >= b.from && target.from <= b.to
+  // Ask the editor where it is about to put the caret. Checking the answer
+  // rather than guessing from line numbers is what makes this reliable: a
+  // block widget's height is measured, not derived, so vertical motion can
+  // clear it by a lot more than one line.
+  let target = head;
+  try {
+    target = view.moveVertically(EditorSelection.cursor(head), direction === 1).head;
+  } catch {
+    target = head;
+  }
+
+  if (target === head) {
+    // No layout to measure (or nowhere to go): fall back to the next line.
+    const lineNumber = state.doc.lineAt(head).number + direction;
+    if (lineNumber < 1 || lineNumber > state.doc.lines) return false;
+    target = state.doc.line(lineNumber).from;
+  }
+
+  const lo = Math.min(head, target);
+  const hi = Math.max(head, target);
+
+  // Closed interval on purpose: a block that begins exactly where the caret
+  // is about to land is the one we mean to step into.
+  const crossed = blocks.find(
+    (b) =>
+      b.to >= lo &&
+      b.from <= hi &&
+      // Already inside it: the source is showing and ordinary line movement
+      // is exactly right, so stay out of the way.
+      !(head >= b.from && head <= b.to)
   );
-  if (!block) return false;
+  if (!crossed) return false;
 
-  // Already inside this block: its source is showing, so ordinary line
-  // movement is the right behaviour and we must not interfere.
-  if (head >= block.from && head <= block.to) return false;
+  const entry = direction === 1 ? crossed.from : state.doc.lineAt(crossed.to).from;
+  if (entry === head) return false;
 
-  const entry = direction === 1 ? block.from : state.doc.lineAt(block.to).from;
   view.dispatch({
     selection: EditorSelection.cursor(entry),
     effects: EditorView.scrollIntoView(entry, { y: 'nearest', yMargin: 32 }),

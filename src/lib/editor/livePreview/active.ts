@@ -22,7 +22,14 @@ export function computeActive(state: EditorState, frozen = false): ActiveContext
     for (const range of state.selection.ranges) {
       ranges.push({ from: range.from, to: range.to });
       const first = state.doc.lineAt(range.from).number;
-      const last = state.doc.lineAt(range.to).number;
+      let last = state.doc.lineAt(range.to).number;
+
+      // A selection that stops exactly at a line start does not reach into
+      // that line, so shift+Down should not un-render it.
+      if (range.to > range.from && state.doc.lineAt(range.to).from === range.to) {
+        last = Math.max(first, last - 1);
+      }
+
       for (let n = first; n <= last; n++) lines.add(n);
     }
   }

@@ -282,6 +282,14 @@ input.md-task:checked {
   padding-right: var(--sp-3);
 }
 
+/* The underline of a setext heading is concealed; collapse the line it
+   leaves behind instead of letting it stand as a gap. */
+.cm-line.md-setext-underline {
+  font-size: 0;
+  line-height: 0;
+  min-height: 0;
+}
+
 /* — Math — */
 .md-math {
   font-size: 1.05em;

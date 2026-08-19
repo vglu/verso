@@ -86,7 +86,8 @@ export class ImageWidget extends WidgetType {
   constructor(
     readonly url: string,
     readonly alt: string,
-    readonly baseDir: string
+    readonly baseDir: string,
+    readonly from = -1
   ) {
     super();
   }
@@ -95,9 +96,20 @@ export class ImageWidget extends WidgetType {
     return other.url === this.url && other.alt === this.alt && other.baseDir === this.baseDir;
   }
 
-  toDOM(): HTMLElement {
+  toDOM(view: EditorView): HTMLElement {
     const wrap = document.createElement('span');
     wrap.className = 'md-img-wrap';
+
+    // An image on its own line is otherwise a dead end: the only way to reach
+    // its source is to click past the picture's right edge.
+    if (this.from >= 0) {
+      wrap.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        const pos = Math.min(this.from, view.state.doc.length);
+        view.dispatch({ selection: EditorSelection.cursor(pos), scrollIntoView: false });
+        view.focus();
+      });
+    }
 
     const img = document.createElement('img');
     img.className = 'md-img';
@@ -111,6 +123,10 @@ export class ImageWidget extends WidgetType {
 
     wrap.appendChild(img);
     return wrap;
+  }
+
+  ignoreEvent(): boolean {
+    return false;
   }
 }
 

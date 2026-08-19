@@ -91,15 +91,19 @@ const TABLE_SCAN_LIMIT_BYTES = 2 * 1024 * 1024;
 const FORCE_PARSE_LIMIT_BYTES = 512 * 1024;
 
 /** Milliseconds the forced parse may spend before we settle for what exists. */
-const FORCE_PARSE_BUDGET_MS = 60;
+const FORCE_PARSE_BUDGET_MS = 25;
 
 /**
- * The best tree available for a whole-document scan: complete for ordinary
- * documents, whatever the parser has reached for very large ones (where the
- * field re-scans as the parse advances).
+ * The best tree available for a whole-document scan.
+ *
+ * `allowForce` is false while the user is typing. Forcing the parse forward
+ * there costs its full budget on every keystroke, synchronously, inside state
+ * construction — measured at tens of milliseconds on a large file. The parse
+ * catches up on its own a moment later and the field re-scans then, so the
+ * only thing waiting buys is a stutter.
  */
-function scanTree(state: EditorState): Tree {
-  if (state.doc.length <= FORCE_PARSE_LIMIT_BYTES) {
+function scanTree(state: EditorState, allowForce: boolean): Tree {
+  if (allowForce && state.doc.length <= FORCE_PARSE_LIMIT_BYTES) {
     const complete = ensureSyntaxTree(state, state.doc.length, FORCE_PARSE_BUDGET_MS);
     if (complete) return complete;
   }
@@ -133,6 +137,19 @@ function pushLine(built: Built, cls: string, linePos: number): void {
   built.decorations.push(Decoration.line({ class: cls }).range(linePos));
 }
 
+/**
+ * End of the whitespace run following a block marker.
+ *
+ * `#   Heading` is legal Markdown, and hiding only one of those spaces left
+ * the rendered heading indented by the rest.
+ */
+function afterMarkerSpace(state: EditorState, from: number): number {
+  const line = state.doc.lineAt(from);
+  let to = from;
+  while (to < line.to && /[ \t]/.test(state.doc.sliceString(to, to + 1))) to += 1;
+  return to;
+}
+
 /** Line classes for a block, clamped to the range we are actually drawing. */
 function decorateLines(
   built: Built,
@@ -164,44 +181,122 @@ export function buildInlineForRange(state: EditorState, from: number, to: number
   const dir = state.facet(documentDir);
   const built: Built = { decorations: [], atomics: [] };
 
+  // Ranges the block layer owns. Inline decorations inside them are either
+  // thrown away (the block is drawn as a widget) or actively harmful (the
+  // block is showing its source for editing, and concealing the markup there
+  // means the pipes no longer line up with the text).
+  const owned = renderedBlocks(state);
+  const insideBlock = (pos: number): boolean =>
+    owned.some((b) => pos >= b.from && pos < b.to);
+
   syntaxTree(state).iterate({
     from,
     to,
-    enter: (node) => handleNode(node, state, active, dir, built, from, to)
+    enter: (node) => {
+      if (insideBlock(node.from)) return false;
+      return handleNode(node, state, active, dir, built, from, to);
+    }
   });
 
-  addInlineMath(state, active, built, from, to);
+  addInlineMath(state, active, built, from, to, insideBlock);
 
   return built;
 }
 
 /**
  * `$…$` formulas. Markdown has no math in its grammar, so these are found by
- * scanning the visible text — but only outside code, where a `$` is just a `$`.
+ * scanning the text — but a `$` in prose is usually money, not mathematics.
+ *
+ * The rule is KaTeX's own auto-render heuristic: an opening `$` must follow a
+ * boundary and be followed by something that is not a space; a closing `$`
+ * must follow something that is not a space and must not be followed by a
+ * letter or digit. Without it "It costs $5 and $7 today" renders as a formula
+ * that swallows the words between the two prices.
  */
-const INLINE_MATH = /(?<!\$)\$([^$\n]+?)\$(?!\$)/g;
+function isMathOpen(prev: string, next: string): boolean {
+  if (next === '' || /\s/.test(next)) return false;
+  if (prev === '') return true;
+  return /[\s(["'“«\[{,;:—–-]/.test(prev);
+}
+
+function isMathClose(prev: string, next: string): boolean {
+  if (prev === '' || /\s/.test(prev)) return false;
+  return !/[0-9A-Za-zЀ-ӿ]/.test(next);
+}
 
 function addInlineMath(
   state: EditorState,
   active: ActiveContext,
   built: Built,
   from: number,
-  to: number
+  to: number,
+  insideBlock: (pos: number) => boolean = () => false
 ): void {
   const text = state.doc.sliceString(from, to);
-  INLINE_MATH.lastIndex = 0;
+  let i = 0;
 
-  let match: RegExpExecArray | null;
-  while ((match = INLINE_MATH.exec(text)) !== null) {
-    const start = from + match.index;
-    const end = start + match[0].length;
-    const formula = match[1]?.trim();
-    if (!formula) continue;
-    if (isLineActive(active, state.doc.lineAt(start).number)) continue;
-    if (isInsideCode(state, start)) continue;
-    if (overlapsExisting(built, start, end)) continue;
+  while (i < text.length) {
+    const ch = text[i];
 
-    pushReplace(built, Decoration.replace({ widget: new MathWidget(formula, false) }), start, end);
+    if (ch === '\\') {
+      i += 2; // an escaped character, including \$, is literal
+      continue;
+    }
+    if (ch !== '$') {
+      i += 1;
+      continue;
+    }
+    if (text[i + 1] === '$') {
+      i += 2; // display math is the block layer's business
+      continue;
+    }
+    if (!isMathOpen(i === 0 ? '' : (text[i - 1] ?? ''), text[i + 1] ?? '')) {
+      i += 1;
+      continue;
+    }
+
+    // Look for a closing `$` before the line ends.
+    let j = i + 1;
+    let close = -1;
+    while (j < text.length) {
+      const cj = text[j];
+      if (cj === '\\') {
+        j += 2;
+        continue;
+      }
+      if (cj === '\n') break;
+      if (cj === '$') {
+        if (isMathClose(text[j - 1] ?? '', text[j + 1] ?? '')) close = j;
+        break;
+      }
+      j += 1;
+    }
+
+    if (close < 0) {
+      i += 1;
+      continue;
+    }
+
+    const start = from + i;
+    const end = from + close + 1;
+    const formula = text.slice(i + 1, close).trim();
+
+    if (
+      formula &&
+      !insideBlock(start) &&
+      !isLineActive(active, state.doc.lineAt(start).number) &&
+      !isInsideCode(state, start) &&
+      !overlapsExisting(built, start, end)
+    ) {
+      pushReplace(
+        built,
+        Decoration.replace({ widget: new MathWidget(formula, false) }),
+        start,
+        end
+      );
+    }
+
+    i = close + 1;
   }
 }
 
@@ -256,15 +351,21 @@ function handleNode(
   }
   const setext = /^SetextHeading([12])$/.exec(name);
   if (setext) {
-    pushLine(built, `md-h${setext[1]}`, state.doc.lineAt(node.from).from);
+    // Both lines carry the class: the underline is concealed, and without the
+    // class its now-empty line rendered at body height as a phantom gap.
+    decorateLines(
+      built,
+      state,
+      `md-h${setext[1]}`,
+      node.from,
+      Math.min(node.to, visibleTo),
+      (n, first, last) => (n === last && last > first ? 'md-setext-underline' : null)
+    );
     return;
   }
   if (name === 'HeaderMark') {
     if (!lineActive(node.from)) {
-      // Swallow the space after `#` too, so the text starts at the margin.
-      let to = node.to;
-      if (state.doc.sliceString(to, to + 1) === ' ') to += 1;
-      pushHide(built, node.from, to);
+      pushHide(built, node.from, afterMarkerSpace(state, node.to));
     }
     return;
   }
@@ -336,12 +437,21 @@ function handleNode(
   // — Links and images —
   if (name === 'Image') {
     if (!lineActive(node.from)) {
-      const text = state.doc.sliceString(node.from, node.to);
-      const m = /^!\[([^\]]*)\]\(\s*<?([^)\s>]*)>?(?:\s+"[^"]*")?\s*\)$/.exec(text);
-      if (m) {
+      // Read the destination and the alt text off the tree rather than
+      // re-parsing with a regex: titles in single quotes, brackets inside the
+      // alt text and angle-bracketed URLs with spaces are all legal, and all
+      // of them defeated the pattern this used to use.
+      const url = node.node.getChild('URL');
+      const marks = node.node.getChildren('LinkMark');
+      const altFrom = marks[0]?.to ?? node.from + 2;
+      const altTo = marks[1]?.from ?? altFrom;
+
+      if (url) {
+        const target = state.doc.sliceString(url.from, url.to).replace(/^<|>$/g, '');
+        const alt = altTo > altFrom ? state.doc.sliceString(altFrom, altTo) : '';
         pushReplace(
           built,
-          Decoration.replace({ widget: new ImageWidget(m[2] ?? '', m[1] ?? '', dir) }),
+          Decoration.replace({ widget: new ImageWidget(target, alt, dir, node.from) }),
           node.from,
           node.to
         );
@@ -353,8 +463,20 @@ function handleNode(
     pushMark(built, 'md-link', node.from, node.to);
     return;
   }
+  if (name === 'Autolink') {
+    // `<https://…>` is its own text; only the angle brackets go.
+    pushMark(built, 'md-link', node.from, node.to);
+    return;
+  }
   if (name === 'LinkMark' || name === 'LinkTitle') {
     if (!lineActive(node.from)) pushHide(built, node.from, node.to);
+    return;
+  }
+  if (name === 'LinkLabel') {
+    // The `[ref]` half of `[text][ref]`. Left visible it leaks into the
+    // rendered text as "text[ref]".
+    const parent = node.node.parent?.name;
+    if (parent === 'Link' && !lineActive(node.from)) pushHide(built, node.from, node.to);
     return;
   }
   if (name === 'URL') {
@@ -362,8 +484,15 @@ function handleNode(
     // A bare autolink is the visible text — only hide the URL of `[a](b)`.
     if ((parent === 'Link' || parent === 'Image') && !lineActive(node.from)) {
       pushHide(built, node.from, node.to);
+    } else if (!parent || parent === 'Paragraph') {
+      pushMark(built, 'md-link', node.from, node.to);
     }
     return;
+  }
+  if (name === 'LinkReference') {
+    // A `[ref]: https://…` definition line. Half-concealing it deleted the
+    // colon and left the rest; it is metadata, so it stays as written.
+    return false;
   }
 
   // — Lists —
@@ -409,9 +538,7 @@ function handleNode(
   }
   if (name === 'QuoteMark') {
     if (!lineActive(node.from)) {
-      let to = node.to;
-      if (state.doc.sliceString(to, to + 1) === ' ') to += 1;
-      pushHide(built, node.from, to);
+      pushHide(built, node.from, afterMarkerSpace(state, node.to));
     }
     return;
   }
@@ -481,10 +608,10 @@ interface BlockState {
   decorations: DecorationSet;
 }
 
-function scanBlocks(state: EditorState): BlockRange[] {
+function scanBlocks(state: EditorState, allowForce = true): BlockRange[] {
   if (state.doc.length > TABLE_SCAN_LIMIT_BYTES) return [];
   const found: BlockRange[] = [];
-  const tree = scanTree(state);
+  const tree = scanTree(state, allowForce);
 
   tree.iterate({
     enter: (node) => {
@@ -524,27 +651,63 @@ function scanBlocks(state: EditorState): BlockRange[] {
   return found;
 }
 
-/** `$$` on its own line opens and closes a display formula. */
+/**
+ * `$$` on its own line opens and closes a display formula.
+ *
+ * Walked with a line iterator rather than `doc.line(n)`: the indexed accessor
+ * is a tree lookup each time, and on a large document that walk was the whole
+ * per-keystroke cost of this layer.
+ */
 function scanDisplayMath(state: EditorState, tree: Tree): BlockRange[] {
   const found: BlockRange[] = [];
   let openLine = -1;
+  let openFrom = 0;
+  let openTo = 0;
 
-  for (let n = 1; n <= state.doc.lines; n++) {
-    const line = state.doc.line(n);
-    if (line.text.trim() !== '$$') continue;
+  const iter = state.doc.iterLines();
+  let n = 0;
+  let from = 0;
+
+  while (true) {
+    const step = iter.next();
+    if (step.done) break;
+    n += 1;
+
+    const raw = step.value;
+    const to = from + raw.length;
+    const line = { from, to, text: raw };
+    from = to + 1; // past the newline
+    const text = raw.trim();
+
+    // `$$ E = mc^2 $$` on one line: neither layer claimed it before, so it
+    // rendered as literal text.
+    const oneLiner = /^\$\$(.+)\$\$$/.exec(text);
+    if (oneLiner && openLine < 0 && !isInsideCode(state, line.from, tree)) {
+      found.push({
+        kind: 'math',
+        from: line.from,
+        to: line.to,
+        source: (oneLiner[1] ?? '').trim(),
+        srcClass: 'md-math-src'
+      });
+      continue;
+    }
+
+    if (text !== '$$') continue;
     if (isInsideCode(state, line.from, tree)) continue;
 
     if (openLine < 0) {
       openLine = n;
+      openFrom = line.from;
+      openTo = line.to;
       continue;
     }
 
-    const open = state.doc.line(openLine);
     found.push({
       kind: 'math',
-      from: open.from,
+      from: openFrom,
       to: line.to,
-      source: state.doc.sliceString(open.to + 1, line.from).trim(),
+      source: state.doc.sliceString(openTo + 1, line.from).trim(),
       srcClass: 'md-math-src'
     });
     openLine = -1;
@@ -608,7 +771,8 @@ const blockPreview = StateField.define<BlockState>({
 
     if (!tr.docChanged && !tr.selection && !tr.reconfigured && !treeAdvanced) return value;
 
-    const blocks = tr.docChanged || treeAdvanced ? scanBlocks(tr.state) : value.blocks;
+    const blocks =
+      tr.docChanged || treeAdvanced ? scanBlocks(tr.state, !tr.docChanged) : value.blocks;
     return { blocks, decorations: blockDecorations(tr.state, blocks) };
   },
 
