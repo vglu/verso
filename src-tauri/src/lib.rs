@@ -93,6 +93,8 @@ pub fn run() {
             commands::theme::read_theme,
             commands::export::read_image_data_uri,
             commands::export::write_export,
+            commands::plugins::plugins_load,
+            commands::plugins::plugins_dir,
             watcher::watch_paths,
         ])
         .build(tauri::generate_context!())

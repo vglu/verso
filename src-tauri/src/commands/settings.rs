@@ -29,6 +29,9 @@ pub struct Settings {
     pub show_status_strip: bool,
     #[serde(default = "default_true")]
     pub show_toolbar: bool,
+    /// Underline misspelled words, using the webview's own dictionaries.
+    #[serde(default)]
+    pub spellcheck: bool,
     #[serde(default = "default_editor_mode")]
     pub editor_mode: String,
     /// Path to the user's own theme file, or null for the built-in themes.
@@ -38,6 +41,10 @@ pub struct Settings {
     /// unread — it is erased from the file on the next save.
     #[serde(default)]
     pub theme_file: Option<String>,
+    /// Plugins the reader has turned on, by id (ADR-004): installing one is
+    /// putting a folder in place, running it is being in this list.
+    #[serde(default)]
+    pub enabled_plugins: Vec<String>,
     #[serde(default)]
     pub recent_files: Vec<String>,
 }
@@ -84,8 +91,10 @@ impl Default for Settings {
             font_family: default_font_family(),
             show_status_strip: true,
             show_toolbar: true,
+            spellcheck: false,
             editor_mode: default_editor_mode(),
             theme_file: None,
+            enabled_plugins: Vec::new(),
             recent_files: Vec::new(),
         }
     }

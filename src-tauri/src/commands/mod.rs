@@ -3,6 +3,7 @@ pub mod drafts;
 pub mod export;
 pub mod fs;
 pub mod menu;
+pub mod plugins;
 pub mod session;
 pub mod settings;
 pub mod shell;

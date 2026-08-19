@@ -128,6 +128,11 @@ const en: Dict = {
   'settings.themeLight': 'Light',
   'settings.themeDark': 'Dark',
   'settings.themeSystem': 'System',
+  'settings.spellcheck': 'Check spelling',
+  'settings.plugins': 'Plugins',
+  'settings.pluginsFolder': 'Open folder',
+  'settings.pluginsEmpty':
+    'No plugins installed. Put a plugin folder in here and restart Verso — a plugin runs no code until you switch it on.',
   'settings.language': 'Language',
   'settings.fontSize': 'Font size',
   'settings.maxWidth': 'Text width',
@@ -296,6 +301,11 @@ const uk: Dict = {
   'settings.themeLight': 'Світла',
   'settings.themeDark': 'Темна',
   'settings.themeSystem': 'Системна',
+  'settings.spellcheck': 'Перевіряти орфографію',
+  'settings.plugins': 'Плагіни',
+  'settings.pluginsFolder': 'Відкрити теку',
+  'settings.pluginsEmpty':
+    'Плагінів не встановлено. Покладіть теку плагіна в цю теку й перезапустіть Verso — код плагіна не виконується, доки ви його не увімкнете.',
   'settings.language': 'Мова',
   'settings.fontSize': 'Розмір шрифту',
   'settings.maxWidth': 'Ширина тексту',

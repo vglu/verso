@@ -137,6 +137,13 @@ export interface Settings {
   fontFamily: string;
   showStatusStrip: boolean;
   showToolbar: boolean;
+  /**
+   * Underline misspelled words. Off by default: the webview's checker knows
+   * nothing about Markdown, so it underlines fenced code and link targets
+   * too, and a page of red is worse than no checking at all for someone who
+   * is reading rather than writing.
+   */
+  spellcheck: boolean;
   /** `live` renders Markdown in place; `source` shows the file as written. */
   editorMode: 'live' | 'source';
   /**
@@ -144,6 +151,11 @@ export interface Settings {
    * (docs/themes.md). Null means the built-in light and dark themes.
    */
   themeFile: string | null;
+  /**
+   * Plugins the reader has turned on, by id. Installing a plugin is putting a
+   * folder in place; running its code is this list, and nothing else.
+   */
+  enabledPlugins: string[];
   recentFiles: string[];
 }
 
@@ -158,8 +170,10 @@ export const DEFAULT_SETTINGS: Settings = {
   fontFamily: 'default',
   showStatusStrip: true,
   showToolbar: true,
+  spellcheck: false,
   editorMode: 'live',
   themeFile: null,
+  enabledPlugins: [],
   recentFiles: []
 };
 

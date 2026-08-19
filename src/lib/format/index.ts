@@ -1,6 +1,7 @@
 import { csvToMarkdownTable } from './csv';
 import { jsonFormatter, jsonMinifier } from './json';
 import { runFormatter, type FormatContext, type Formatter } from './types';
+import { plugins } from '../plugins/registry.svelte';
 
 export type { FormatContext, FormatResult, Formatter } from './types';
 export { runFormatter } from './types';
@@ -35,20 +36,31 @@ export function contextFor(
 /**
  * Format with the first formatter that has something to say.
  *
+ * Built-ins are asked first and answer instantly; plugins follow, and they
+ * answer from a worker, which is why this is asynchronous even when nothing
+ * asynchronous happens.
+ *
  * Returns null when nothing applies — no formatter for this file type, or the
  * document is already as they would leave it. The caller must then do nothing
  * at all: an edit that changes no text still costs a place in the undo
  * history and marks a clean file dirty.
  */
-export function formatDocument(
+export async function formatDocument(
   text: string,
   fileName: string,
   selection: { from: number; to: number } | null = null
-): { text: string; note?: string; formatter: Formatter } | null {
+): Promise<{ text: string; note?: string; by: string } | null> {
   const context = contextFor(fileName, selection);
+
   for (const formatter of formattersFor(context.ext)) {
     const result = runFormatter(formatter, text, context);
-    if (result) return { ...result, formatter };
+    if (result) return { ...result, by: formatter.id };
   }
+
+  for (const plugin of plugins.formattersFor(context.ext)) {
+    const result = await plugins.format(plugin, text, context);
+    if (result) return { ...result, by: plugin.manifest.name };
+  }
+
   return null;
 }

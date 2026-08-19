@@ -1,0 +1,9 @@
+{
+  "id": "tidy-markdown",
+  "name": "Tidy Markdown",
+  "description": "Trailing spaces, list markers and stray blank lines, all made consistent. A demonstration of the plugin contract that is also worth keeping.",
+  "version": "1.0.0",
+  "author": "Verso",
+  "entry": "index.js",
+  "extensions": ["md", "markdown", "mdown", "mkd"]
+}

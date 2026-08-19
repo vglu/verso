@@ -275,16 +275,21 @@
    * an edit that changes no text would still cost a clean file its clean
    * state and a place in the undo history.
    */
-  function formatActive(): void {
+  async function formatActive(): Promise<void> {
     const tab = activeTab;
     const handle = tab ? tabs.handleOf(tab.id) : null;
     if (!tab || !handle) return;
 
-    const result = formatDocument(handle.getContent(), tab.fileName);
+    // The document may have moved on while a plugin was thinking, and
+    // replacing text that is no longer there would undo whatever was typed
+    // in the meantime.
+    const before = handle.getContent();
+    const result = await formatDocument(before, tab.fileName);
     if (!result) {
       tabs.lastError = t('format.none');
       return;
     }
+    if (handle.getContent() !== before) return;
 
     handle.replaceAll(result.text);
     bump();
@@ -454,7 +459,7 @@
         void printActive();
         break;
       case 'formatDocument':
-        formatActive();
+        void formatActive();
         break;
       case 'zoomIn':
         settings.stepZoom(1);

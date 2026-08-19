@@ -9,6 +9,7 @@ import { getLang, menuLabels, setLang } from './i18n';
 import { clearUserTheme, loadUserTheme } from '../ui/userTheme';
 import { syncWindowTheme } from '../ui/windowTheme';
 import { clampZoom, DEFAULT_ZOOM, nextZoom } from '../ui/zoom';
+import { plugins } from '../plugins/registry.svelte';
 import { THEME_CHANGED_EVENT } from '../editor/livePreview/richWidgets';
 
 const THEME_MIRROR_KEY = 'verso.theme';
@@ -35,6 +36,7 @@ class SettingsStore {
     this.applyZoom();
     this.watchSystemTheme();
     void this.applyUserTheme();
+    void plugins.load(this.value.enabledPlugins);
   }
 
   /** The user's own theme file, if they have chosen one. */
@@ -188,6 +190,11 @@ class SettingsStore {
     this.mediaQuery.addEventListener('change', () => {
       if (this.value.theme === 'system') this.applyTheme(true);
     });
+  }
+
+  /** Turn a plugin on or off, and remember it. */
+  setPluginEnabled(id: string, on: boolean): void {
+    this.update({ enabledPlugins: plugins.setEnabled(id, on) });
   }
 
   /** Add a path to the recent list (most recent first, max 10). */

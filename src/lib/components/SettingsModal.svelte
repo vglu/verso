@@ -1,9 +1,21 @@
 <script lang="ts">
   import Modal from './Modal.svelte';
   import { settings } from '../stores/settings.svelte';
+  import { tabs } from '../stores/tabs.svelte';
   import { t } from '../stores/i18n';
   import type { LangSetting, ThemeSetting } from '../ipc/types';
   import { pickThemeFile } from '../ipc/dialogs';
+  import { plugins } from '../plugins/registry.svelte';
+  import { pluginsDir } from '../ipc/commands';
+  import { revealInOs } from '../ipc/commands';
+
+  async function openPluginsFolder(): Promise<void> {
+    try {
+      await revealInOs(await pluginsDir());
+    } catch (e) {
+      console.warn('cannot open the plugins folder', e);
+    }
+  }
 
   interface Props {
     onClose: () => void;
@@ -142,6 +154,15 @@
     </label>
 
     <label class="row check">
+      <span class="label">{t('settings.spellcheck')}</span>
+      <input
+        type="checkbox"
+        checked={settings.value.spellcheck}
+        onchange={(e) => tabs.setSpellcheck(e.currentTarget.checked)}
+      />
+    </label>
+
+    <label class="row check">
       <span class="label">{t('settings.showToolbar')}</span>
       <input
         type="checkbox"
@@ -149,6 +170,44 @@
         onchange={(e) => settings.update({ showToolbar: e.currentTarget.checked })}
       />
     </label>
+
+    <div class="row plugins-head">
+      <span class="label">{t('settings.plugins')}</span>
+      <button class="btn" onclick={openPluginsFolder}>{t('settings.pluginsFolder')}</button>
+    </div>
+
+    {#if plugins.installed.length === 0}
+      <p class="hint">{t('settings.pluginsEmpty')}</p>
+    {:else}
+      <ul class="plugin-list">
+        {#each plugins.installed as plugin (plugin.manifest.id)}
+          <li class="plugin">
+            <label class="plugin-main">
+              <input
+                type="checkbox"
+                checked={plugins.enabled.includes(plugin.manifest.id)}
+                onchange={(e) =>
+                  settings.setPluginEnabled(plugin.manifest.id, e.currentTarget.checked)}
+              />
+              <span class="plugin-text">
+                <span class="plugin-name">
+                  {plugin.manifest.name}
+                  {#if plugin.manifest.version}<span class="plugin-version"
+                      >{plugin.manifest.version}</span
+                    >{/if}
+                </span>
+                {#if plugin.manifest.description}
+                  <span class="plugin-desc">{plugin.manifest.description}</span>
+                {/if}
+                {#if plugins.failures[plugin.manifest.id]}
+                  <span class="plugin-error">{plugins.failures[plugin.manifest.id]}</span>
+                {/if}
+              </span>
+            </label>
+          </li>
+        {/each}
+      </ul>
+    {/if}
 
     <label class="row check">
       <span class="label">{t('settings.showStatus')}</span>
@@ -199,6 +258,62 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     direction: rtl;
+  }
+
+  .plugins-head {
+    margin-top: var(--sp-2);
+  }
+
+  .hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--fg-muted);
+    line-height: 1.5;
+  }
+
+  .plugin-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .plugin-main {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    cursor: pointer;
+  }
+
+  .plugin-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .plugin-name {
+    font-size: 13px;
+    color: var(--fg-ui);
+  }
+
+  .plugin-version {
+    margin-left: var(--sp-2);
+    font-size: 11px;
+    color: var(--fg-faint);
+  }
+
+  .plugin-desc {
+    font-size: 12px;
+    color: var(--fg-muted);
+    line-height: 1.45;
+  }
+
+  .plugin-error {
+    font-size: 12px;
+    color: var(--warning);
   }
 
   .theme-error {

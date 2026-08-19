@@ -4,6 +4,7 @@
  * Contract: docs/design/IPC-CONTRACT.md §2.
  */
 import { invoke } from '@tauri-apps/api/core';
+import type { LoadedPlugin } from '../plugins/host';
 import type {
   Draft,
   DraftInfo,
@@ -89,3 +90,9 @@ export const revealInOs = (path: string): Promise<void> => invoke('reveal_in_os'
 export const openExternal = (url: string): Promise<void> => invoke('open_external', { url });
 
 export const getStartupFiles = (): Promise<string[]> => invoke('get_startup_files');
+
+// ---- plugins ----
+export const pluginsLoad = (): Promise<LoadedPlugin[]> => invoke('plugins_load');
+
+/** The folder plugins live in; created on demand so it can be opened. */
+export const pluginsDir = (): Promise<string> => invoke('plugins_dir');
