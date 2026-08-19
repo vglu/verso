@@ -90,8 +90,8 @@ Download the installer for your system from the
 
 | System | File |
 | --- | --- |
-| Windows | `Verso_0.2.0_x64-setup.exe` (3.7 MB) or the `.msi` |
-| macOS | `Verso_0.2.0_x64.dmg`, or `_aarch64.dmg` on Apple silicon |
+| Windows | `Verso_0.3.0_x64-setup.exe` (3.7 MB) or the `.msi` |
+| macOS | `Verso_0.3.0_x64.dmg`, or `_aarch64.dmg` on Apple silicon |
 | Linux | `.deb`, `.rpm`, or the `.AppImage` if your distribution is neither |
 
 Every file is listed in `SHA256SUMS.txt` beside them; check it if you like:
@@ -143,7 +143,7 @@ Decisions are recorded as [ADRs](.cursor/decisions/).
 
 ## Status
 
-**0.2, released.** Everything described above works, and is built and used on
+**0.3, released.** Everything described above works, and is built and used on
 Windows every day: the Windows installer has been installed from the release
 and checked — file association, "Open with", and a clean uninstall. macOS and
 Linux are built by CI on every commit, and their installers have not yet been
