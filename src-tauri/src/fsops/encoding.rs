@@ -394,9 +394,14 @@ fn reject_binary(bytes: &[u8], path: &Path) -> AppResult<()> {
 /// exactly, because opening a file we could not save again would be a trap
 /// rather than a feature.
 fn detect_legacy(bytes: &[u8]) -> Option<(Encoding, String)> {
-    let mut detector = chardetng::EncodingDetector::new();
+    // ISO-2022-JP is denied: it is a stateful escape-sequence encoding this
+    // program could not write back byte for byte, and 1.0 made the choice
+    // explicit rather than leaving it out as 0.1 did. UTF-8 stays allowed —
+    // the same `true` the old two-argument `guess` was given.
+    let mut detector =
+        chardetng::EncodingDetector::new(chardetng::Iso2022JpDetection::Deny);
     detector.feed(bytes, true);
-    let codec = detector.guess(None, true);
+    let codec = detector.guess(None, chardetng::Utf8Detection::Allow);
 
     let encoding = Encoding::from_codec(codec)?;
     let (text, _, had_errors) = codec.decode(bytes);

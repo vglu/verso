@@ -23,16 +23,16 @@ tauri-plugin-window-state = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
-notify = "6"
-notify-debouncer-full = "0.3"
+notify = "8"
+notify-debouncer-full = "0.7"
 encoding_rs = "0.8"
 # Firefox's encoding detector. Guessing a legacy 8-bit encoding cannot be done
 # by validity — nearly every byte sequence is "valid" windows-1252 — so it
 # takes statistics over the text, which is exactly what this crate is.
-chardetng = "0.1"
-sha2 = "0.10"
+chardetng = "1.0"
+sha2 = "0.11"
 # Pictures are embedded into exported documents as data URIs.
-base64 = "0.22"
+base64 = "0.23"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = "2"

@@ -1,7 +1,7 @@
 use crate::error::{AppError, AppResult};
 use crate::state::AppState;
-use notify::{RecommendedWatcher, RecursiveMode, Watcher};
-use notify_debouncer_full::{new_debouncer, DebounceEventResult, Debouncer, FileIdMap};
+use notify::{RecommendedWatcher, RecursiveMode};
+use notify_debouncer_full::{new_debouncer, DebounceEventResult, Debouncer, RecommendedCache};
 use serde::Serialize;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -21,7 +21,7 @@ pub struct FsChangedPayload {
 
 /// Owns the debouncer and the set of paths currently observed.
 pub struct WatchManager {
-    debouncer: Option<Debouncer<RecommendedWatcher, FileIdMap>>,
+    debouncer: Option<Debouncer<RecommendedWatcher, RecommendedCache>>,
     watched: HashSet<PathBuf>,
 }
 
@@ -83,20 +83,18 @@ impl WatchManager {
 
         let next: HashSet<PathBuf> = paths.into_iter().filter(|p| p.exists()).collect();
 
+        // The debouncer keeps its own record of the roots it watches now, so
+        // watch/unwatch is the whole story — no separate cache to keep in step.
         for gone in self.watched.difference(&next) {
-            let _ = debouncer.watcher().unwatch(gone);
-            debouncer.cache().remove_root(gone);
+            let _ = debouncer.unwatch(gone);
         }
 
         // Non-recursive throughout: we watch the open documents and their
         // immediate directory, never a whole tree the user did not ask for.
-        let mode = RecursiveMode::NonRecursive;
         for added in next.difference(&self.watched) {
-            if let Err(e) = debouncer.watcher().watch(added, mode) {
+            if let Err(e) = debouncer.watch(added, RecursiveMode::NonRecursive) {
                 eprintln!("[verso] cannot watch {}: {e}", added.display());
-                continue;
             }
-            debouncer.cache().add_root(added, mode);
         }
 
         self.watched = next;

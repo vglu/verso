@@ -48,7 +48,16 @@ pub fn doc_id(path: &Path) -> String {
     };
     let mut hasher = Sha256::new();
     hasher.update(normalized.as_bytes());
-    format!("{:x}", hasher.finalize())
+
+    // Written out byte by byte rather than with `{:x}` on the digest: sha2 0.11
+    // dropped that formatting, and this id is the name of the draft file. A
+    // different string here would not be a cosmetic change — it would orphan
+    // every unsaved document already on disk.
+    let mut out = String::with_capacity(64);
+    for byte in hasher.finalize() {
+        out.push_str(&format!("{byte:02x}"));
+    }
+    out
 }
 
 /// `{app_config_dir}` — created on demand.
@@ -103,6 +112,20 @@ pub fn now_ms() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The id is the draft file's name, so it has to be the same string it was
+    /// in every earlier version — a document with unsaved changes would
+    /// otherwise stop finding its own draft after an upgrade. This pins the
+    /// exact digest; a change in how it is formatted fails here rather than in
+    /// somebody's unsaved work. (Lowercase path: Windows lowercases it anyway,
+    /// so the expected value is the same on every platform.)
+    #[test]
+    fn doc_id_is_the_hex_sha256_of_the_path() {
+        assert_eq!(
+            doc_id(Path::new("/tmp/one.md")),
+            "334fef3b3652302bf9e884d0d95b8209b286c22b572242686b58265a500775fa"
+        );
+    }
 
     #[test]
     fn doc_id_is_stable_and_distinct() {
