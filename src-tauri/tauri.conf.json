@@ -51,8 +51,13 @@
     "longDescription": "Verso opens Markdown files instantly and renders them beautifully, with live WYSIWYG editing, tabs, a folder tree and an outline.",
     "fileAssociations": [
       {
-        "ext": ["md", "markdown", "mdown", "mkd"],
-        "name": "Markdown Document",
+        "ext": [
+          "md",
+          "markdown",
+          "mdown",
+          "mkd"
+        ],
+        "name": "Verso.Markdown",
         "description": "Markdown Document",
         "role": "Editor",
         "mimeType": "text/markdown"
@@ -65,7 +70,8 @@
     },
     "windows": {
       "nsis": {
-        "installMode": "perMachine"
+        "installMode": "perMachine",
+        "installerHooks": "./installer-hooks.nsh"
       }
     },
     "licenseFile": "../LICENSE",
