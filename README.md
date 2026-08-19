@@ -9,6 +9,10 @@ finished document, not like source code.
 
 *verso* — the left-hand page of an open book.
 
+[![CI](https://github.com/vglu/verso/actions/workflows/ci.yml/badge.svg)](https://github.com/vglu/verso/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Made with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24C8DB.svg)](https://tauri.app)
+
 ![Verso rendering a document](docs/screenshots/light.png)
 
 </div>

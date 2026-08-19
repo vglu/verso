@@ -60,7 +60,15 @@ jobs:
         with:
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}
           releaseName: 'Verso __VERSION__'
-          releaseBody: 'See CHANGELOG.md for details. Installers are attached below.'
+          releaseBody: |
+            Installers are attached below, with `SHA256SUMS.txt` to check them
+            against. See [CHANGELOG.md](https://github.com/vglu/verso/blob/master/CHANGELOG.md)
+            for what changed.
+
+            **The installer is not code-signed.** Windows SmartScreen will say
+            "unknown publisher" — choose **More info → Run anyway**. macOS will
+            need **right-click → Open** the first time. Building from source
+            avoids both; the instructions are in the README.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
@@ -77,7 +85,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}
         run: |
+          set -euo pipefail
           mkdir -p assets && cd assets
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" || exit 0
+
+          # An unsigned installer is exactly the kind of download people are
+          # right to be careful about, so the checksums have to be there — and
+          # a step that swallows its own failure would leave them missing
+          # without saying so.
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*'
           sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
           gh release upload "$TAG" SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --clobber

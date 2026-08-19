@@ -1,0 +1,70 @@
+name: Bug report
+description: Something behaved differently from what you expected
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time. The most useful bug report is a document
+        and a sequence of keys — if you can attach the `.md` file it happened
+        with, that usually answers half the questions below.
+
+        If the document is private, a cut-down version that still shows the
+        problem is just as good.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, and what the application did.
+      placeholder: |
+        I put the caret on the last line of the document and pressed Up.
+        The caret jumped to a table near the top of the file.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+      placeholder: The caret moves to the line above.
+    validations:
+      required: true
+
+  - type: textarea
+    id: document
+    attributes:
+      label: The document
+      description: >
+        Attach the file, or paste the smallest piece of Markdown that shows it.
+        Encoding and line endings matter for anything about saving — the status
+        bar shows both.
+
+  - type: input
+    id: version
+    attributes:
+      label: Verso version
+      description: Help → About, or the sidebar footer.
+      placeholder: '0.1.0'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: data-loss
+    attributes:
+      label: Did it touch your file?
+      options:
+        - label: >
+            The file on disk changed in a way I did not ask for (this makes it
+            urgent — please say so in the title too)

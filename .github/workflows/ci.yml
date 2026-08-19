@@ -36,6 +36,12 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # The component suite is separate because it needs the Svelte compiler.
+      # Left out of CI, the things only a mounted component can be wrong about
+      # would be checked nowhere.
+      - name: Component tests
+        run: npm run test:ui
+
   build:
     name: Build (${{ matrix.platform }})
     needs: frontend

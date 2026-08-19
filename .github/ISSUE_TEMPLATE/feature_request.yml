@@ -1,0 +1,42 @@
+name: Feature request
+description: Something Verso should be able to do
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Verso is viewer-first and deliberately small. The features most likely
+        to happen are the ones that make reading or editing an existing
+        document better — not the ones that make it a different kind of
+        application.
+
+        It is worth reading the "Known limitations" section of the
+        [changelog](../blob/master/CHANGELOG.md) first: some of this is already
+        planned, and some of it has been decided against for a reason.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: >
+        The situation, not the solution. What were you doing when you wanted
+        this, and what did you do instead?
+      placeholder: |
+        I keep a folder of meeting notes and I want to find the one that
+        mentions a particular name. Today I open them one at a time.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you have in mind
+      description: If you have a shape for it. It is fine to leave this empty.
+
+  - type: textarea
+    id: elsewhere
+    attributes:
+      label: Where you have seen it work well
+      description: >
+        Another application that does this the right way is the fastest way to
+        agree on what "right" means.
