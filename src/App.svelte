@@ -256,7 +256,26 @@
     }
   }
 
+  /** Anywhere the user is typing something that is not the document. */
+  function typingElsewhere(target: EventTarget | null): boolean {
+    const el = target as HTMLElement | null;
+    if (!el) return false;
+    const tag = el.tagName;
+    return (
+      tag === 'INPUT' ||
+      tag === 'TEXTAREA' ||
+      tag === 'SELECT' ||
+      el.isContentEditable === true
+    );
+  }
+
   function onKeydown(event: KeyboardEvent): void {
+    // Someone nearer the event already dealt with it — the editor's own
+    // keymap, a modal, the search panel. Acting again would fire twice.
+    if (event.defaultPrevented) return;
+    // Ctrl+A in the filter field must select the field's text, not switch tabs.
+    if (typingElsewhere(event.target)) return;
+
     const mod = event.ctrlKey || event.metaKey;
     if (!mod) return;
 

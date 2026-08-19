@@ -88,6 +88,21 @@ export interface KeymapHooks {
 }
 
 /**
+ * Bind a key to a hook only when the hook exists.
+ *
+ * A binding wired to a hook nobody supplies is worse than no binding: it
+ * swallows the key, so the default that would otherwise have run never does,
+ * and the feature looks broken rather than absent.
+ */
+function fromHook(hook: (() => void) | undefined): () => boolean {
+  return () => {
+    if (!hook) return false;
+    hook();
+    return true;
+  };
+}
+
+/**
  * Wrap a jump so it can be undone with Back.
  *
  * Anything that can move the caret more than a screen records where it came
@@ -111,7 +126,8 @@ export function editorKeymap(hooks: KeymapHooks = {}): Extension {
         // — Inline formatting —
         { key: 'Mod-b', run: (view) => toggleWrap(view, '**') },
         { key: 'Mod-i', run: (view) => toggleWrap(view, '*') },
-        { key: 'Mod-e', run: (view) => toggleWrap(view, '`') },
+        // Ctrl+E belongs to Reader mode (DESIGN-SYSTEM §7). Inline code has
+        // no shortcut until a free one is chosen rather than borrowed.
         { key: 'Mod-Shift-x', run: (view) => toggleWrap(view, '~~') },
         { key: 'Mod-k', run: insertLink },
 
@@ -137,52 +153,22 @@ export function editorKeymap(hooks: KeymapHooks = {}): Extension {
         { key: 'Mod-Alt-ArrowUp', run: asJump(prevHeading) },
         { key: 'Mod-l', run: selectBlock },
 
-        // — Moving the block itself. Alt is the editor convention on Windows;
-        //   the Ctrl+Shift alias catches Typora and Notion muscle memory. —
-        { key: 'Alt-ArrowUp', run: moveBlockUp },
-        { key: 'Alt-ArrowDown', run: moveBlockDown },
+        // — Moving the block itself. Alt+arrows stay with CodeMirror's own
+        //   move-line, which is what every editor on this platform does; the
+        //   block move is the Ctrl+Shift pair, which Typora and Notion use. —
         { key: 'Mod-Shift-ArrowUp', run: moveBlockUp },
         { key: 'Mod-Shift-ArrowDown', run: moveBlockDown },
 
-        // — Where was I? —
-        { key: 'Alt-ArrowLeft', run: jumpBack },
-        { key: 'Alt-ArrowRight', run: jumpForward },
+        // — Where was I? Consumed either way: falling through to the default
+        //   would move the caret a word sideways, which reads as a bug. —
+        { key: 'Alt-ArrowLeft', run: (view) => (jumpBack(view), true) },
+        { key: 'Alt-ArrowRight', run: (view) => (jumpForward(view), true) },
 
-        {
-          key: 'Mod-f',
-          run: () => {
-            hooks.onFind?.();
-            return true;
-          }
-        },
-        {
-          key: 'Mod-g',
-          run: () => {
-            hooks.onGoToLine?.();
-            return true;
-          }
-        },
-        {
-          key: 'Mod-Shift-o',
-          run: () => {
-            hooks.onGoToHeading?.();
-            return true;
-          }
-        },
-        {
-          key: 'Mod-/',
-          run: () => {
-            hooks.onToggleSource?.();
-            return true;
-          }
-        },
-        {
-          key: 'Mod-s',
-          run: () => {
-            hooks.onSave?.();
-            return true;
-          }
-        }
+        { key: 'Mod-f', run: fromHook(hooks.onFind) },
+        { key: 'Mod-g', run: fromHook(hooks.onGoToLine) },
+        { key: 'Mod-Shift-o', run: fromHook(hooks.onGoToHeading) },
+        { key: 'Mod-/', run: fromHook(hooks.onToggleSource) },
+        { key: 'Mod-s', run: fromHook(hooks.onSave) }
       ])
     ),
     keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab])

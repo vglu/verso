@@ -1,5 +1,6 @@
 import { EditorSelection } from '@codemirror/state';
 import { EditorView, WidgetType } from '@codemirror/view';
+import { setEditing } from './editing';
 
 /**
  * Clicking a rendered block puts the caret into its source.
@@ -12,7 +13,14 @@ function editOnClick(host: HTMLElement, view: EditorView, from: number): void {
   host.addEventListener('mousedown', (event) => {
     event.preventDefault();
     const pos = Math.min(from + 1, view.state.doc.length);
-    view.dispatch({ selection: EditorSelection.cursor(pos), scrollIntoView: false });
+    view.dispatch({
+      selection: EditorSelection.cursor(pos),
+      // Clicking a rendered block to get at its source is unambiguously an
+      // intent to edit; without saying so the caret arrives and the document
+      // stays frozen, which reads as the click not having worked.
+      effects: setEditing.of(true),
+      scrollIntoView: false
+    });
     view.focus();
   });
 }

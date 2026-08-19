@@ -47,6 +47,10 @@
     if (!tab) return;
     const handle = tabs.handleOf(tab.id);
     if (!handle || handle.view.state.readOnly) return;
+    // Pressing a formatting button is an edit, even though the pointer never
+    // touched the document — without this the change lands while the page is
+    // still frozen and the result is invisible until something else happens.
+    handle.beginEditing();
     action(handle.view);
     handle.focus();
   }

@@ -5,6 +5,7 @@ import { highlightSelectionMatches, search } from '@codemirror/search';
 import { markdownSupport } from './markdownLang';
 import { editorTheme } from './cmTheme';
 import { documentDir, livePreview, readerMode } from './livePreview';
+import { editingField, setEditing } from './livePreview/editing';
 import { editorKeymap, type KeymapHooks } from './keymap';
 import { activeOutlineIndex, extractOutline, type OutlineItem } from './outline';
 import { resetMermaid, THEME_CHANGED_EVENT } from './livePreview/richWidgets';
@@ -43,6 +44,8 @@ export interface EditorHandle {
   isReaderMode(): boolean;
   setSourceMode(value: boolean): void;
   isSourceMode(): boolean;
+  /** Declare that what follows is the user editing, not reading. */
+  beginEditing(): void;
 }
 
 export interface CreateEditorOptions {
@@ -243,7 +246,12 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
       view.contentDOM.classList.toggle('md-source', value);
     },
 
-    isSourceMode: () => sourceOn
+    isSourceMode: () => sourceOn,
+
+    beginEditing() {
+      if (view.state.field(editingField, false)) return;
+      view.dispatch({ effects: setEditing.of(true) });
+    }
   };
 }
 

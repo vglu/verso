@@ -2,12 +2,13 @@ import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import type { Tree } from '@lezer/common';
 import {
   Facet,
-  StateEffect,
+  Prec,
   StateField,
   type EditorState,
   type Extension,
   type Range
 } from '@codemirror/state';
+import { editingField, setEditing } from './editing';
 import {
   Decoration,
   EditorView,
@@ -48,24 +49,7 @@ export const readerMode = Facet.define<boolean, boolean>({
   combine: (values) => values.some((v) => v)
 });
 
-export const setEditing = StateEffect.define<boolean>();
-
-/**
- * True once the user actually works in this document (clicked or typed).
- *
- * A freshly opened file is a *reading* surface: nothing should be revealed,
- * even though the caret technically sits on line 1. Programmatic focus alone
- * does not count — only real interaction flips this.
- */
-export const editingField = StateField.define<boolean>({
-  create: () => false,
-  update(value, tr) {
-    for (const effect of tr.effects) {
-      if (effect.is(setEditing)) return effect.value;
-    }
-    return value;
-  }
-});
+export { editingField, setEditing };
 
 function isFrozen(state: EditorState): boolean {
   return state.facet(readerMode) || !state.field(editingField, false);
@@ -574,8 +558,17 @@ class InlinePreviewPlugin implements PluginValue {
     // region there are no nodes there to decorate, and nothing else would
     // prompt a rebuild once it gets there.
     const treeAdvanced = syntaxTree(update.state) !== syntaxTree(update.startState);
+    const startedEditing = update.transactions.some((tr) =>
+      tr.effects.some((e) => e.is(setEditing))
+    );
 
-    if (update.docChanged || update.selectionSet || update.viewportChanged || treeAdvanced) {
+    if (
+      update.docChanged ||
+      update.selectionSet ||
+      update.viewportChanged ||
+      treeAdvanced ||
+      startedEditing
+    ) {
       const built = buildInline(update.view);
       this.decorations = Decoration.set(built.decorations, true);
       this.atomics = Decoration.set(built.atomics, true);
@@ -841,8 +834,14 @@ const blockPreview = StateField.define<BlockState>({
     // Watching for the tree to advance is therefore not an optimisation — it
     // is the only reason blocks below the first parsed region ever appear.
     const treeAdvanced = syntaxTree(tr.state) !== syntaxTree(tr.startState);
+    // The transaction that begins editing carries nothing else — no text
+    // change, no selection. Without this the document stayed frozen until
+    // some *later* transaction happened to rebuild it, which is why the first
+    // click never revealed anything and the second one did.
+    const startedEditing = tr.effects.some((e) => e.is(setEditing));
 
-    if (!tr.docChanged && !tr.selection && !tr.reconfigured && !treeAdvanced) return value;
+    if (!tr.docChanged && !tr.selection && !tr.reconfigured && !treeAdvanced && !startedEditing)
+      return value;
 
     const blocks =
       tr.docChanged || treeAdvanced ? scanBlocks(tr.state, !tr.docChanged) : value.blocks;
@@ -885,13 +884,32 @@ export function renderedBlocks(state: EditorState): BlockRange[] {
  * Flip the document into "editing" the moment the user touches it, and back
  * to a clean reading surface when focus leaves.
  */
+/** Pending deferred reveal, so it can be cancelled if the view goes away. */
+let revealTimer: ReturnType<typeof setTimeout> | null = null;
+
+function cancelPendingReveal(): void {
+  if (revealTimer !== null) {
+    clearTimeout(revealTimer);
+    revealTimer = null;
+  }
+}
+
 const editingTracker = EditorView.domEventHandlers({
   mousedown: (_event, view) => {
     if (!view.state.field(editingField, false)) {
+      cancelPendingReveal();
       // Deferred on purpose: revealing syntax re-flows the line, and doing
       // that mid-click would move the text out from under the pointer before
       // CodeMirror resolves the click into a caret position.
-      setTimeout(() => view.dispatch({ effects: setEditing.of(true) }), 0);
+      revealTimer = setTimeout(() => {
+        revealTimer = null;
+        // The tab may have been closed, or the buffer replaced, in the
+        // meantime — dispatching into a dead view throws, and into a fresh
+        // one would open a document nobody has touched yet.
+        if (!view.dom.isConnected) return;
+        if (view.state.field(editingField, false)) return;
+        view.dispatch({ effects: setEditing.of(true) });
+      }, 0);
     }
     return false;
   },
@@ -902,6 +920,7 @@ const editingTracker = EditorView.domEventHandlers({
     return false;
   },
   blur: (_event, view) => {
+    cancelPendingReveal();
     if (view.state.field(editingField, false)) {
       view.dispatch({ effects: setEditing.of(false) });
     }
@@ -910,5 +929,13 @@ const editingTracker = EditorView.domEventHandlers({
 });
 
 export function livePreview(): Extension {
-  return [editingField, editingTracker, blockPreview, inlinePreview];
+  return [
+    editingField,
+    // Highest precedence so the tracker sees every key. Handlers run until
+    // one claims the event; sitting below the keymap meant that any key the
+    // keymap handled — every arrow, every shortcut — never started editing.
+    Prec.highest(editingTracker),
+    blockPreview,
+    inlinePreview
+  ];
 }

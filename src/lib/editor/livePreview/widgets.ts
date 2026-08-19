@@ -1,5 +1,6 @@
 import { EditorSelection } from '@codemirror/state';
 import { EditorView, WidgetType } from '@codemirror/view';
+import { setEditing } from './editing';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { renderInline } from './inline';
 import { parseTable } from './table';
@@ -111,7 +112,11 @@ export class ImageWidget extends WidgetType {
       wrap.addEventListener('mousedown', (event) => {
         event.preventDefault();
         const pos = Math.min(this.from, view.state.doc.length);
-        view.dispatch({ selection: EditorSelection.cursor(pos), scrollIntoView: false });
+        view.dispatch({
+          selection: EditorSelection.cursor(pos),
+          effects: setEditing.of(true),
+          scrollIntoView: false
+        });
         view.focus();
       });
     }
@@ -187,6 +192,7 @@ export class FenceChipWidget extends WidgetType {
         // Select the language so typing replaces it outright.
         view.dispatch({
           selection: to > from ? EditorSelection.range(from, to) : EditorSelection.cursor(from),
+          effects: setEditing.of(true),
           scrollIntoView: false
         });
         view.focus();
@@ -271,6 +277,7 @@ export class TableWidget extends WidgetType {
       const cell = target?.closest('td, th') as HTMLTableCellElement | null;
       view.dispatch({
         selection: { anchor: this.sourcePosForCell(cell) },
+        effects: setEditing.of(true),
         scrollIntoView: false
       });
       view.focus();

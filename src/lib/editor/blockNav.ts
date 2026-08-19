@@ -216,7 +216,9 @@ function stepIntoBlock(view: EditorView, direction: 1 | -1): boolean {
   );
   if (!crossed) return false;
 
-  const entry = direction === 1 ? crossed.from : state.doc.lineAt(crossed.to).from;
+  const edgeLine =
+    direction === 1 ? state.doc.lineAt(crossed.from) : state.doc.lineAt(crossed.to);
+  const entry = keepColumn(view, head, edgeLine);
   if (entry === head) return false;
 
   view.dispatch({
@@ -225,6 +227,33 @@ function stepIntoBlock(view: EditorView, direction: 1 | -1): boolean {
     scrollIntoView: false
   });
   return true;
+}
+
+/**
+ * Land on the entry line under the same horizontal position the caret had.
+ *
+ * Vertical movement everywhere else keeps its column; dropping to column 0
+ * on the way into a table is the sort of small betrayal that makes movement
+ * feel arbitrary. Falls back to the line start when there is no layout to
+ * measure (tests, or before the first paint).
+ */
+function keepColumn(
+  view: EditorView,
+  head: number,
+  line: { from: number; to: number }
+): number {
+  try {
+    const coords = view.coordsAtPos(head);
+    if (!coords) return line.from;
+    const lineTop = view.coordsAtPos(line.from);
+    if (!lineTop) return line.from;
+
+    const at = view.posAtCoords({ x: coords.left, y: (lineTop.top + lineTop.bottom) / 2 });
+    if (at === null) return line.from;
+    return Math.max(line.from, Math.min(at, line.to));
+  } catch {
+    return line.from;
+  }
 }
 
 export function stepDownIntoBlock(view: EditorView): boolean {
