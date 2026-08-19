@@ -35,12 +35,30 @@ function walk(dir) {
 
 function scan(full, rel) {
   const lines = readFileSync(full, 'utf8').split(/\r?\n/);
+
+  // Print is the one place a literal colour is the correct answer. Paper has
+  // no theme: printing a reader's dark background would be a black page, so
+  // the print stylesheet states black on white and means it. The exemption is
+  // this narrow on purpose — it ends with the block.
+  let printDepth = 0;
+  let inPrint = false;
+
   lines.forEach((line, i) => {
-    if (EXEMPT_LINE.test(line)) return;
-    const matches = line.match(COLOR_RE);
-    if (matches) {
-      offenders.push(`${rel}:${i + 1}: ${line.trim()}`);
+    if (!inPrint && /@media\s+print/.test(line)) {
+      inPrint = true;
+      printDepth = 0;
     }
+    if (inPrint) {
+      printDepth += (line.match(/\{/g) ?? []).length;
+      printDepth -= (line.match(/\}/g) ?? []).length;
+    }
+
+    if (!inPrint && !EXEMPT_LINE.test(line)) {
+      const matches = line.match(COLOR_RE);
+      if (matches) offenders.push(`${rel}:${i + 1}: ${line.trim()}`);
+    }
+
+    if (inPrint && printDepth <= 0 && /\}/.test(line)) inPrint = false;
   });
 }
 
