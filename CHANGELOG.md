@@ -59,7 +59,10 @@ in place, and never lose a byte.
 - Folder tree for the document's directory, showing only Markdown and
   sub-folders; refreshes when the folder changes on disk.
 - Outline panel that tracks the section you are reading.
-- Session restore for open tabs, caret positions and sidebar state.
+- Session restore for open tabs, caret positions, reading position and sidebar
+  state — a long document reopens where you stopped reading, not at line one.
+- Interface in English and Ukrainian, following the system language unless you
+  choose one in the settings.
 
 **Export**
 
