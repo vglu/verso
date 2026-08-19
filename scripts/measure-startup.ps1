@@ -4,6 +4,13 @@
 # "Window exists" is not the number that matters: a window can be up while
 # the webview is still blank. So after the window appears we capture it and
 # wait until enough pixels differ from the background.
+#
+# This one needs the screen. The window is kept out of the way — left edge,
+# bottom of the stack, focus handed straight back — but a window that is
+# covered from its very first frame never composites, and then there is
+# nothing to detect: the run reports no paint time at all. Take the number
+# when the desktop is free; use scripts/screenshot.ps1 the rest of the time,
+# which reads a window that is behind everything perfectly well.
 param(
     [string]$Exe = "src-tauri\target\release\mdviewer.exe",
     [string]$File = "tests\fixtures\sample.md",
@@ -20,9 +27,30 @@ using System.Runtime.InteropServices;
 public class Win32Startup {
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
     [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint flags);
+    [DllImport("user32.dll")] public static extern bool SetWindowPos(
+        IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+    [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
+    public static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
+    public const uint NOSIZE = 0x0001, NOMOVE = 0x0002, NOACTIVATE = 0x0010;
 }
 "@
+
+# The run takes five launches. Each window is moved to the left edge and sent
+# to the back of the stack, so the measurement happens beside someone else's
+# work instead of over the top of it; PrintWindow captures it there just the
+# same. Handing the focus back first is not optional — Windows keeps the
+# foreground window on top wherever you try to put it.
+$script:Previous = [IntPtr]::Zero
+
+function Send-ToBack([IntPtr]$handle) {
+    if ($script:Previous -ne [IntPtr]::Zero -and $script:Previous -ne $handle) {
+        [Win32Startup]::SetForegroundWindow($script:Previous) | Out-Null
+    }
+    [Win32Startup]::SetWindowPos($handle, [Win32Startup]::HWND_BOTTOM, 0, 0, 0, 0,
+        [Win32Startup]::NOSIZE -bor [Win32Startup]::NOACTIVATE) | Out-Null
+}
 
 # Fraction of sampled pixels that must differ from the window's own background
 # before we call the document "painted".
@@ -51,8 +79,12 @@ function Get-InkFraction([IntPtr]$handle) {
         $y0 = [int]($h * 0.12); $y1 = [int]($h * 0.75)
         $bg = $bmp.GetPixel([int]($w * 0.93), [int]($h * 0.70))
         $hits = 0; $total = 0
-        for ($y = $y0; $y -lt $y1; $y += 4) {
-            for ($x = $x0; $x -lt $x1; $x += 4) {
+        # Sampled coarsely on purpose. GetPixel from PowerShell costs about
+        # 3µs, so a fine grid made one poll cost 120ms — and the answer can
+        # only ever be as precise as one poll. A sparse grid still tells ink
+        # from background, and brings the resolution down to ~40ms.
+        for ($y = $y0; $y -lt $y1; $y += 12) {
+            for ($x = $x0; $x -lt $x1; $x += 12) {
                 $p = $bmp.GetPixel($x, $y)
                 $total++
                 if ([math]::Abs($p.R - $bg.R) + [math]::Abs($p.G - $bg.G) + [math]::Abs($p.B - $bg.B) -gt 40) {
@@ -73,13 +105,19 @@ for ($i = 1; $i -le $Runs; $i++) {
     Get-Process mdviewer -ErrorAction SilentlyContinue | Stop-Process -Force
     Start-Sleep -Milliseconds 1500
 
+    # Whoever is in front keeps the screen for the whole run.
+    $script:Previous = [Win32Startup]::GetForegroundWindow()
     $watch = [System.Diagnostics.Stopwatch]::StartNew()
     $proc = Start-Process -FilePath $Exe -ArgumentList (Resolve-Path $File) -PassThru
 
     $windowMs = $null
     while ($watch.ElapsedMilliseconds -lt 20000) {
         $proc.Refresh()
-        if ($proc.MainWindowHandle -ne 0) { $windowMs = $watch.ElapsedMilliseconds; break }
+        if ($proc.MainWindowHandle -ne 0) {
+            $windowMs = $watch.ElapsedMilliseconds
+            Send-ToBack $proc.MainWindowHandle
+            break
+        }
         Start-Sleep -Milliseconds 10
     }
     if (-not $windowMs) { Write-Output "run ${i}: no window"; continue }
@@ -90,6 +128,8 @@ for ($i = 1; $i -le $Runs; $i++) {
             $paintedMs = $watch.ElapsedMilliseconds
             break
         }
+        # The webview can raise itself as it settles; keep it down.
+        Send-ToBack $proc.MainWindowHandle
     }
 
     $watch.Stop()

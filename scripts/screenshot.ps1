@@ -35,8 +35,14 @@ $proc = Get-Process -Name $ProcessName -ErrorAction SilentlyContinue |
 if (-not $proc) { throw "process '$ProcessName' has no visible window" }
 
 $handle = $proc.MainWindowHandle
-[Win32Cap]::ShowWindow($handle, 9) | Out-Null    # SW_RESTORE
-[Win32Cap]::SetForegroundWindow($handle) | Out-Null
+
+# PrintWindow renders a window that is behind others, so the default path never
+# disturbs what is in front. Only the screen grab needs the window raised, and
+# it says so by asking for -Screen.
+if ($Screen) {
+    [Win32Cap]::ShowWindow($handle, 9) | Out-Null    # SW_RESTORE
+    [Win32Cap]::SetForegroundWindow($handle) | Out-Null
+}
 Start-Sleep -Milliseconds 900
 
 $rect = New-Object Win32Cap+RECT
