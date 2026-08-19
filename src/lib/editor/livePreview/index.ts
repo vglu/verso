@@ -29,6 +29,7 @@ import {
 } from './widgets';
 import { MathWidget, MermaidWidget } from './richWidgets';
 import { frontmatterRange, isInFrontmatter } from '../frontmatter';
+import { displayMathOnLine, findInlineMath } from '../mathScan';
 
 /**
  * Live preview: Markdown renders in place, and the raw syntax comes back on
@@ -217,26 +218,10 @@ export function buildInlineForRange(state: EditorState, from: number, to: number
 }
 
 /**
- * `$…$` formulas. Markdown has no math in its grammar, so these are found by
- * scanning the text — but a `$` in prose is usually money, not mathematics.
- *
- * The rule is KaTeX's own auto-render heuristic: an opening `$` must follow a
- * boundary and be followed by something that is not a space; a closing `$`
- * must follow something that is not a space and must not be followed by a
- * letter or digit. Without it "It costs $5 and $7 today" renders as a formula
- * that swallows the words between the two prices.
+ * `$…$` formulas, found by the shared scanner in mathScan.ts — the same one
+ * the exporter uses, so a document renders identically on screen and in the
+ * file it is exported to.
  */
-function isMathOpen(prev: string, next: string): boolean {
-  if (next === '' || /\s/.test(next)) return false;
-  if (prev === '') return true;
-  return /[\s(["'“«[{,;:—–-]/.test(prev);
-}
-
-function isMathClose(prev: string, next: string): boolean {
-  if (prev === '' || /\s/.test(prev)) return false;
-  return !/[0-9A-Za-zЀ-ӿ]/.test(next);
-}
-
 function addInlineMath(
   state: EditorState,
   active: ActiveContext,
@@ -246,56 +231,12 @@ function addInlineMath(
   insideBlock: (pos: number) => boolean = () => false
 ): void {
   const text = state.doc.sliceString(from, to);
-  let i = 0;
 
-  while (i < text.length) {
-    const ch = text[i];
-
-    if (ch === '\\') {
-      i += 2; // an escaped character, including \$, is literal
-      continue;
-    }
-    if (ch !== '$') {
-      i += 1;
-      continue;
-    }
-    if (text[i + 1] === '$') {
-      i += 2; // display math is the block layer's business
-      continue;
-    }
-    if (!isMathOpen(i === 0 ? '' : (text[i - 1] ?? ''), text[i + 1] ?? '')) {
-      i += 1;
-      continue;
-    }
-
-    // Look for a closing `$` before the line ends.
-    let j = i + 1;
-    let close = -1;
-    while (j < text.length) {
-      const cj = text[j];
-      if (cj === '\\') {
-        j += 2;
-        continue;
-      }
-      if (cj === '\n') break;
-      if (cj === '$') {
-        if (isMathClose(text[j - 1] ?? '', text[j + 1] ?? '')) close = j;
-        break;
-      }
-      j += 1;
-    }
-
-    if (close < 0) {
-      i += 1;
-      continue;
-    }
-
-    const start = from + i;
-    const end = from + close + 1;
-    const formula = text.slice(i + 1, close).trim();
+  for (const math of findInlineMath(text)) {
+    const start = from + math.from;
+    const end = from + math.to;
 
     if (
-      formula &&
       !insideBlock(start) &&
       !isLineActive(active, state.doc.lineAt(start).number) &&
       !isInsideCode(state, start) &&
@@ -303,13 +244,11 @@ function addInlineMath(
     ) {
       pushReplace(
         built,
-        Decoration.replace({ widget: new MathWidget(formula, false, start) }),
+        Decoration.replace({ widget: new MathWidget(math.formula, false, start) }),
         start,
         end
       );
     }
-
-    i = close + 1;
   }
 }
 
@@ -736,13 +675,13 @@ function scanDisplayMath(state: EditorState, tree: Tree): BlockRange[] {
 
     // `$$ E = mc^2 $$` on one line: neither layer claimed it before, so it
     // rendered as literal text.
-    const oneLiner = /^\$\$(.+)\$\$$/.exec(text);
-    if (oneLiner && openLine < 0 && !isInsideCode(state, line.from, tree)) {
+    const oneLiner = displayMathOnLine(text);
+    if (oneLiner !== null && openLine < 0 && !isInsideCode(state, line.from, tree)) {
       found.push({
         kind: 'math',
         from: line.from,
         to: line.to,
-        source: (oneLiner[1] ?? '').trim(),
+        source: oneLiner,
         srcClass: 'md-math-src'
       });
       continue;

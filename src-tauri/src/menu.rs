@@ -48,6 +48,14 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
     let close_tab = MenuItemBuilder::with_id("closeTab", label(l, "closeTab", "Close Tab"))
         .accelerator("CmdOrCtrl+W")
         .build(app)?;
+    let export_html =
+        MenuItemBuilder::with_id("exportHtml", label(l, "exportHtml", "Export as HTML…"))
+            .build(app)?;
+    // Not Ctrl+P: that is Go to Heading, and WebView2 would take it anyway.
+    // Print keeps the Shift variant, which the window's menu claims first.
+    let print = MenuItemBuilder::with_id("print", label(l, "print", "Print…"))
+        .accelerator("CmdOrCtrl+Shift+P")
+        .build(app)?;
 
     let file = SubmenuBuilder::new(app, label(l, "menu.file", "File"))
         .item(&new_file)
@@ -57,6 +65,9 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         .separator()
         .item(&save)
         .item(&save_as)
+        .separator()
+        .item(&export_html)
+        .item(&print)
         .separator()
         .item(&close_tab)
         .separator()
@@ -122,8 +133,7 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         .item(&settings)
         .build()?;
 
-    let about =
-        MenuItemBuilder::with_id("about", label(l, "about", "About Verso")).build(app)?;
+    let about = MenuItemBuilder::with_id("about", label(l, "about", "About Verso")).build(app)?;
     let help = SubmenuBuilder::new(app, label(l, "menu.help", "Help"))
         .item(&about)
         .build()?;

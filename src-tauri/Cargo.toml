@@ -31,6 +31,8 @@ encoding_rs = "0.8"
 # takes statistics over the text, which is exactly what this crate is.
 chardetng = "0.1"
 sha2 = "0.10"
+# Pictures are embedded into exported documents as data URIs.
+base64 = "0.22"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = "2"

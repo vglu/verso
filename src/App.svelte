@@ -37,6 +37,7 @@
   import type { DraftInfo, MenuActionId } from './lib/ipc/types';
   import { baseName, isRemoteUrl } from './lib/editor/pathUtil';
   import { pushJump } from './lib/editor/history';
+  import { exportToHtml, printDocument, type ExportRequest } from './lib/export';
 
   let revision = $state(0);
   let showSettings = $state(false);
@@ -218,6 +219,48 @@
     }
   }
 
+  // ---- export ----
+
+  /**
+   * What the active document needs to become a page of its own.
+   *
+   * Null when there is nothing open, or when the tab is a path the file has
+   * not been read from yet — exporting an empty buffer would be worse than
+   * refusing.
+   */
+  function exportRequest(): ExportRequest | null {
+    const tab = activeTab;
+    const handle = tab ? tabs.handleOf(tab.id) : null;
+    if (!tab || !handle || !tab.loaded) return null;
+
+    return {
+      state: handle.view.state,
+      name: tab.fileName.replace(/\.[^.]+$/, ''),
+      dir: tab.dirPath,
+      pageWidth: settings.value.editorMaxWidth
+    };
+  }
+
+  async function exportDocument(): Promise<void> {
+    const request = exportRequest();
+    if (!request) return;
+    try {
+      await exportToHtml(request);
+    } catch (error) {
+      tabs.lastError = String(error);
+    }
+  }
+
+  async function printActive(): Promise<void> {
+    const request = exportRequest();
+    if (!request) return;
+    try {
+      await printDocument(request);
+    } catch (error) {
+      tabs.lastError = String(error);
+    }
+  }
+
   // ---- links ----
 
   async function handleLink(href: string): Promise<void> {
@@ -365,6 +408,12 @@
         break;
       case 'goToHeading':
         showPalette = true;
+        break;
+      case 'exportHtml':
+        void exportDocument();
+        break;
+      case 'print':
+        void printActive();
         break;
       case 'foldAll':
         withEditor((view) => foldAll(view));

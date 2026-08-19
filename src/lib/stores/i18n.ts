@@ -24,6 +24,8 @@ const en: Dict = {
   'menu.save': 'Save',
   'menu.saveAs': 'Save As…',
   'menu.closeTab': 'Close Tab',
+  'menu.exportHtml': 'Export as HTML…',
+  'menu.print': 'Print…',
   'menu.find': 'Find…',
   'menu.goToHeading': 'Go to Heading…',
   'menu.goToLine': 'Go to Line…',
@@ -180,6 +182,8 @@ const ru: Dict = {
   'menu.save': 'Сохранить',
   'menu.saveAs': 'Сохранить как…',
   'menu.closeTab': 'Закрыть вкладку',
+  'menu.exportHtml': 'Экспорт в HTML…',
+  'menu.print': 'Печать…',
   'menu.find': 'Найти…',
   'menu.goToHeading': 'Перейти к заголовку…',
   'menu.goToLine': 'Перейти к строке…',
@@ -359,6 +363,8 @@ export function menuLabels(): Record<string, string> {
     'toggleOutline',
     'foldAll',
     'unfoldAll',
+    'exportHtml',
+    'print',
     'settings',
     'about'
   ];

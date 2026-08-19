@@ -48,6 +48,15 @@ export const setMenuLabels = (labels: Record<string, string>): Promise<void> =>
 /** The text of a user's theme file. A theme is one CSS file (docs/themes.md). */
 export const readTheme = (path: string): Promise<string> => invoke('read_theme', { path });
 
+// ---- export ----
+/** A local picture as a data URI, so an exported page carries it. */
+export const readImageDataUri = (path: string): Promise<string> =>
+  invoke('read_image_data_uri', { path });
+
+/** Write an exported file. Not `saveFile`: an export is not a document. */
+export const writeExport = (path: string, contents: string): Promise<void> =>
+  invoke('write_export', { path, contents });
+
 // ---- drafts ----
 export const draftSave = (
   docId: string,

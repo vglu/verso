@@ -184,6 +184,8 @@ export type MenuActionId =
   | 'goToLine'
   | 'foldAll'
   | 'unfoldAll'
+  | 'exportHtml'
+  | 'print'
   | 'about';
 
 export interface MenuActionPayload {

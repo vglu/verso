@@ -20,6 +20,18 @@ export async function pickFile(defaultDir?: string | null): Promise<string | nul
   return typeof picked === 'string' ? picked : null;
 }
 
+/** Where to put an exported document. */
+export async function pickExportTarget(
+  suggestedName: string,
+  defaultDir?: string | null
+): Promise<string | null> {
+  const picked = await save({
+    filters: [{ name: 'HTML page', extensions: ['html'] }],
+    defaultPath: defaultDir ? `${defaultDir}/${suggestedName}` : suggestedName
+  });
+  return picked ?? null;
+}
+
 /** A theme is one CSS file — the contract is in docs/themes.md. */
 export async function pickThemeFile(defaultDir?: string | null): Promise<string | null> {
   const picked = await open({

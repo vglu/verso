@@ -91,6 +91,8 @@ pub fn run() {
             commands::shell::get_startup_files,
             commands::menu::set_menu_labels,
             commands::theme::read_theme,
+            commands::export::read_image_data_uri,
+            commands::export::write_export,
             watcher::watch_paths,
         ])
         .build(tauri::generate_context!())
