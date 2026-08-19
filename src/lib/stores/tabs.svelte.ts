@@ -128,6 +128,22 @@ class TabsStore {
     return handles.get(id) ?? null;
   }
 
+  /**
+   * Turn spell checking on or off, everywhere at once.
+   *
+   * Lives here rather than in the settings store because this is the side
+   * that knows the open editors — and because a settings store that reached
+   * back into the tabs would close a circle between the two.
+   *
+   * Applied to editors that are already open as well as ones opened later: a
+   * setting that only takes effect in new tabs is a setting people report as
+   * broken.
+   */
+  setSpellcheck(on: boolean): void {
+    settings.update({ spellcheck: on });
+    for (const tab of this.tabs) handles.get(tab.id)?.setSpellcheck(on);
+  }
+
   registerHandle(id: string, handle: EditorHandle): void {
     handles.get(id)?.destroy();
     handles.set(id, handle);

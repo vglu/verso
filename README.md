@@ -47,10 +47,17 @@ edit in place, and never damages your file.
   pictures, diagrams and formulas — and the print dialog, which is where
   "Save as PDF" lives.
 - **Light and dark themes** built from CSS tokens — [write your own](docs/themes.md)
-  and Verso repaints as you save the file.
+  and Verso repaints as you save the file. Three ship in `docs/themes/`,
+  including a Minecraft palette and a soft rose one; every colour in them is
+  measured against WCAG rather than eyeballed.
+- **Plugins** that add formatters, [in about thirty lines](docs/plugins.md).
+  They run in a worker with no DOM, no file system and no network, and none of
+  their code runs until you switch them on.
 - **Opens what other editors will not.** UTF-8, UTF-16, and the eight-bit
   encodings everything written before UTF-8 is in: windows-1251, DOS 866,
   KOI8-R/U, ISO 8859-5, windows-1252 — saved back byte for byte.
+- **Spell checking, if you want it** — the system's own dictionaries, in
+  whatever languages your computer speaks. Off by default.
 - **Zoom the whole window** (`Ctrl+=` / `Ctrl+-` / `Ctrl+0`, or `Ctrl` and the
   wheel) from 50% to 300%.
 - **English and Ukrainian interface**, following the system language unless you
@@ -130,7 +137,8 @@ Decisions are recorded as [ADRs](.cursor/decisions/).
 ## Documentation
 
 - [User guide](docs/guide/README.md) — shortcuts, saving, recovery
-- [Writing a theme](docs/themes.md) — the token contract
+- [Writing a theme](docs/themes.md) — the token contract, and how to measure one
+- [Plugins](docs/plugins.md) — using them, and writing one
 - [Changelog](CHANGELOG.md)
 
 ## Status
@@ -142,8 +150,8 @@ Linux are built by CI on every commit, and their installers have not yet been
 run by hand — treat those two as untested rather than unsupported, and please
 open an issue if something there is wrong.
 
-Not there yet: plugins, folder-wide search, and renaming or deleting files
-from the tree. See the [changelog](CHANGELOG.md) for the current limits.
+Not there yet: folder-wide search, renaming or deleting files from the tree,
+and plugins that do anything other than formatting. See the [changelog](CHANGELOG.md) for the current limits.
 
 ## License
 

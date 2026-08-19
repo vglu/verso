@@ -82,6 +82,17 @@ highlighted, and clicking a heading jumps to it.
 The session — open tabs, caret positions, sidebar state — comes back when you
 reopen the app. Turn that off in Settings if you prefer a clean start.
 
+## Spell checking
+
+Off by default, and switched on in **Settings → Check spelling**. It uses the
+dictionaries your system already has, so it speaks whatever languages your
+computer does — Verso ships no dictionaries of its own and downloads nothing.
+Misspelled words are underlined; right-click one for suggestions.
+
+It is off by default because the checker sees a Markdown file as plain text:
+fenced code, link targets and file names all get underlined too. For writing
+prose it is worth it, and for reading it is not, so it is yours to choose.
+
 ## What is supported
 
 CommonMark plus GitHub extensions: tables, task lists, strikethrough and

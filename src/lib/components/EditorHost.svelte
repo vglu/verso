@@ -69,6 +69,7 @@
       fileName: tab.fileName,
       readOnly: tab.readonly,
       sourceMode: settings.value.editorMode === 'source',
+      spellcheck: settings.value.spellcheck,
       onChange: (content, meta) => {
         tabs.setContent(tabId, content, meta.userInitiated);
         scheduleOutlineUpdate(tabId);

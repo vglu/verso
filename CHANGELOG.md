@@ -4,6 +4,44 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] — 2026-08-20
+
+### Added
+
+- **Plugins.** A plugin is a folder with a manifest and one JavaScript file
+  exporting a `format(text, context)` function; it adds a way to format a
+  document. The code runs in a Web Worker with no DOM, no file system, no
+  Tauri commands and no network, under a two-second deadline — and it does not
+  run at all until the plugin is switched on in Settings, because installing a
+  plugin and allowing it to run are two different decisions. Writing one is
+  documented in [docs/plugins.md](docs/plugins.md), including why the
+  content-security policy had to be widened by exactly `blob:` and no further.
+  - `examples/plugins/tidy-markdown` is a complete working example: list
+    markers, ordered-list numbering, trailing spaces and stray blank lines,
+    with everything inside a fenced code block left strictly alone.
+- **Optional spell checking** (Settings → Check spelling), using the
+  dictionaries the operating system already has — no downloads, no bundled
+  word lists, and whatever languages the machine speaks. Right-click an
+  underlined word for suggestions. Off by default: the checker reads a
+  Markdown file as plain text, so it underlines fenced code and link targets
+  as well, which is worth it while writing and not while reading.
+- **Two themes, and a way to measure one.**
+  - `docs/themes/overworld.css` — Minecraft's palette: sandstone by day,
+    deepslate underground, diamond as the accent because it is split-
+    complementary to earth, which is exactly why it reads as treasure.
+  - `docs/themes/blush.css` — soft rose against warm plum type, with a sage
+    complement so the page never cloys; wine-dark in the evening.
+  - `scripts/check-theme-contrast.mjs` reports the WCAG ratio of every pair a
+    reader has to read, in both the light and dark blocks. All three shipped
+    themes pass it; it found three failures in the example theme the first
+    time it ran, and those are fixed.
+
+### Fixed
+
+- `paper.css` had links at 4.16:1, accents on panels at 3.58:1 and
+  placeholders at 2.77:1 — below the thresholds its own documentation asks
+  for. Darkened until they pass.
+
 ## [0.2.0] — 2026-08-20
 
 ### Added

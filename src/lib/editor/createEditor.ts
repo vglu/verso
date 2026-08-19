@@ -60,6 +60,7 @@ export interface EditorHandle {
   getScrollAnchor(): ScrollAnchor;
   setScrollAnchor(anchor: ScrollAnchor): void;
   setReadOnly(value: boolean): void;
+  setSpellcheck(value: boolean): void;
   setReaderMode(value: boolean): void;
   isReaderMode(): boolean;
   /** False on a document too large to scan for tables, formulas and diagrams. */
@@ -84,6 +85,8 @@ export interface CreateEditorOptions {
   readOnly?: boolean;
   /** Start in plain Markdown source rather than live preview. */
   sourceMode?: boolean;
+  /** Underline misspelled words, using the system's own dictionaries. */
+  spellcheck?: boolean;
   /**
    * `userInitiated` is false when the change came from the app itself
    * (reloading a file from disk), so a reload never looks like an edit.
@@ -195,7 +198,7 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     markdown ? [] : EditorView.editorAttributes.of({ class: 'cm-code' }),
     EditorView.contentAttributes.of({
       class: markdown ? 'md-doc' : 'md-doc cm-code-content',
-      spellcheck: 'false',
+      spellcheck: options.spellcheck ? 'true' : 'false',
       autocorrect: 'off',
       autocapitalize: 'off'
     }),
@@ -321,6 +324,16 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
 
     setScrollAnchor(anchor) {
       restoreAnchor(view, anchor);
+    },
+
+    /**
+     * Set on the element rather than through a state reconfiguration: the
+     * content element outlives every re-render, and asking CodeMirror to
+     * rebuild the document to change one attribute would throw away the
+     * spell checker's own work along with it.
+     */
+    setSpellcheck(value) {
+      view.contentDOM.setAttribute('spellcheck', value ? 'true' : 'false');
     },
 
     setReadOnly(value) {

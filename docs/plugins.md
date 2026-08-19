@@ -124,9 +124,24 @@ A plugin runs in a Web Worker, and that is the whole of its world:
 | `import` of another module in your folder | **no**, not yet — one file, for now |
 
 This is not a promise about behaviour, it is the shape of the sandbox: those
-things are absent rather than forbidden. The reasoning, and the price Verso
-paid in its content-security policy to allow plugin code at all, is written
-down in [ADR-004](../.cursor/decisions/ADR-004-plugins.md).
+things are absent rather than forbidden.
+
+### Why it is built this way
+
+Verso's content-security policy forbids running code that arrived from disk:
+no `eval`, no `new Function`, no importing a blob. That is not an oversight —
+it is what keeps a document from ever becoming executable — and it meant
+plugins could not exist at all without widening it somewhere.
+
+The policy was widened by exactly `blob:`, for scripts and workers. That is
+what a worker needs to import your file, and nothing more. The alternative,
+`unsafe-eval`, would have allowed strings to be executed in the main document,
+where every open file and every setting lives; `blob:` in a worker cannot
+reach any of it.
+
+So the sandbox is not a promise that plugins behave. It is the fact that the
+worker has no DOM to touch, no IPC to call and no socket to open, whatever the
+code inside it tries.
 
 ### Testing your plugin
 
