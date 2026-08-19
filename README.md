@@ -2,10 +2,12 @@
 
 # Verso
 
-**A beautiful, instant Markdown viewer and editor for Windows, macOS and Linux.**
+**A beautiful, instant Markdown viewer and editor.**
 
 Double-click a `.md` file — it opens in well under a second and looks like a
 finished document, not like source code.
+
+*verso* — the left-hand page of an open book.
 
 ![Verso rendering a document](docs/screenshots/light.png)
 
@@ -31,9 +33,17 @@ edit in place, and never damages your file.
   cells, click a cell to edit its source.
 - **Math and diagrams.** `$E = mc^2$` via KaTeX, ` ```mermaid ` fences via
   Mermaid — both loaded only when a document needs them.
-- **Tabs, folder tree, outline, find & replace**, session restore.
-- **Light and dark themes** built from CSS tokens — [write your own](docs/themes.md).
-- **~2 MB installer, ~40 MB of RAM.** Tauri 2 and the system webview, no
+- **Tabs, folder tree, outline, find & replace**, session restore, section
+  folding, go-to-heading.
+- **Export and print.** A standalone HTML file that carries its own styles,
+  pictures, diagrams and formulas — and the print dialog, which is where
+  "Save as PDF" lives.
+- **Light and dark themes** built from CSS tokens — [write your own](docs/themes.md)
+  and Verso repaints as you save the file.
+- **Opens what other editors will not.** UTF-8, UTF-16, and the eight-bit
+  encodings everything written before UTF-8 is in: windows-1251, DOS 866,
+  KOI8-R/U, ISO 8859-5, windows-1252 — saved back byte for byte.
+- **3.8 MB installer, ~40 MB of RAM.** Tauri 2 and the system webview, no
   bundled browser.
 
 ### Your file is safe
@@ -55,8 +65,8 @@ Math and diagrams render inline, and only load when a document actually uses the
 
 ## Install
 
-Download the installer for your platform from
-[Releases](../../releases), or build it yourself:
+There is no release to download yet — 0.1 has not been published. Build it
+yourself:
 
 ```bash
 npm ci
@@ -66,6 +76,14 @@ npm run tauri build
 Requires Node 22+ and a stable Rust toolchain. On Linux you also need
 `libwebkit2gtk-4.1-dev` and the usual GTK build dependencies (see
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+
+### About the warning you will see
+
+The installer is not code-signed — a certificate costs a few hundred dollars a
+year, which is not something a free project carries. Windows SmartScreen will
+say "unknown publisher": choose **More info → Run anyway**. macOS will need
+**right-click → Open** the first time. If that is not a trade you want to
+make, building from source above gives you the same application without it.
 
 ## Develop
 
@@ -93,9 +111,15 @@ Decisions are recorded as [ADRs](.cursor/decisions/).
 
 ## Status
 
-**0.1** — the first working release. Plugins, HTML/PDF export and
-folder-wide search are next; see the changelog for current limitations.
+**0.1, unreleased.** Everything described above works, and is built and used
+on Windows every day. macOS and Linux are wired into CI but have not been run
+by hand yet — treat them as untested rather than supported until the first
+release says otherwise.
+
+Not there yet: plugins, folder-wide search, and renaming or deleting files
+from the tree. See the [changelog](CHANGELOG.md) for the current limits.
 
 ## License
 
-MIT
+[MIT](LICENSE) © SIMS tech. Part of the [SIMS tech](https://sims-service.com/products)
+product line.
