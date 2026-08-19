@@ -43,7 +43,12 @@
   let showAbout = $state(false);
   let showPalette = $state(false);
   let pendingRecovery = $state<DraftInfo[]>([]);
-  let closeRequest = $state<{ index: number; quitting: boolean } | null>(null);
+  let closeRequest = $state<{
+    index: number;
+    quitting: boolean;
+    /** Part of a "close others" sweep: ask about the next one afterwards. */
+    sweeping?: boolean;
+  } | null>(null);
   let narrow = $state(false);
   /**
    * Restoring a session is asynchronous. Until it settles we render nothing
@@ -57,9 +62,14 @@
   const activeTab = $derived(tabs.active);
 
   // The folder on screen is watched for as long as it is on screen, whatever
-  // happens to the tabs in the meantime.
+  // happens to the tabs in the meantime. The user's theme file joins it, so
+  // that editing a theme repaints the application as you save it — which is
+  // the difference between writing a theme and guessing at one.
   $effect(() => {
-    tabs.setWatchExtras(workspace.treeRoot ? [workspace.treeRoot] : []);
+    const extras = [workspace.treeRoot, settings.value.themeFile].filter((p): p is string =>
+      Boolean(p)
+    );
+    tabs.setWatchExtras(extras);
   });
 
   function bump(): void {
@@ -101,6 +111,39 @@
     bump();
   }
 
+  /**
+   * Close a set of tabs, asking about each one that has unsaved changes.
+   *
+   * Tracked by id rather than index: closing one tab renumbers the rest, and
+   * an index taken before the first close points at a different document by
+   * the time the reader answers the second question.
+   */
+  let sweepIds = $state<string[]>([]);
+
+  function closeTabs(ids: string[]): void {
+    const indexes = ids
+      .map((id) => tabs.tabs.findIndex((tab) => tab.id === id))
+      .filter((index) => index >= 0);
+
+    const dirty = tabs.closeMany(indexes);
+    sweepIds = dirty.map((index) => tabs.tabs[index]?.id).filter((id): id is string => Boolean(id));
+
+    bump();
+    askAboutNextSweep();
+  }
+
+  function askAboutNextSweep(): void {
+    while (sweepIds.length > 0) {
+      const id = sweepIds[0]!;
+      sweepIds = sweepIds.slice(1);
+      const index = tabs.tabs.findIndex((tab) => tab.id === id);
+      if (index >= 0) {
+        closeRequest = { index, quitting: false, sweeping: true };
+        return;
+      }
+    }
+  }
+
   function requestClose(index: number): void {
     const tab = tabs.tabs[index];
     if (!tab) return;
@@ -129,9 +172,14 @@
     finishClose(request);
   }
 
-  function finishClose(request: { index: number; quitting: boolean }): void {
+  function finishClose(request: { index: number; quitting: boolean; sweeping?: boolean }): void {
     closeRequest = null;
     bump();
+
+    if (request.sweeping) {
+      askAboutNextSweep();
+      return;
+    }
     if (!request.quitting) return;
 
     // Quitting asks about every unsaved document, not just the first one.
@@ -398,6 +446,22 @@
     // Ctrl+O/S/W are owned by the native menu; nothing to do here.
   }
 
+  /**
+   * The webview's own context menu has no business here.
+   *
+   * Right-clicking a tab offered Back, Refresh, Print and "Send tab to your
+   * devices" — a browser showing through a desktop application. It is
+   * suppressed everywhere we have something of our own to put in its place,
+   * and kept inside the document's text, where the system menu is genuinely
+   * the right one: cut, copy and paste cannot be reimplemented from a webview
+   * without asking for clipboard permissions we do not want.
+   */
+  function onContextMenu(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.cm-content') || target?.closest('input, textarea')) return;
+    event.preventDefault();
+  }
+
   function onResize(): void {
     narrow = window.innerWidth < 900;
     workspace.overlayMode = narrow;
@@ -449,6 +513,12 @@
 
       unlisteners.push(
         await onFsChanged(async ({ path, kind }) => {
+          // The theme file is watched too: save it in your editor and the
+          // application repaints.
+          if (settings.value.themeFile && path === settings.value.themeFile) {
+            await settings.applyUserTheme();
+            return;
+          }
           await tabs.onExternalChange(path, kind);
           if (workspace.treeRoot && path.startsWith(workspace.treeRoot)) {
             await workspace.refreshTree();
@@ -491,7 +561,12 @@
   });
 </script>
 
-<svelte:window onkeydown={onKeydown} onresize={onResize} onfocus={() => void tabs.recheckAll()} />
+<svelte:window
+  onkeydown={onKeydown}
+  onresize={onResize}
+  oncontextmenu={onContextMenu}
+  onfocus={() => void tabs.recheckAll()}
+/>
 
 <div class="app-shell">
   {#if workspace.sidebarVisible}
@@ -503,7 +578,7 @@
   {/if}
 
   <div class="app-main">
-    <TabBar onCloseTab={requestClose} />
+    <TabBar onCloseTab={requestClose} onCloseTabs={closeTabs} />
 
     {#if settings.value.showToolbar && tabs.hasTabs}
       <Toolbar {revision} />

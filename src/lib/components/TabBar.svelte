@@ -1,11 +1,71 @@
 <script lang="ts">
   import { tabs } from '../stores/tabs.svelte';
+  import { t } from '../stores/i18n';
+  import { revealInOs } from '../ipc/commands';
+  import ContextMenu, { type ContextItem } from './ContextMenu.svelte';
 
   interface Props {
     onCloseTab: (index: number) => void;
+    /** Close a set of tabs, asking about any with unsaved changes. */
+    onCloseTabs: (ids: string[]) => void;
   }
 
-  const { onCloseTab }: Props = $props();
+  const { onCloseTab, onCloseTabs }: Props = $props();
+
+  let context = $state<{ x: number; y: number; items: ContextItem[] } | null>(null);
+
+  /**
+   * The menu a tab strip is expected to have.
+   *
+   * Right-clicking a tab used to produce the webview's own menu — Back,
+   * Refresh, Print, "Send tab to your devices" — which is a browser showing
+   * through a desktop application. These are the things the tab itself can do.
+   */
+  function openTabMenu(event: MouseEvent, index: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const tab = tabs.tabs[index];
+    if (!tab) return;
+
+    const ids = (list: number[]): string[] =>
+      list.map((i) => tabs.tabs[i]?.id).filter((id): id is string => Boolean(id));
+
+    const items: ContextItem[] = [
+      { label: t('tab.close'), onSelect: () => onCloseTab(index) },
+      { label: t('tab.closeOthers'), onSelect: () => onCloseTabs(ids(tabs.othersThan(index))) },
+      { label: t('tab.closeRight'), onSelect: () => onCloseTabs(ids(tabs.rightOf(index))) },
+      {
+        label: t('tab.closeAll'),
+        onSelect: () => onCloseTabs(ids(tabs.tabs.map((_, i) => i)))
+      },
+      { label: t('tab.save'), onSelect: () => void tabs.save(index), divider: true },
+      { label: t('tab.saveAs'), onSelect: () => void tabs.saveAs(index) }
+    ];
+
+    if (tab.path) {
+      items.push(
+        { label: t('tab.copyPath'), onSelect: () => void copy(tab.path!), divider: true },
+        { label: t('tab.copyName'), onSelect: () => void copy(tab.fileName) },
+        { label: t('tree.reveal'), onSelect: () => void revealInOs(tab.path!) },
+        {
+          label: t('tab.reload'),
+          onSelect: () => void tabs.reloadFromDisk(index),
+          divider: true
+        }
+      );
+    }
+
+    context = { x: event.clientX, y: event.clientY, items };
+  }
+
+  async function copy(text: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (error) {
+      console.warn('copy failed', error);
+    }
+  }
 
   function onAuxClick(event: MouseEvent, index: number): void {
     if (event.button === 1) {
@@ -62,6 +122,7 @@
         title={tab.path ?? tab.fileName}
         onclick={() => tabs.activate(index)}
         onauxclick={(e) => onAuxClick(e, index)}
+        oncontextmenu={(e) => openTabMenu(e, index)}
         onkeydown={(e) => onTabKeydown(e, index)}
       >
         <span class="name">{tab.fileName}</span>
@@ -92,6 +153,10 @@
       </div>
     {/each}
   </div>
+{/if}
+
+{#if context}
+  <ContextMenu x={context.x} y={context.y} items={context.items} onClose={() => (context = null)} />
 {/if}
 
 <style>

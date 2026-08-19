@@ -134,6 +134,11 @@ export interface Settings {
   showToolbar: boolean;
   /** `live` renders Markdown in place; `source` shows the file as written. */
   editorMode: 'live' | 'source';
+  /**
+   * Path to a user's own theme — one CSS file that overrides design tokens
+   * (docs/themes.md). Null means the built-in light and dark themes.
+   */
+  themeFile: string | null;
   recentFiles: string[];
 }
 
@@ -148,6 +153,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showStatusStrip: true,
   showToolbar: true,
   editorMode: 'live',
+  themeFile: null,
   recentFiles: []
 };
 

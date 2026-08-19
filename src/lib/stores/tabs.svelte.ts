@@ -452,6 +452,38 @@ class TabsStore {
     void this.syncWatchList();
   }
 
+  /**
+   * Close several tabs at once.
+   *
+   * Right to left: closing shifts every index after it, and walking backwards
+   * is the only order in which the indexes the caller worked out stay true.
+   * Tabs with unsaved changes are left alone and returned, so the caller can
+   * ask about them one at a time rather than deciding on the reader's behalf.
+   */
+  closeMany(indexes: number[]): number[] {
+    const dirty: number[] = [];
+    for (const index of [...indexes].sort((a, b) => b - a)) {
+      const tab = this.tabs[index];
+      if (!tab) continue;
+      if (tab.dirty) {
+        dirty.push(index);
+        continue;
+      }
+      this.close(index);
+    }
+    return dirty;
+  }
+
+  /** Indexes of every tab except one — "close the others". */
+  othersThan(index: number): number[] {
+    return this.tabs.map((_, i) => i).filter((i) => i !== index);
+  }
+
+  /** Indexes to the right of one — "close those to the right". */
+  rightOf(index: number): number[] {
+    return this.tabs.map((_, i) => i).filter((i) => i > index);
+  }
+
   // ---- external changes ----
 
   async reloadFromDisk(index: number): Promise<void> {

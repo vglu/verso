@@ -45,6 +45,9 @@ export const watchPaths = (paths: string[]): Promise<void> => invoke('watch_path
 export const setMenuLabels = (labels: Record<string, string>): Promise<void> =>
   invoke('set_menu_labels', { labels });
 
+/** The text of a user's theme file. A theme is one CSS file (docs/themes.md). */
+export const readTheme = (path: string): Promise<string> => invoke('read_theme', { path });
+
 // ---- drafts ----
 export const draftSave = (
   docId: string,

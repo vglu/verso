@@ -1,0 +1,73 @@
+/*
+ * Paper — a warm light theme for MDViewer.
+ *
+ * A complete, working example of the contract in docs/themes.md: it changes
+ * design tokens and nothing else, so every part of the application follows —
+ * the document, the sidebar, the tabs, the search panel, the code highlighting.
+ *
+ * Settings → Your own theme → choose this file.
+ */
+
+:root {
+  /* — Surfaces — */
+  --bg: #fdfaf3;
+  --bg-app: #f4efe4;
+  --bg-panel: #efe9db;
+  --bg-hover: rgba(70, 50, 25, 0.06);
+  --bg-active: rgba(70, 50, 25, 0.1);
+  --bg-code: #f3ecdd;
+  --bg-field: #fffdf8;
+
+  /* — Text — */
+  --fg: #2b2118;
+  --fg-ui: #43362a;
+  --fg-muted: #6d5b4a;
+  --fg-faint: #9a8a76;
+  --heading: #1f1710;
+
+  /* — Accent — */
+  --accent: #b5651d;
+  --accent-hover: #985314;
+  --accent-soft: rgba(181, 101, 29, 0.14);
+
+  /* — Utility — */
+  --border: rgba(70, 50, 25, 0.16);
+  --selection: rgba(181, 101, 29, 0.22);
+  --caret: #b5651d;
+  --quote-border: #d8cbb2;
+  --search-match: rgba(240, 190, 70, 0.4);
+  --search-match-current: rgba(230, 150, 20, 0.6);
+  --scrollbar: rgba(70, 50, 25, 0.22);
+  --scrollbar-hover: rgba(70, 50, 25, 0.36);
+  --shadow-panel: 0 12px 32px rgba(70, 50, 25, 0.14), 0 2px 8px rgba(70, 50, 25, 0.08);
+  --scrim: rgba(50, 38, 25, 0.4);
+}
+
+/*
+ * The dark half. A theme that defines only `:root` leaves the dark mode as it
+ * was, which is usually not what anyone wants — so both are here.
+ */
+[data-theme='dark'] {
+  --bg: #1e1a15;
+  --bg-app: #191512;
+  --bg-panel: #221d18;
+  --bg-hover: rgba(255, 240, 210, 0.06);
+  --bg-active: rgba(255, 240, 210, 0.1);
+  --bg-code: #262019;
+  --bg-field: #15120f;
+
+  --fg: #e6dccb;
+  --fg-ui: #d2c6b2;
+  --fg-muted: #9c8f7c;
+  --fg-faint: #776c5d;
+  --heading: #f2e9d8;
+
+  --accent: #e09a4e;
+  --accent-hover: #f0ad63;
+  --accent-soft: rgba(224, 154, 78, 0.16);
+
+  --border: rgba(255, 240, 210, 0.14);
+  --selection: rgba(224, 154, 78, 0.26);
+  --caret: #e09a4e;
+  --quote-border: #4a3f31;
+}

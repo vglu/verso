@@ -90,6 +90,7 @@ pub fn run() {
             commands::shell::open_external,
             commands::shell::get_startup_files,
             commands::menu::set_menu_labels,
+            commands::theme::read_theme,
             watcher::watch_paths,
         ])
         .build(tauri::generate_context!())

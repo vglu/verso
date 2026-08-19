@@ -20,6 +20,17 @@ export async function pickFile(defaultDir?: string | null): Promise<string | nul
   return typeof picked === 'string' ? picked : null;
 }
 
+/** A theme is one CSS file — the contract is in docs/themes.md. */
+export async function pickThemeFile(defaultDir?: string | null): Promise<string | null> {
+  const picked = await open({
+    multiple: false,
+    directory: false,
+    filters: [{ name: 'CSS theme', extensions: ['css'] }],
+    ...(defaultDir ? { defaultPath: defaultDir } : {})
+  });
+  return typeof picked === 'string' ? picked : null;
+}
+
 export async function pickFolder(defaultDir?: string | null): Promise<string | null> {
   const picked = await open({
     multiple: false,

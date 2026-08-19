@@ -3,6 +3,7 @@
   import { settings } from '../stores/settings.svelte';
   import { t } from '../stores/i18n';
   import type { LangSetting, ThemeSetting } from '../ipc/types';
+  import { pickThemeFile } from '../ipc/dialogs';
 
   interface Props {
     onClose: () => void;
@@ -15,6 +16,15 @@
     { value: 'dark', labelKey: 'settings.themeDark' },
     { value: 'system', labelKey: 'settings.themeSystem' }
   ];
+
+  async function chooseTheme(): Promise<void> {
+    const picked = await pickThemeFile(settings.value.themeFile);
+    if (picked) settings.setThemeFile(picked);
+  }
+
+  function themeName(path: string): string {
+    return path.split(/[\\/]/).pop() ?? path;
+  }
 
   const langs: { value: LangSetting; label: string }[] = [
     { value: 'system', label: 'System' },
@@ -39,6 +49,33 @@
         {/each}
       </div>
     </div>
+
+    <!-- A theme is one CSS file that overrides design tokens (docs/themes.md).
+         It sits under the built-in theme choice because that is what it
+         replaces. -->
+    <div class="row">
+      <span class="label">{t('settings.customTheme')}</span>
+      <div class="theme-file">
+        {#if settings.value.themeFile}
+          <span class="theme-name" title={settings.value.themeFile}>
+            {themeName(settings.value.themeFile)}
+          </span>
+          <button class="btn" onclick={chooseTheme}>{t('settings.themeChange')}</button>
+          <button class="btn" onclick={() => settings.setThemeFile(null)}>
+            {t('settings.themeRemove')}
+          </button>
+        {:else}
+          <button class="btn" onclick={chooseTheme}>{t('settings.themeChoose')}</button>
+        {/if}
+      </div>
+    </div>
+
+    {#if settings.themeError}
+      <div class="row">
+        <span class="label"></span>
+        <span class="theme-error">{t('settings.themeFailed')}</span>
+      </div>
+    {/if}
 
     <div class="row">
       <span class="label">{t('settings.language')}</span>
@@ -145,6 +182,29 @@
   .label {
     font-size: 13px;
     color: var(--fg-ui);
+  }
+
+  .theme-file {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+  }
+
+  .theme-name {
+    font-size: 12px;
+    color: var(--fg-muted);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    direction: rtl;
+  }
+
+  .theme-error {
+    font-size: 12px;
+    color: var(--warning);
+    text-align: right;
   }
 
   .segment {

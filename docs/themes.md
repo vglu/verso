@@ -14,9 +14,11 @@ editor, the sidebar, the tabs and the code highlighting.
 }
 ```
 
-> Status: themes ship as built-in light/dark in 0.1. Loading a user CSS file
-> from disk lands in 0.2 — this contract is published now so themes written
-> today keep working.
+Choose your file in **Settings → Your own theme**. It is applied over the
+built-in theme and remembered between sessions, and MDViewer watches it: save
+the file in your editor and the window repaints, which is the difference
+between writing a theme and guessing at one. `docs/themes/paper.css` is a
+complete example to start from.
 
 ## Rules
 

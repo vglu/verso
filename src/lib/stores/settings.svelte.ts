@@ -6,6 +6,7 @@
 import { DEFAULT_SETTINGS, type Settings, type ThemeSetting } from '../ipc/types';
 import { setMenuLabels, settingsLoad, settingsSave } from '../ipc/commands';
 import { getLang, menuLabels, setLang } from './i18n';
+import { clearUserTheme, loadUserTheme } from '../ui/userTheme';
 import { THEME_CHANGED_EVENT } from '../editor/livePreview/richWidgets';
 
 const THEME_MIRROR_KEY = 'mdviewer.theme';
@@ -30,6 +31,32 @@ class SettingsStore {
     this.applyTheme(false);
     this.applyTypography();
     this.watchSystemTheme();
+    void this.applyUserTheme();
+  }
+
+  /** The user's own theme file, if they have chosen one. */
+  themeError = $state<string | null>(null);
+
+  async applyUserTheme(): Promise<void> {
+    const path = this.value.themeFile;
+    if (!path) {
+      clearUserTheme();
+      this.themeError = null;
+      return;
+    }
+
+    const result = await loadUserTheme(path);
+    // A theme that has been moved or deleted leaves the application in its
+    // built-in colours and says so, rather than failing silently or refusing
+    // to start.
+    this.themeError = result.ok ? null : (result.error ?? 'failed');
+  }
+
+  /** Choose, replace or remove the user's theme. */
+  setThemeFile(path: string | null): void {
+    this.value = { ...this.value, themeFile: path };
+    void this.applyUserTheme();
+    this.persist();
   }
 
   /** Patch settings, apply side effects, persist (debounced). */
