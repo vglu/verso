@@ -282,6 +282,32 @@ input.md-task:checked {
   border-top-right-radius: var(--radius-m);
 }
 
+/* Front matter: the file's metadata, set apart from its text. Quiet enough to
+   read past, legible enough to edit. */
+.cm-line.md-frontmatter {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  line-height: 1.7;
+  color: var(--fg-muted);
+  background: var(--bg-code);
+  padding-left: var(--sp-3);
+  padding-right: var(--sp-3);
+  border-left: 2px solid var(--border);
+}
+
+.cm-line.md-frontmatter-first {
+  padding-top: 6px;
+  border-top-left-radius: var(--radius-m);
+  border-top-right-radius: var(--radius-m);
+}
+
+.cm-line.md-frontmatter-last {
+  padding-bottom: 6px;
+  margin-bottom: 0.9em;
+  border-bottom-left-radius: var(--radius-m);
+  border-bottom-right-radius: var(--radius-m);
+}
+
 .cm-line.md-table-src {
   font-family: var(--font-mono);
   font-size: 0.875em;

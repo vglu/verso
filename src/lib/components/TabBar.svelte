@@ -14,6 +14,34 @@
     }
   }
 
+  /**
+   * A tab strip is one stop on the Tab key, not one per document.
+   *
+   * With every tab tabbable, reaching the editor from the sidebar meant
+   * pressing Tab once for each open file. Arrow keys move between tabs, which
+   * is what a tablist is supposed to do.
+   */
+  function onTabKeydown(event: KeyboardEvent, index: number): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      tabs.activate(index);
+      return;
+    }
+
+    const delta = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+    if (delta === 0) return;
+
+    event.preventDefault();
+    tabs.activateNext(delta);
+    focusActiveTab(event.currentTarget as HTMLElement);
+  }
+
+  function focusActiveTab(from: HTMLElement): void {
+    const strip = from.closest('.tabbar');
+    const next = strip?.querySelectorAll<HTMLElement>('[role="tab"]')[tabs.activeIndex];
+    next?.focus();
+  }
+
   function onWheel(event: WheelEvent): void {
     const el = event.currentTarget as HTMLElement;
     if (el.scrollWidth > el.clientWidth) {
@@ -29,12 +57,12 @@
         class="tab"
         class:active={index === tabs.activeIndex}
         role="tab"
-        tabindex="0"
+        tabindex={index === tabs.activeIndex ? 0 : -1}
         aria-selected={index === tabs.activeIndex}
         title={tab.path ?? tab.fileName}
         onclick={() => tabs.activate(index)}
         onauxclick={(e) => onAuxClick(e, index)}
-        onkeydown={(e) => e.key === 'Enter' && tabs.activate(index)}
+        onkeydown={(e) => onTabKeydown(e, index)}
       >
         <span class="name">{tab.fileName}</span>
 

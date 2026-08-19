@@ -4,8 +4,8 @@
  * right background before the first frame (anti-FOUC).
  */
 import { DEFAULT_SETTINGS, type Settings, type ThemeSetting } from '../ipc/types';
-import { settingsLoad, settingsSave } from '../ipc/commands';
-import { setLang } from './i18n';
+import { setMenuLabels, settingsLoad, settingsSave } from '../ipc/commands';
+import { menuLabels, setLang } from './i18n';
 import { THEME_CHANGED_EVENT } from '../editor/livePreview/richWidgets';
 
 const THEME_MIRROR_KEY = 'mdviewer.theme';
@@ -26,6 +26,7 @@ class SettingsStore {
     }
     this.loaded = true;
     setLang(this.value.uiLang);
+    this.syncMenuLanguage();
     this.applyTheme(false);
     this.applyTypography();
     this.watchSystemTheme();
@@ -37,11 +38,26 @@ class SettingsStore {
     this.value = { ...this.value, ...patch };
 
     if (themeChanged) this.applyTheme(true);
-    if (patch.uiLang !== undefined) setLang(this.value.uiLang);
+    if (patch.uiLang !== undefined) {
+      setLang(this.value.uiLang);
+      this.syncMenuLanguage();
+    }
     if (patch.editorFontSize !== undefined || patch.editorMaxWidth !== undefined) {
       this.applyTypography();
     }
     this.persist();
+  }
+
+  /**
+   * Hand the native menu its labels in the current language.
+   *
+   * The menu is built in Rust, before the frontend knows anything, so it
+   * starts out in English and is re-labelled the moment the settings are
+   * loaded. Failing is not worth interrupting anyone over: an English menu is
+   * a blemish, not a broken application.
+   */
+  private syncMenuLanguage(): void {
+    void setMenuLabels(menuLabels()).catch((e) => console.warn('menu labels failed', e));
   }
 
   private persist(): void {

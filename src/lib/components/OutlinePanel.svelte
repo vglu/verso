@@ -115,6 +115,7 @@
             class="item"
             class:active={match.index === workspace.activeOutline}
             class:top={match.item.level === 1}
+            aria-current={match.index === workspace.activeOutline ? 'true' : undefined}
             style="padding-left: {10 + (match.item.level - 1) * 11}px"
             onclick={() => onRevealHeading(match.item.from)}
             title={match.item.text}

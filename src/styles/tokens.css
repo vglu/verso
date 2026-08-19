@@ -108,3 +108,44 @@
     --t-press: 0ms;
   }
 }
+
+/*
+ * High-contrast mode.
+ *
+ * The system replaces our palette with its own, and everything we build out of
+ * tint alone stops existing: a hovered row, the active tab, a selected file,
+ * the panel edges. Those go back to being drawn with borders and the system's
+ * own colours, which are the only ones that survive here.
+ */
+@media (forced-colors: active) {
+  :root {
+    --border: CanvasText;
+    --accent: LinkText;
+    --accent-soft: Canvas;
+    --bg-hover: Canvas;
+    --bg-active: Canvas;
+    --scrim: Canvas;
+    --shadow-panel: none;
+  }
+
+  .btn,
+  .icon-btn,
+  input,
+  select {
+    border: 1px solid ButtonText;
+  }
+
+  :focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 1px;
+  }
+
+  /* Anything that says "this one" with a tint says it with a border instead. */
+  [aria-current='true'],
+  [aria-selected='true'] {
+    outline: 1px solid Highlight;
+    outline-offset: -1px;
+    forced-color-adjust: none;
+    color: Highlight;
+  }
+}

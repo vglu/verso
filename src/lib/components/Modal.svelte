@@ -11,10 +11,50 @@
 
   const { title, onClose, children, footer }: Props = $props();
 
+  let dialog = $state<HTMLElement | null>(null);
+
   function onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       event.stopPropagation();
       onClose();
+      return;
+    }
+    if (event.key === 'Tab') trapTab(event);
+  }
+
+  /**
+   * Keep Tab inside the dialog.
+   *
+   * A modal covers the window, so tabbing out of it means moving focus to
+   * things the reader cannot see or reach — the editor behind the scrim, the
+   * sidebar, the browser chrome. They come back to a dialog that no longer
+   * answers the keyboard.
+   */
+  function trapTab(event: KeyboardEvent): void {
+    if (!dialog) return;
+
+    const focusable = [
+      ...dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+    ].filter((el) => el.offsetParent !== null || el === document.activeElement);
+
+    if (focusable.length === 0) {
+      event.preventDefault();
+      dialog.focus();
+      return;
+    }
+
+    const first = focusable[0]!;
+    const last = focusable[focusable.length - 1]!;
+    const active = document.activeElement;
+
+    if (event.shiftKey && (active === first || active === dialog)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
     }
   }
 
@@ -36,6 +76,7 @@
     aria-modal="true"
     aria-label={title}
     tabindex="-1"
+    bind:this={dialog}
     use:autofocus
     onclick={(e) => e.stopPropagation()}
     in:modalIn

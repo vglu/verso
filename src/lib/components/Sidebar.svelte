@@ -4,8 +4,12 @@
   import { workspace } from '../stores/workspace.svelte';
   import { tabs } from '../stores/tabs.svelte';
   import { t } from '../stores/i18n';
-  import { baseName } from '../editor/pathUtil';
+  import { baseName, dirName } from '../editor/pathUtil';
+  import { revealInOs } from '../ipc/commands';
+  import ContextMenu, { type ContextItem } from './ContextMenu.svelte';
+  import type { TreeEntry } from '../ipc/types';
   import { APP_NAME, SIDEBAR_CONDENSE_WIDTH, loadVersion, signatureLine } from '../ui/product';
+  import { handleTreeKey } from '../ui/treeKeys';
 
   interface Props {
     onOpenFile: (path: string) => void;
@@ -32,6 +36,59 @@
   const activePath = $derived(tabs.active?.path ?? null);
 
   let resizing = $state(false);
+  let treeEl = $state<HTMLElement | null>(null);
+  let context = $state<{ x: number; y: number; items: ContextItem[] } | null>(null);
+
+  function onTreeKeydown(event: KeyboardEvent): void {
+    if (!treeEl) return;
+    const result = handleTreeKey(treeEl, event, document.activeElement);
+    if (!result.handled) return;
+
+    event.preventDefault();
+    result.focus?.focus();
+    if (result.toggle) void workspace.toggleDir(result.toggle);
+    if (result.open) onOpenFile(result.open);
+  }
+
+  /**
+   * Right-click on a row.
+   *
+   * Everything here is something the tree could not otherwise do: showing a
+   * file in Explorer, starting a document in a particular folder, or getting
+   * at its path to paste somewhere else.
+   */
+  function openContextMenu(entry: TreeEntry, x: number, y: number): void {
+    const items: ContextItem[] = entry.isDir
+      ? [
+          { label: t('tree.newFileHere'), onSelect: () => onNewFile(entry.path) },
+          { label: t('tree.reveal'), onSelect: () => void revealInOs(entry.path) },
+          { label: t('tree.copyPath'), onSelect: () => void copyPath(entry.path), divider: true }
+        ]
+      : [
+          { label: t('tree.open'), onSelect: () => onOpenFile(entry.path) },
+          { label: t('tree.newFileHere'), onSelect: () => onNewFile(dirName(entry.path)) },
+          { label: t('tree.reveal'), onSelect: () => void revealInOs(entry.path), divider: true },
+          { label: t('tree.copyPath'), onSelect: () => void copyPath(entry.path) }
+        ];
+
+    context = { x, y, items };
+  }
+
+  async function copyPath(path: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(path);
+    } catch (error) {
+      console.warn('copy path failed', error);
+    }
+  }
+
+  /** Entering the tree lands on the open document, or on the first row. */
+  function onTreeFocus(): void {
+    if (!treeEl || treeEl.contains(document.activeElement) === false) {
+      const current = treeEl?.querySelector<HTMLElement>('[aria-current="true"]');
+      (current ?? treeEl?.querySelector<HTMLElement>('[role="treeitem"]'))?.focus();
+    }
+  }
 
   function startResize(event: PointerEvent): void {
     resizing = true;
@@ -82,9 +139,23 @@
       {#if rootEntries.length === 0}
         <div class="hint">{t('sidebar.emptyTree')}</div>
       {:else}
-        <div role="tree" aria-label={t('sidebar.files')}>
+        <!-- One tab stop for the whole tree; arrows move inside it. -->
+        <div
+          role="tree"
+          aria-label={t('sidebar.files')}
+          tabindex="0"
+          bind:this={treeEl}
+          onkeydown={onTreeKeydown}
+          onfocus={onTreeFocus}
+        >
           {#each rootEntries as entry (entry.path)}
-            <FileTreeNode {entry} depth={0} {activePath} onOpen={onOpenFile} />
+            <FileTreeNode
+              {entry}
+              depth={0}
+              {activePath}
+              onOpen={onOpenFile}
+              onContext={openContextMenu}
+            />
           {/each}
         </div>
       {/if}
@@ -114,6 +185,10 @@
     onpointerdown={startResize}
   ></div>
 </aside>
+
+{#if context}
+  <ContextMenu x={context.x} y={context.y} items={context.items} onClose={() => (context = null)} />
+{/if}
 
 <style>
   .sidebar {

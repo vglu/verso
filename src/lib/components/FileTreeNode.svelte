@@ -8,9 +8,10 @@
     depth: number;
     activePath: string | null;
     onOpen: (path: string) => void;
+    onContext: (entry: TreeEntry, x: number, y: number) => void;
   }
 
-  const { entry, depth, activePath, onOpen }: Props = $props();
+  const { entry, depth, activePath, onOpen, onContext }: Props = $props();
 
   const isOpen = $derived(Boolean(workspace.expanded[entry.path]));
   const isActive = $derived(activePath === entry.path);
@@ -27,18 +28,30 @@
   }
 </script>
 
+<!-- Keys are handled once, by the tree itself: a row is not a tab stop, and a
+     handler here would fight the arrow navigation in Sidebar.svelte. -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
   class="row"
   class:active={isActive}
   class:dir={entry.isDir}
   style="padding-left: {8 + depth * 14}px"
   role="treeitem"
-  tabindex="0"
+  data-path={entry.path}
+  data-dir={entry.isDir ? 'true' : undefined}
+  data-depth={depth}
+  aria-level={depth + 1}
   aria-expanded={entry.isDir ? isOpen : undefined}
   aria-selected={isActive}
+  aria-current={isActive ? 'true' : undefined}
+  tabindex="-1"
   title={entry.path}
   onclick={activate}
-  onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), activate())}
+  oncontextmenu={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onContext(entry, e.clientX, e.clientY);
+  }}
 >
   {#if entry.isDir}
     <svg class="chev" class:open={isOpen} viewBox="0 0 12 12" aria-hidden="true">
@@ -60,7 +73,7 @@
 
 {#if entry.isDir && isOpen}
   {#each children as child (child.path)}
-    <Self entry={child} depth={depth + 1} {activePath} {onOpen} />
+    <Self entry={child} depth={depth + 1} {activePath} {onOpen} {onContext} />
   {/each}
 {/if}
 

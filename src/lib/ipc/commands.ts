@@ -36,6 +36,15 @@ export const resolveTreeRoot = (filePath: string): Promise<string> =>
 
 export const watchPaths = (paths: string[]): Promise<void> => invoke('watch_paths', { paths });
 
+/**
+ * Give the native menu its labels.
+ *
+ * The menu is built in Rust but translated here: one dictionary, in the place
+ * where every other string in the application lives.
+ */
+export const setMenuLabels = (labels: Record<string, string>): Promise<void> =>
+  invoke('set_menu_labels', { labels });
+
 // ---- drafts ----
 export const draftSave = (
   docId: string,

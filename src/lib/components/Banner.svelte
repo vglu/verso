@@ -19,7 +19,17 @@
   const { tone = 'warning', message, actions = [], onDismiss }: Props = $props();
 </script>
 
-<div class="banner" class:info={tone === 'info'} role="status" in:bannerIn out:bannerOut>
+<!-- A warning interrupts on purpose: "this file changed under you" has to reach
+     a screen reader now, not after whatever it is reading. Information waits
+     its turn. -->
+<div
+  class="banner"
+  class:info={tone === 'info'}
+  role={tone === 'warning' ? 'alert' : 'status'}
+  aria-live={tone === 'warning' ? 'assertive' : 'polite'}
+  in:bannerIn
+  out:bannerOut
+>
   <span class="msg">{message}</span>
 
   <div class="actions">

@@ -479,13 +479,29 @@ class TabsStore {
     tab.baseMtimeMs = stat?.exists ? stat.mtimeMs : null;
   }
 
+  /**
+   * Paths to watch besides the open files — the folder the tree is showing.
+   *
+   * Kept here rather than passed in at each call: every `syncWatchList()` from
+   * opening, closing or saving replaces the whole list, so a root supplied
+   * once at startup was dropped the first time a tab changed. The tree then
+   * stopped noticing files appearing and disappearing, for the rest of the
+   * session, silently.
+   */
+  private watchExtras: string[] = [];
+
+  setWatchExtras(paths: string[]): void {
+    this.watchExtras = paths.filter(Boolean);
+    void this.syncWatchList();
+  }
+
   /** Tell the backend which paths to observe (open files + their folders). */
   async syncWatchList(extra: string[] = []): Promise<void> {
     const paths = this.tabs
       .map((t) => t.path)
       .filter((p): p is string => Boolean(p))
-      .concat(extra);
-    await watchPaths(paths).catch((e) => console.warn('watch failed', e));
+      .concat(this.watchExtras, extra);
+    await watchPaths([...new Set(paths)]).catch((e) => console.warn('watch failed', e));
   }
 
   /** Flush pending drafts — called before the window closes. */

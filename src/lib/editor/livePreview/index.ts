@@ -28,6 +28,7 @@ import {
   TableWidget
 } from './widgets';
 import { MathWidget, MermaidWidget } from './richWidgets';
+import { frontmatterRange, isInFrontmatter } from '../frontmatter';
 
 /**
  * Live preview: Markdown renders in place, and the raw syntax comes back on
@@ -176,6 +177,23 @@ export function buildInlineForRange(state: EditorState, from: number, to: number
   const dir = state.facet(documentDir);
   const built: Built = { decorations: [], atomics: [] };
 
+  // Front matter is metadata, and the parser has no idea: it reads the opening
+  // `---` as a rule and the closing one as a heading underline. Style those
+  // lines as a block and keep the tree's opinion of them out of it.
+  const matter = frontmatterRange(state);
+  if (matter && matter.from < to && matter.to > from) {
+    for (let n = matter.firstLine; n <= matter.lastLine; n++) {
+      const line = state.doc.line(n);
+      const edge =
+        n === matter.firstLine
+          ? ' md-frontmatter-first'
+          : n === matter.lastLine
+            ? ' md-frontmatter-last'
+            : '';
+      pushLine(built, `md-frontmatter${edge}`, line.from);
+    }
+  }
+
   // Ranges the block layer owns. Inline decorations inside them are either
   // thrown away (the block is drawn as a widget) or actively harmful (the
   // block is showing its source for editing, and concealing the markup there
@@ -188,6 +206,7 @@ export function buildInlineForRange(state: EditorState, from: number, to: number
     to,
     enter: (node) => {
       if (insideBlock(node.from)) return false;
+      if (isInFrontmatter(matter, node.from, node.to)) return false;
       return handleNode(node, state, active, dir, built, from, to);
     }
   });
@@ -945,6 +964,7 @@ function cancelPendingReveal(): void {
 
 const editingTracker = EditorView.domEventHandlers({
   mousedown: (_event, view) => {
+    if (view.composing) return false;
     if (!view.state.field(editingField, false)) {
       cancelPendingReveal();
       // Deferred on purpose: revealing syntax re-flows the line, and doing
@@ -963,6 +983,17 @@ const editingTracker = EditorView.domEventHandlers({
     return false;
   },
   keydown: (_event, view) => {
+    // Never mid-composition. An input method builds a word over several
+    // keystrokes, and a transaction dispatched between them tears down the
+    // composition the browser is holding — the half-typed word disappears.
+    // Anything worth revealing will still be revealed when composition ends.
+    if (view.composing) return false;
+    if (!view.state.field(editingField, false)) {
+      view.dispatch({ effects: setEditing.of(true) });
+    }
+    return false;
+  },
+  compositionend: (_event, view) => {
     if (!view.state.field(editingField, false)) {
       view.dispatch({ effects: setEditing.of(true) });
     }

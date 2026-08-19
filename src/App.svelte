@@ -56,6 +56,12 @@
 
   const activeTab = $derived(tabs.active);
 
+  // The folder on screen is watched for as long as it is on screen, whatever
+  // happens to the tabs in the meantime.
+  $effect(() => {
+    tabs.setWatchExtras(workspace.treeRoot ? [workspace.treeRoot] : []);
+  });
+
   function bump(): void {
     revision += 1;
     scheduleSessionSave();
@@ -420,7 +426,7 @@
       const drafts = await draftsList().catch(() => [] as DraftInfo[]);
       pendingRecovery = drafts.filter((d) => tabs.indexOfPath(d.path) < 0);
 
-      await tabs.syncWatchList(workspace.treeRoot ? [workspace.treeRoot] : []);
+      await tabs.syncWatchList();
 
       unlisteners.push(
         await onOpenFile(async ({ paths }) => {

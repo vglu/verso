@@ -13,7 +13,31 @@ const en: Dict = {
   'empty.openFile': 'Open file',
   'empty.openFolder': 'Open folder',
   'sidebar.newFile': 'New file in this folder',
+  // The native menu. Built in Rust, translated here — see setMenuLabels.
+  'menu.file': 'File',
+  'menu.edit': 'Edit',
+  'menu.view': 'View',
+  'menu.help': 'Help',
+  'menu.newFile': 'New File',
+  'menu.open': 'Open File…',
+  'menu.openFolder': 'Open Folder…',
+  'menu.save': 'Save',
+  'menu.saveAs': 'Save As…',
+  'menu.closeTab': 'Close Tab',
+  'menu.find': 'Find…',
+  'menu.goToHeading': 'Go to Heading…',
+  'menu.goToLine': 'Go to Line…',
+  'menu.toggleSidebar': 'Toggle Sidebar',
+  'menu.toggleOutline': 'Toggle Outline',
+  'menu.foldAll': 'Fold All Sections',
+  'menu.unfoldAll': 'Unfold All Sections',
+  'menu.settings': 'Settings…',
+  'menu.about': 'About MDViewer',
   'sidebar.filter': 'Filter headings',
+  'tree.open': 'Open',
+  'tree.newFileHere': 'New file here',
+  'tree.reveal': 'Show in Explorer',
+  'tree.copyPath': 'Copy path',
   'palette.title': 'Go to heading',
   'palette.placeholder': 'Type part of a heading',
   'palette.noMatch': 'No heading matches',
@@ -130,7 +154,30 @@ const ru: Dict = {
   'empty.openFile': 'Открыть файл',
   'empty.openFolder': 'Открыть папку',
   'sidebar.newFile': 'Новый файл в этой папке',
+  'menu.file': 'Файл',
+  'menu.edit': 'Правка',
+  'menu.view': 'Вид',
+  'menu.help': 'Справка',
+  'menu.newFile': 'Новый файл',
+  'menu.open': 'Открыть файл…',
+  'menu.openFolder': 'Открыть папку…',
+  'menu.save': 'Сохранить',
+  'menu.saveAs': 'Сохранить как…',
+  'menu.closeTab': 'Закрыть вкладку',
+  'menu.find': 'Найти…',
+  'menu.goToHeading': 'Перейти к заголовку…',
+  'menu.goToLine': 'Перейти к строке…',
+  'menu.toggleSidebar': 'Показать/скрыть панель файлов',
+  'menu.toggleOutline': 'Показать/скрыть оглавление',
+  'menu.foldAll': 'Свернуть все секции',
+  'menu.unfoldAll': 'Развернуть все секции',
+  'menu.settings': 'Настройки…',
+  'menu.about': 'О программе',
   'sidebar.filter': 'Фильтр заголовков',
+  'tree.open': 'Открыть',
+  'tree.newFileHere': 'Новый файл здесь',
+  'tree.reveal': 'Показать в проводнике',
+  'tree.copyPath': 'Копировать путь',
   'palette.title': 'Перейти к заголовку',
   'palette.placeholder': 'Введите часть заголовка',
   'palette.noMatch': 'Ничего не найдено',
@@ -256,6 +303,38 @@ export function setLang(setting: LangSetting): void {
 
 export function getLang(): 'ru' | 'en' {
   return current;
+}
+
+/**
+ * Labels for the native menu, keyed by the ids Rust builds it from.
+ *
+ * The submenu titles keep their `menu.` prefix because they are not commands;
+ * the items drop it, so the Rust side asks for `save` rather than
+ * `menu.save` and one dictionary answers both sides.
+ */
+export function menuLabels(): Record<string, string> {
+  const ids = [
+    'newFile',
+    'open',
+    'openFolder',
+    'save',
+    'saveAs',
+    'closeTab',
+    'find',
+    'goToHeading',
+    'goToLine',
+    'toggleSidebar',
+    'toggleOutline',
+    'foldAll',
+    'unfoldAll',
+    'settings',
+    'about'
+  ];
+
+  const out: Record<string, string> = {};
+  for (const id of ids) out[id] = t(`menu.${id}`);
+  for (const part of ['file', 'edit', 'view', 'help']) out[`menu.${part}`] = t(`menu.${part}`);
+  return out;
 }
 
 /** Translate a key, with optional {placeholder} substitution. */

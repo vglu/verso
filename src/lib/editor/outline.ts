@@ -1,5 +1,6 @@
 import { syntaxTree } from '@codemirror/language';
 import type { EditorState } from '@codemirror/state';
+import { frontmatterRange, isInFrontmatter } from './frontmatter';
 
 export interface OutlineItem {
   level: number;
@@ -13,9 +14,14 @@ export interface OutlineItem {
  */
 export function extractOutline(state: EditorState): OutlineItem[] {
   const items: OutlineItem[] = [];
+  // Front matter is metadata, not structure. Without this, `title: Notes`
+  // above its closing `---` parses as a setext heading, and the outline of
+  // every note that carries metadata opened with a line of it.
+  const matter = frontmatterRange(state);
 
   syntaxTree(state).iterate({
     enter: (node) => {
+      if (isInFrontmatter(matter, node.from, node.to)) return false;
       const atx = /^ATXHeading([1-6])$/.exec(node.name);
       const setext = /^SetextHeading([12])$/.exec(node.name);
       const match = atx ?? setext;
