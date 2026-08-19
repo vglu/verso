@@ -1,0 +1,119 @@
+<script lang="ts">
+  import Self from './FileTreeNode.svelte';
+  import { workspace } from '../stores/workspace.svelte';
+  import type { TreeEntry } from '../ipc/types';
+
+  interface Props {
+    entry: TreeEntry;
+    depth: number;
+    activePath: string | null;
+    onOpen: (path: string) => void;
+  }
+
+  const { entry, depth, activePath, onOpen }: Props = $props();
+
+  const isOpen = $derived(Boolean(workspace.expanded[entry.path]));
+  const isActive = $derived(activePath === entry.path);
+  const children = $derived(workspace.children[entry.path] ?? []);
+
+  function activate(): void {
+    if (entry.isDir) void workspace.toggleDir(entry.path);
+    else onOpen(entry.path);
+  }
+
+  /** Markdown extensions are noise in a Markdown app; the icon carries it. */
+  function displayName(name: string): string {
+    return name.replace(/\.(md|markdown|mdown|mkd)$/i, '');
+  }
+</script>
+
+<div
+  class="row"
+  class:active={isActive}
+  class:dir={entry.isDir}
+  style="padding-left: {8 + depth * 14}px"
+  role="treeitem"
+  tabindex="0"
+  aria-expanded={entry.isDir ? isOpen : undefined}
+  aria-selected={isActive}
+  title={entry.path}
+  onclick={activate}
+  onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), activate())}
+>
+  {#if entry.isDir}
+    <svg class="chev" class:open={isOpen} viewBox="0 0 12 12" aria-hidden="true">
+      <path
+        d="M4.5 2.5L8 6l-3.5 3.5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  {:else}
+    <span class="chev spacer"></span>
+  {/if}
+
+  <span class="label">{entry.isDir ? entry.name : displayName(entry.name)}</span>
+</div>
+
+{#if entry.isDir && isOpen}
+  {#each children as child (child.path)}
+    <Self entry={child} depth={depth + 1} {activePath} {onOpen} />
+  {/each}
+{/if}
+
+<style>
+  .row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    height: 28px;
+    padding-right: var(--sp-2);
+    color: var(--fg-muted);
+    font-size: 13px;
+    cursor: default;
+    user-select: none;
+    border-radius: var(--radius-s);
+    transition:
+      background-color var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease);
+  }
+
+  .row:hover {
+    background: var(--bg-hover);
+    color: var(--fg-ui);
+  }
+
+  .row.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .row.dir {
+    color: var(--fg-ui);
+  }
+
+  .chev {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    color: var(--fg-faint);
+    transition: transform var(--t-fast) var(--ease);
+  }
+
+  .chev.open {
+    transform: rotate(90deg);
+  }
+
+  .spacer {
+    display: inline-block;
+  }
+
+  .label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+</style>

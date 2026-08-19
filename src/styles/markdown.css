@@ -1,0 +1,334 @@
+/*
+ * Document typography — the reading experience.
+ * These class names are the theme contract (DESIGN-SYSTEM §3): a theme may
+ * restyle them, so renaming one is a breaking change for user themes.
+ */
+
+.md-doc {
+  color: var(--fg);
+  font-family: var(--font-text);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  letter-spacing: -0.011em;
+}
+
+/* — Headings — */
+.cm-line.md-h1,
+.cm-line.md-h2,
+.cm-line.md-h3,
+.cm-line.md-h4,
+.cm-line.md-h5,
+.cm-line.md-h6 {
+  color: var(--heading);
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+/* Blank source lines already separate blocks, so heading margins stay modest —
+   otherwise the gap doubles and the page reads as loose. */
+.cm-line.md-h1 {
+  font-size: 2em;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0.5em 0 0.15em;
+}
+
+.cm-line.md-h2 {
+  font-size: 1.55em;
+  margin: 0.5em 0 0.1em;
+}
+
+.cm-line.md-h3 {
+  font-size: 1.25em;
+  margin: 0.4em 0 0.1em;
+}
+
+.cm-line.md-h4 {
+  font-size: 1.08em;
+  font-weight: 600;
+  margin: 0.35em 0 0.05em;
+}
+
+.cm-line.md-h5 {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0.3em 0 0.05em;
+}
+
+.cm-line.md-h6 {
+  font-size: 0.9em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin: 0.3em 0 0.05em;
+}
+
+/* The first heading should not push the document away from the top edge. */
+.cm-content > .cm-line:first-child.md-h1,
+.cm-content > .cm-line:first-child.md-h2,
+.cm-content > .cm-line:first-child.md-h3 {
+  margin-top: 0.1em;
+}
+
+/* — Inline — */
+.md-bold {
+  font-weight: 700;
+}
+
+.md-italic {
+  font-style: italic;
+}
+
+.md-strike {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--fg-muted);
+}
+
+.md-code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--bg-code);
+  border-radius: var(--radius-s);
+  padding: 1px 5px;
+}
+
+.md-link {
+  color: var(--accent);
+  text-decoration: none;
+  cursor: default;
+}
+
+.md-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.md-html {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--fg-muted);
+}
+
+/* — Lists — */
+.md-bullet {
+  color: var(--fg-faint);
+  font-weight: 700;
+}
+
+.md-li-num {
+  color: var(--fg-faint);
+}
+
+input.md-task {
+  appearance: none;
+  width: 1em;
+  height: 1em;
+  margin: 0 0.1em -0.12em 0;
+  border: 1.5px solid var(--fg-faint);
+  border-radius: var(--radius-s);
+  background: transparent;
+  cursor: pointer;
+  vertical-align: baseline;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease);
+}
+
+input.md-task:hover {
+  border-color: var(--accent);
+}
+
+input.md-task:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' d='M4 8.5l2.5 2.5L12 5.5'/%3E%3C/svg%3E");
+  background-size: 100%;
+}
+
+.md-task-done {
+  color: var(--fg-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+/* — Quotes — */
+.cm-line.md-quote {
+  border-left: 3px solid var(--quote-border);
+  padding-left: 1em;
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+/* — Code blocks — */
+.cm-line.md-codeblock-line {
+  background: var(--bg-code);
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  line-height: 1.6;
+  padding-left: var(--sp-4);
+  padding-right: var(--sp-4);
+}
+
+.cm-line.md-codeblock-first {
+  border-radius: var(--radius-m) var(--radius-m) 0 0;
+  padding-top: var(--sp-2);
+  margin-top: 0.6em;
+}
+
+.cm-line.md-codeblock-last {
+  border-radius: 0 0 var(--radius-m) var(--radius-m);
+  padding-bottom: var(--sp-2);
+  margin-bottom: 0.6em;
+  min-height: 0.6em;
+}
+
+.md-fence-chip {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  user-select: none;
+}
+
+/* — Rules — */
+.md-hr {
+  display: inline-block;
+  width: 100%;
+  height: 1px;
+  vertical-align: middle;
+  background: var(--border);
+}
+
+/* — Images — */
+.md-img-wrap {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.md-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-s);
+  vertical-align: middle;
+}
+
+.md-img-broken {
+  display: inline-block;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-m);
+  color: var(--fg-faint);
+  font-size: 0.85em;
+}
+
+/* — Tables — */
+.md-table-wrap {
+  overflow-x: auto;
+  margin: 0.8em 0;
+  padding-bottom: 2px;
+}
+
+.md-table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 0.95em;
+  line-height: 1.5;
+  min-width: min(100%, 320px);
+}
+
+.md-table th,
+.md-table td {
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.md-table th {
+  background: var(--bg-panel);
+  font-weight: 600;
+  color: var(--fg-ui);
+}
+
+.md-table tr:first-child th:first-child {
+  border-top-left-radius: var(--radius-m);
+}
+
+.md-table tr:first-child th:last-child {
+  border-top-right-radius: var(--radius-m);
+}
+
+.cm-line.md-table-src {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  color: var(--fg-ui);
+  background: var(--bg-code);
+  padding-left: var(--sp-3);
+  padding-right: var(--sp-3);
+}
+
+/* — Math — */
+.md-math {
+  font-size: 1.05em;
+}
+
+.md-math-display {
+  display: block;
+  margin: 0.8em 0;
+  text-align: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.md-math-error {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--danger);
+}
+
+.cm-line.md-math-src {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--bg-code);
+  color: var(--fg-ui);
+  padding-left: var(--sp-3);
+  padding-right: var(--sp-3);
+}
+
+/* — Mermaid diagrams — */
+.md-mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 0.8em 0;
+  padding: var(--sp-4);
+  background: var(--bg-code);
+  border-radius: var(--radius-m);
+  overflow-x: auto;
+}
+
+.md-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.md-mermaid-loading {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--fg-faint);
+  white-space: pre-wrap;
+}
+
+.md-mermaid-error {
+  color: var(--danger);
+}
+
+/* — Reader mode: hide the caret entirely — */
+.md-reader .cm-cursor {
+  display: none;
+}

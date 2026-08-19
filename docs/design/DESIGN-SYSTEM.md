@@ -1,0 +1,172 @@
+# MDViewer — Design System: токены, типографика, layout, темы, анимации, хоткеи
+
+> Красота — приоритет №1. Этот документ — исполняемая спецификация для Designer/Coder и **публичный контракт для авторов тем** (позже копируется в `docs/themes.md`). Эталоны: Typora (тишина), iA Writer (типографика), Linear (полировка).
+
+## 1. Дизайн-принципы
+
+1. **Хром исчезает.** Панели — тонкие, приглушённые, без лишних бордеров; иерархия через spacing и вес шрифта, не через рамки. Режим «только документ» — одна клавиша.
+2. **Документ — печатная страница.** Колонка 760px по центру, воздух по бокам, spacing между блоками крупнее межстрочного — глаз видит структуру без линий.
+3. **Ничего не прыгает.** Виджеты с estimatedHeight, шрифты предзагружены (`font-display: block` для локальных), панели анимируются width/transform, не layout-ломающе.
+4. **Каждый интерактив имеет hover и focus-visible.** Клавиатурная навигация — не афтерфакт.
+
+## 2. Токены (`src/styles/tokens.css`) — контракт тем, уровень 1
+
+Тема обязана переопределять ТОЛЬКО токены (минимум — цветовые). Все компоненты и `.md-*`-стили пишутся исключительно через `var()`.
+
+```css
+:root {
+  /* — Поверхности — */
+  --bg: #ffffff;             /* фон документа */
+  --bg-app: #f7f7f5;         /* фон приложения вокруг/панели */
+  --bg-panel: #f1f1ef;       /* sidebar, модалки */
+  --bg-hover: rgba(0,0,0,.045);
+  --bg-active: rgba(0,0,0,.07);
+  --bg-code: #f6f6f4;        /* фон код-блоков и inline-кода */
+
+  /* — Текст — */
+  --fg: #1f2328;             /* основной текст документа */
+  --fg-ui: #3a3f45;          /* текст хрома */
+  --fg-muted: #6e747c;       /* вторичный */
+  --fg-faint: #9aa0a8;       /* подписи, плейсхолдеры */
+
+  /* — Акцент — */
+  --accent: #4a72d4;         /* ссылки, выделения, активные элементы */
+  --accent-hover: #3a5fc0;
+  --accent-soft: rgba(74,114,212,.12);
+
+  /* — Служебные — */
+  --border: rgba(0,0,0,.09);
+  --selection: rgba(74,114,212,.22);
+  --caret: var(--accent);
+  --warning: #b7791f;  --danger: #c0392b;  --success: #2f9e63;
+  --heading: var(--fg);      /* темы могут красить заголовки отдельно */
+  --quote-border: #d5d9de;
+  --search-match: rgba(255,200,60,.35);
+  --search-match-current: rgba(255,160,0,.55);
+  --scrollbar: rgba(0,0,0,.18);
+  --shadow-panel: 0 4px 24px rgba(0,0,0,.08);
+
+  /* — Типографика — */
+  --font-text: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-ui: var(--font-text);
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  --font-size: 16px;         /* из settings.editorFontSize */
+  --line-height: 1.75;
+  --editor-max-width: 760px; /* из settings.editorMaxWidth */
+
+  /* — Геометрия — */
+  --radius-s: 4px; --radius-m: 8px; --radius-l: 12px;
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px;
+
+  /* — Синтаксис кода (фенсы) — */
+  --syn-keyword: #a626a4; --syn-string: #50a14f; --syn-number: #986801;
+  --syn-comment: #a0a1a7; --syn-function: #4078f2; --syn-type: #c18401;
+  --syn-operator: #383a42; --syn-property: #e45649;
+
+  /* — Анимации — */
+  --ease: cubic-bezier(.25,.1,.25,1);
+  --t-fast: 120ms; --t-med: 200ms; --t-slow: 300ms;
+}
+```
+
+Тёмная тема (`themes/dark.css`) — `[data-theme="dark"] { ... }` переопределяет ту же таблицу (bg #1e2126, bg-app #191c20, fg #d6dae0, accent #6f96e8, тени сильнее, syn-палитра OneDark-подобная). `theme: system` → media-query + подписка на смену. Атрибут ставится на `<html>` ДО первого кадра (инлайн-скрипт читает кеш настроек из localStorage-зеркала) — никакого «мигания» белым.
+
+**Гвард:** grep литеральных цветов (`#[0-9a-f]{3,8}` и `rgb(`) вне `tokens.css`/`themes/` — пусто. Входит в чеклист QA.
+
+## 3. Классы документа — контракт тем, уровень 2
+
+Стабильные классы, которые рендерит editor-core (менять = breaking change для тем):
+
+`.md-doc` (корень) · `.md-h1…-h6` · `.md-li`, `.md-li-num`, `.md-bullet` · `.md-task`, `.md-task-done` · `.md-quote` · `.md-codeblock`, `.md-codeblock-line`, `.md-fence-chip` · `.md-code` (inline) · `.md-bold`, `.md-italic`, `.md-strike` · `.md-link` · `.md-img`, `.md-img-broken` · `.md-hr` · `.md-table`, `.md-table-src` · `.md-html` · `.md-math`, `.md-mermaid` · `.md-frontmatter`
+
+## 4. Типографика документа (`markdown.css`)
+
+| Элемент | Спека |
+| --- | --- |
+| Тело | var(--font-text) 16px/1.75, цвет --fg, `letter-spacing: -0.011em` |
+| H1 | 2.0em / 700 / lh 1.25, margin: 1.6em 0 .6em; первый элемент — margin-top .2em |
+| H2 | 1.55em / 650 / lh 1.3, margin 1.5em 0 .5em |
+| H3 | 1.25em / 650; H4 1.08em/600; H5 1em/600; H6 .9em/600 --fg-muted uppercase ls .04em |
+| Параграфы | margin: .55em 0 (ритм задают заголовки/блоки) |
+| Списки | отступ уровня 1.6em; маркер --fg-faint; чекбокс 15px, --accent при done + текст .md-task-done: --fg-muted + strike |
+| Цитата | border-left 3px --quote-border, padding-left 1em, цвет --fg-muted; вложенные — каскад |
+| Inline-код | --font-mono .9em, --bg-code, radius-s, padding 1px 5px |
+| Код-блок | --bg-code, radius-m, padding 12px 16px, mono .875em/1.6; чип языка сверху справа --fg-faint |
+| Таблица | borders --border 1px, header --bg-panel + 600, cell padding 6px 12px, radius-m у контейнера, зебры нет (тишина) |
+| Ссылки | --accent, underline только on-hover (offset 3px); external после Ctrl-hover — курсор pointer + tooltip URL |
+| HR | 1px --border, margin 2em 0 |
+| Картинки | max-width 100%, radius-s, margin .8em auto, caption из alt --fg-faint .85em по центру (P1) |
+| Выделение поиска | --search-match / -current, radius 2px |
+
+Шрифты **бандлим**: Inter (Var, latin+cyr subset) + JetBrains Mono (Regular/Bold) — woff2 в `src/assets/fonts`, preload в index.html. Никаких сетевых шрифтов.
+
+## 5. Layout приложения
+
+```
+┌───────────────────────────────────────────────┐
+│ (нативный titlebar)                            │
+├────────┬──────────────────────────────────────┤
+│        │ TabBar (34px)                         │
+│ Side   ├──────────────────────────────────────┤
+│ bar    │                                      │
+│ 260px  │        Документ (колонка 760px       │
+│ resize │        по центру, скролл свой)       │
+│ 200-   │                                      │
+│ 480px  ├──────────────────────────────────────┤
+│        │ StatusStrip (26px, скрываемый)        │
+└────────┴──────────────────────────────────────┘
+```
+
+- **Sidebar:** iOS-сегмент сверху [Файлы | Оглавление]; Ctrl+\ — показать/скрыть (анимация width var(--t-med)); ширина drag-resize, персистится. Пустая папка → мягкий empty-хинт.
+- **FileTree:** строки 28px, только имя (без расширения .md — тишина), папки chevron 12px c поворотом --t-fast, активный файл --accent-soft фон, hover --bg-hover. Ленивая подгрузка подпапок. Внешние изменения (watch корня) — авто-рефреш.
+- **Outline:** пункты по уровням (отступ 12px/уровень), активная секция --accent + тонкая полоска слева, плавный подскролл списка к активной.
+- **TabBar:** вкладка = имя + dirty-точка (8px --accent) вместо крестика до hover; активная — фон --bg (сливается с документом), неактивные --bg-app; max-width 180px c ellipsis; средняя кнопка мыши закрывает; переполнение — горизонтальный скролл колёсиком.
+- **StatusStrip:** справа: `слова · символы · строка:колонка · UTF-8 · LF`; слева: путь файла (--fg-faint, ellipsis середины). Клик по кодировке/EOL — P2.
+- **EmptyState (нет вкладок):** по центру логотип-глиф, «Откройте файл или перетащите сюда», кнопки [Открыть файл] [Открыть папку], список недавних (recentFiles) — 5 строк.
+- **Узкое окно** (< 900px): sidebar становится overlay поверх документа (тень --shadow-panel), авто-скрыт.
+
+## 6. Анимации
+
+| Что | Как |
+| --- | --- |
+| Появление/скрытие sidebar | width + opacity, --t-med --ease |
+| Смена вкладки | контент cross-fade 80ms (едва заметно) |
+| Открытие файла | документ fade-in + translateY(4px→0), --t-med |
+| Смена темы | `transition: background --t-slow, color --t-slow` на корне (одноразовый класс на 350мс, потом снять — чтобы не тормозить всё остальное) |
+| Conceal/reveal разметки | «жёсткое» переключение (без анимации — как Typora; анимация тут = визуальный шум) |
+| Hover-состояния | --t-fast |
+| ConflictBanner/тосты | slide-down от верха документа, --t-med |
+
+`@media (prefers-reduced-motion: reduce)` — все транзишены 0ms. Обязательно.
+
+## 7. Хоткеи (MVP, `lib/editor/keymap.ts` + глобальные)
+
+| Хоткей | Действие |
+| --- | --- |
+| Ctrl+O / Ctrl+Shift+O | Открыть файл / папку |
+| Ctrl+S / Ctrl+Shift+S | Сохранить / Сохранить как |
+| Ctrl+W | Закрыть вкладку |
+| Ctrl+Tab / Ctrl+Shift+Tab | Следующая / предыдущая вкладка |
+| Ctrl+1..9 | Вкладка N (9 = последняя) |
+| Ctrl+F / Ctrl+H | Поиск / поиск+замена |
+| F3 / Shift+F3 | Следующее / предыдущее совпадение |
+| Ctrl+B / Ctrl+I | Жирный / курсив (обернуть/снять) |
+| Ctrl+K | Ссылка из выделения |
+| Ctrl+\ | Сайдбар вкл/выкл |
+| Ctrl+Shift+\ | Переключить панель Файлы/Оглавление |
+| Ctrl+E | Reader mode (P1) |
+| Ctrl+, | Настройки |
+| Ctrl+= / Ctrl+- / Ctrl+0 | Размер шрифта +/−/сброс |
+| Esc | Закрыть поиск/модалку/баннер |
+
+macOS: Ctrl→Cmd автоматически (`Mod-`). Конфликты с CM6-дефолтами решаются нашей картой (`Prec.high`).
+
+## 8. Definition of Beautiful (чек для QA каждого UI-таска)
+
+- [ ] Скриншоты light + dark; контраст текста ≥ 4.5:1 (проверен пипеткой/тулой, не глазом)
+- [ ] Ноль литеральных цветов вне tokens/themes
+- [ ] Hover + focus-visible на всех интерактивах; тап-таргеты ≥ 24px
+- [ ] Ничего не прыгает при загрузке/наборе/скролле (виджеты с estimatedHeight)
+- [ ] reduced-motion уважается; анимации ≤ 300мс
+- [ ] Пустые состояния оформлены (не белая дыра)
+- [ ] Текст UI есть в ru и en словарях

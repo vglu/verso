@@ -1,0 +1,151 @@
+/**
+ * IPC data contract — mirror of the Rust structs (serde camelCase).
+ * Source of truth: docs/design/IPC-CONTRACT.md §1. Change the doc first.
+ */
+
+// ---- errors ----
+export type AppError =
+  | { kind: 'NotFound'; path: string }
+  | { kind: 'PermissionDenied'; path: string }
+  | { kind: 'ExternalModified'; path: string; diskMtimeMs: number }
+  | { kind: 'UnsupportedEncoding'; path: string; detected: string }
+  | { kind: 'IsBinary'; path: string }
+  | { kind: 'Io'; message: string };
+
+export function isAppError(e: unknown): e is AppError {
+  return typeof e === 'object' && e !== null && 'kind' in e;
+}
+
+// ---- files ----
+export type Encoding = 'utf-8' | 'utf-8-bom' | 'utf-16-le' | 'utf-16-be';
+export type Eol = 'lf' | 'crlf';
+
+export interface FileMeta {
+  path: string;
+  docId: string;
+  fileName: string;
+  dirPath: string;
+  mtimeMs: number;
+  readonly: boolean;
+  encoding: Encoding;
+  eol: Eol;
+  trailingNewline: boolean;
+  sizeBytes: number;
+}
+
+export interface OpenedFile {
+  meta: FileMeta;
+  content: string;
+}
+
+export interface SaveResult {
+  mtimeMs: number;
+}
+
+export interface SaveMeta {
+  encoding: Encoding;
+  eol: Eol;
+  trailingNewline: boolean;
+}
+
+export interface StatResult {
+  mtimeMs: number;
+  exists: boolean;
+}
+
+// ---- tree ----
+export interface TreeEntry {
+  name: string;
+  path: string;
+  isDir: boolean;
+  hasChildren: boolean;
+}
+
+// ---- drafts ----
+export interface Draft {
+  docId: string;
+  path: string;
+  baseMtimeMs: number;
+  savedAtMs: number;
+  content: string;
+}
+
+export interface DraftInfo {
+  docId: string;
+  path: string;
+  baseMtimeMs: number;
+  savedAtMs: number;
+}
+
+// ---- session ----
+export interface SessionTab {
+  path: string;
+  cursor: number;
+  scrollTop: number;
+}
+
+export interface SessionState {
+  tabs: SessionTab[];
+  activeIndex: number;
+  sidebar: {
+    visible: boolean;
+    panel: 'files' | 'outline';
+    width: number;
+  };
+  treeRoot: string | null;
+}
+
+// ---- settings ----
+export type ThemeSetting = 'light' | 'dark' | 'system';
+export type LangSetting = 'system' | 'ru' | 'en';
+
+export interface Settings {
+  theme: ThemeSetting;
+  uiLang: LangSetting;
+  autosaveDraftMs: number;
+  restoreSession: boolean;
+  editorFontSize: number;
+  editorMaxWidth: number;
+  fontFamily: string;
+  showStatusStrip: boolean;
+  recentFiles: string[];
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  theme: 'system',
+  uiLang: 'system',
+  autosaveDraftMs: 800,
+  restoreSession: true,
+  editorFontSize: 16,
+  editorMaxWidth: 760,
+  fontFamily: 'default',
+  showStatusStrip: true,
+  recentFiles: []
+};
+
+// ---- events ----
+export interface OpenFilePayload {
+  paths: string[];
+}
+
+export type FsChangeKind = 'modified' | 'removed' | 'renamed';
+
+export interface FsChangedPayload {
+  path: string;
+  kind: FsChangeKind;
+}
+
+export type MenuActionId =
+  | 'open'
+  | 'openFolder'
+  | 'save'
+  | 'saveAs'
+  | 'closeTab'
+  | 'settings'
+  | 'toggleSidebar'
+  | 'find'
+  | 'about';
+
+export interface MenuActionPayload {
+  id: MenuActionId;
+}

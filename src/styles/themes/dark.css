@@ -1,0 +1,45 @@
+/* Dark theme — overrides token values only. */
+
+[data-theme='dark'] {
+  /* — Surfaces — */
+  --bg: #1e2126;
+  --bg-app: #191c20;
+  --bg-panel: #202429;
+  --bg-hover: rgba(255, 255, 255, 0.055);
+  --bg-active: rgba(255, 255, 255, 0.09);
+  --bg-code: #24282e;
+
+  /* — Text — */
+  --fg: #d6dae0;
+  --fg-ui: #c3c8cf;
+  --fg-muted: #8d949d;
+  --fg-faint: #6b727b;
+
+  /* — Accent — */
+  --accent: #6f96e8;
+  --accent-hover: #85a7f0;
+  --accent-soft: rgba(111, 150, 232, 0.16);
+
+  /* — Utility — */
+  --border: rgba(255, 255, 255, 0.1);
+  --selection: rgba(111, 150, 232, 0.28);
+  --warning: #d9a441;
+  --danger: #e0685c;
+  --success: #4bbd80;
+  --quote-border: #3a4048;
+  --search-match: rgba(255, 200, 60, 0.28);
+  --search-match-current: rgba(255, 170, 30, 0.5);
+  --scrollbar: rgba(255, 255, 255, 0.16);
+  --scrollbar-hover: rgba(255, 255, 255, 0.28);
+  --shadow-panel: 0 4px 28px rgba(0, 0, 0, 0.45);
+
+  /* — Code syntax (One Dark palette) — */
+  --syn-keyword: #c678dd;
+  --syn-string: #98c379;
+  --syn-number: #d19a66;
+  --syn-comment: #6b727b;
+  --syn-function: #61afef;
+  --syn-type: #e5c07b;
+  --syn-operator: #abb2bf;
+  --syn-property: #e06c75;
+}

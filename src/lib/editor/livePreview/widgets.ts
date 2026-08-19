@@ -1,0 +1,256 @@
+import { EditorView, WidgetType } from '@codemirror/view';
+import { convertFileSrc } from '@tauri-apps/api/core';
+import { renderInline } from './inline';
+import { parseTable } from './table';
+import { decodeUrlPath, isRemoteUrl, joinPath, stripUrlSuffix } from '../pathUtil';
+
+/**
+ * Widgets are view-only. None of them mutate the document, with one
+ * deliberate exception: the task checkbox, where clicking *is* the user
+ * editing the text (EDITOR-CORE §6).
+ */
+
+/** Bullet glyph replacing `-`/`*`/`+` in unordered lists. */
+export class BulletWidget extends WidgetType {
+  eq(): boolean {
+    return true;
+  }
+
+  toDOM(): HTMLElement {
+    const span = document.createElement('span');
+    span.className = 'md-bullet';
+    span.textContent = '•';
+    return span;
+  }
+
+  ignoreEvent(): boolean {
+    return false;
+  }
+}
+
+/** Horizontal rule replacing `---`. */
+export class HrWidget extends WidgetType {
+  eq(): boolean {
+    return true;
+  }
+
+  toDOM(): HTMLElement {
+    const span = document.createElement('span');
+    span.className = 'md-hr';
+    return span;
+  }
+}
+
+/** Interactive task checkbox for `- [ ]` / `- [x]`. */
+export class CheckboxWidget extends WidgetType {
+  constructor(readonly checked: boolean) {
+    super();
+  }
+
+  eq(other: CheckboxWidget): boolean {
+    return other.checked === this.checked;
+  }
+
+  toDOM(view: EditorView): HTMLElement {
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = 'md-task';
+    input.checked = this.checked;
+    input.setAttribute('aria-label', this.checked ? 'Task done' : 'Task not done');
+
+    input.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      // Resolve the position at click time: the document may have shifted
+      // since this widget was created.
+      const pos = view.posAtDOM(input);
+      const marker = view.state.doc.sliceString(pos, pos + 3);
+      if (!/^\[[ xX]\]$/.test(marker)) return;
+
+      view.dispatch({
+        changes: { from: pos, to: pos + 3, insert: this.checked ? '[ ]' : '[x]' },
+        userEvent: 'input'
+      });
+    });
+
+    return input;
+  }
+
+  ignoreEvent(): boolean {
+    return false;
+  }
+}
+
+/** Rendered image; `baseDir` resolves document-relative sources. */
+export class ImageWidget extends WidgetType {
+  constructor(
+    readonly url: string,
+    readonly alt: string,
+    readonly baseDir: string
+  ) {
+    super();
+  }
+
+  eq(other: ImageWidget): boolean {
+    return other.url === this.url && other.alt === this.alt && other.baseDir === this.baseDir;
+  }
+
+  toDOM(): HTMLElement {
+    const wrap = document.createElement('span');
+    wrap.className = 'md-img-wrap';
+
+    const img = document.createElement('img');
+    img.className = 'md-img';
+    img.alt = this.alt;
+    img.loading = 'lazy';
+    img.src = resolveImageSrc(this.url, this.baseDir);
+
+    img.addEventListener('error', () => {
+      wrap.replaceChildren(brokenImage(this.alt || this.url));
+    });
+
+    wrap.appendChild(img);
+    return wrap;
+  }
+}
+
+function brokenImage(label: string): HTMLElement {
+  const box = document.createElement('span');
+  box.className = 'md-img-broken';
+  box.textContent = `🖼 ${label}`;
+  return box;
+}
+
+export function resolveImageSrc(url: string, baseDir: string): string {
+  if (isRemoteUrl(url)) return url;
+  const clean = decodeUrlPath(stripUrlSuffix(url));
+  if (!baseDir) return url;
+  try {
+    return convertFileSrc(joinPath(baseDir, clean));
+  } catch {
+    return url;
+  }
+}
+
+/** Language chip shown on the opening line of a fenced code block. */
+export class FenceChipWidget extends WidgetType {
+  constructor(readonly language: string) {
+    super();
+  }
+
+  eq(other: FenceChipWidget): boolean {
+    return other.language === this.language;
+  }
+
+  toDOM(): HTMLElement {
+    const chip = document.createElement('span');
+    chip.className = 'md-fence-chip';
+    chip.textContent = this.language || 'text';
+    return chip;
+  }
+}
+
+/**
+ * Rendered GFM table. Clicking a cell drops the caret into the corresponding
+ * source position, which reveals the raw table for editing (EDITOR-CORE §5).
+ */
+export class TableWidget extends WidgetType {
+  constructor(
+    readonly source: string,
+    readonly from: number
+  ) {
+    super();
+  }
+
+  eq(other: TableWidget): boolean {
+    return other.source === this.source;
+  }
+
+  /** Keeps the scrollbar honest before the widget is measured. */
+  get estimatedHeight(): number {
+    const lines = this.source.split('\n').length;
+    return Math.max(60, lines * 32 + 12);
+  }
+
+  toDOM(view: EditorView): HTMLElement {
+    const parsed = parseTable(this.source);
+    const wrap = document.createElement('div');
+    wrap.className = 'md-table-wrap';
+
+    if (!parsed) {
+      // Not a shape we can render: show the source rather than nothing.
+      const pre = document.createElement('pre');
+      pre.className = 'md-table-src';
+      pre.textContent = this.source;
+      wrap.appendChild(pre);
+      return wrap;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'md-table';
+
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    parsed.header.forEach((cell, i) => {
+      const th = document.createElement('th');
+      applyAlign(th, parsed.align[i] ?? null);
+      renderInline(th, cell);
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    for (const row of parsed.rows) {
+      const tr = document.createElement('tr');
+      row.forEach((cell, i) => {
+        const td = document.createElement('td');
+        applyAlign(td, parsed.align[i] ?? null);
+        renderInline(td, cell);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+
+    // One handler for the whole table: put the caret near what was clicked.
+    wrap.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      const target = event.target as HTMLElement | null;
+      const cell = target?.closest('td, th') as HTMLTableCellElement | null;
+      view.dispatch({
+        selection: { anchor: this.sourcePosForCell(cell) },
+        scrollIntoView: false
+      });
+      view.focus();
+    });
+
+    wrap.appendChild(table);
+    return wrap;
+  }
+
+  /** Map a clicked cell back to an offset inside the table source. */
+  private sourcePosForCell(cell: HTMLTableCellElement | null): number {
+    if (!cell) return this.from;
+
+    const row = cell.parentElement as HTMLTableRowElement | null;
+    const isHeader = cell.tagName === 'TH';
+    const bodyIndex = row?.parentElement?.tagName === 'TBODY' ? (row?.rowIndex ?? 1) : 0;
+
+    // Source line: header is line 0, the delimiter is line 1, body starts at 2.
+    const lineIndex = isHeader ? 0 : bodyIndex + 1;
+    const lines = this.source.split('\n');
+    let offset = 0;
+    for (let i = 0; i < Math.min(lineIndex, lines.length - 1); i++) {
+      offset += (lines[i]?.length ?? 0) + 1;
+    }
+    return this.from + offset;
+  }
+
+  ignoreEvent(): boolean {
+    return false;
+  }
+}
+
+function applyAlign(cell: HTMLTableCellElement, align: 'left' | 'center' | 'right' | null): void {
+  if (align) cell.style.textAlign = align;
+}
