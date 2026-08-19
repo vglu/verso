@@ -66,7 +66,7 @@ in place, and never lose a byte.
 
 **Export**
 
-- Export as a standalone HTML file: the stylesheet, the pictures, the diagrams
+- Export as a standalone HTML file (`Ctrl+Shift+E`): the stylesheet, the pictures, the diagrams
   and the formulas are all inside it, so it opens anywhere, offline. Colours
   are the reader's own, including a custom theme.
 - Print (`Ctrl+Shift+P`), which is also where "Save as PDF" lives. The page is

@@ -48,8 +48,12 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
     let close_tab = MenuItemBuilder::with_id("closeTab", label(l, "closeTab", "Close Tab"))
         .accelerator("CmdOrCtrl+W")
         .build(app)?;
+    // Every other action in this menu can be reached from the keyboard; export
+    // was the one that needed the mouse. Ctrl+E is reader mode, so export
+    // takes the Shift variant, next to Print on Ctrl+Shift+P.
     let export_html =
         MenuItemBuilder::with_id("exportHtml", label(l, "exportHtml", "Export as HTML…"))
+            .accelerator("CmdOrCtrl+Shift+E")
             .build(app)?;
     // Not Ctrl+P: that is Go to Heading, and WebView2 would take it anyway.
     // Print keeps the Shift variant, which the window's menu claims first.
