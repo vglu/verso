@@ -15,7 +15,7 @@ import {
   stepUpIntoBlock
 } from './blockNav';
 import { setHeading, toggleList, toggleQuote } from './format';
-import { jumpBack, jumpForward, pushJump } from './history';
+import { cancelJump, jumpBack, jumpForward, jumpHistoryKeeper, pushJump } from './history';
 
 /**
  * Editor-level shortcuts. Application-level ones (open, save, close tab) live
@@ -110,10 +110,12 @@ function fromHook(hook: (() => void) | undefined): () => boolean {
  */
 function asJump(command: (view: EditorView) => boolean) {
   return (view: EditorView): boolean => {
-    const before = view.state.selection.main.head;
     pushJump(view);
     const moved = command(view);
-    if (!moved && view.state.selection.main.head === before) jumpBack(view);
+    // Undo the record rather than "going back": walking back would push the
+    // abandoned position onto the forward stack, so a later Forward would
+    // travel somewhere the reader never went.
+    if (!moved) cancelJump(view);
     return moved;
   };
 }
@@ -121,6 +123,7 @@ function asJump(command: (view: EditorView) => boolean) {
 export function editorKeymap(hooks: KeymapHooks = {}): Extension {
   return [
     history(),
+    jumpHistoryKeeper,
     Prec.high(
       keymap.of([
         // — Inline formatting —

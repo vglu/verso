@@ -14,10 +14,12 @@ export function snapshotSession(): SessionState {
     .filter((tab) => tab.path)
     .map((tab) => {
       const handle = tabs.handleOf(tab.id);
+      const scroll = handle?.getScrollAnchor() ?? tab.scroll;
       return {
         path: tab.path!,
         cursor: handle?.getCursor().pos ?? tab.cursor,
-        scrollTop: handle?.getScrollTop() ?? tab.scrollTop
+        scrollPos: scroll.pos,
+        scrollOffset: scroll.offset
       };
     });
 
@@ -73,7 +75,13 @@ export async function restoreSession(): Promise<boolean> {
     const restored = tabs.tabs[index];
     if (restored) {
       restored.cursor = tab.cursor ?? 0;
-      restored.scrollTop = tab.scrollTop ?? 0;
+      // Sessions written before positions became anchors carry only a pixel
+      // offset; there is nothing to resolve it against, so it is dropped
+      // rather than applied to the wrong place.
+      restored.scroll = {
+        pos: tab.scrollPos ?? 0,
+        offset: tab.scrollOffset ?? 0
+      };
     }
     opened += 1;
   }

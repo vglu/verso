@@ -22,6 +22,20 @@ export interface DocStats {
 }
 
 /**
+ * Where the reader is, expressed as a place in the text rather than a number
+ * of pixels.
+ *
+ * A pixel offset is only meaningful while everything above it keeps the same
+ * height — and in this editor it does not: images finish loading, diagrams
+ * render, blocks open into source. Anchoring to a document position and the
+ * distance from that line's top survives all of it.
+ */
+export interface ScrollAnchor {
+  pos: number;
+  offset: number;
+}
+
+/**
  * The only surface the app chrome uses to talk to the editor. Svelte
  * components never import CodeMirror directly (ARCHITECTURE §5).
  */
@@ -37,8 +51,8 @@ export interface EditorHandle {
   getCursor(): CursorInfo;
   setCursor(pos: number): void;
   getStats(): DocStats;
-  getScrollTop(): number;
-  setScrollTop(value: number): void;
+  getScrollAnchor(): ScrollAnchor;
+  setScrollAnchor(anchor: ScrollAnchor): void;
   setReadOnly(value: boolean): void;
   setReaderMode(value: boolean): void;
   isReaderMode(): boolean;
@@ -257,10 +271,10 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
 
     getStats: () => computeStats(view.state.doc.toString()),
 
-    getScrollTop: () => view.scrollDOM.scrollTop,
+    getScrollAnchor: () => captureAnchor(view),
 
-    setScrollTop(value) {
-      view.scrollDOM.scrollTop = value;
+    setScrollAnchor(anchor) {
+      restoreAnchor(view, anchor);
     },
 
     setReadOnly(value) {
@@ -297,6 +311,41 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
       view.dispatch({ effects: setEditing.of(true) });
     }
   };
+}
+
+/** The document position at the top of the screen, and how far above it. */
+function captureAnchor(view: EditorView): ScrollAnchor {
+  try {
+    const top = view.scrollDOM.scrollTop;
+    const pos = view.visibleRanges[0]?.from ?? 0;
+    const block = view.lineBlockAt(pos);
+    return { pos, offset: top - block.top };
+  } catch {
+    return { pos: 0, offset: 0 };
+  }
+}
+
+/**
+ * Put the reader back where they were.
+ *
+ * Deferred to a measure pass: at the moment a tab is restored the widgets
+ * above have not been laid out yet, so resolving the position immediately
+ * would land against heights that are about to change.
+ */
+function restoreAnchor(view: EditorView, anchor: ScrollAnchor): void {
+  const pos = Math.max(0, Math.min(anchor.pos, view.state.doc.length));
+  view.requestMeasure({
+    read: (v) => {
+      try {
+        return v.lineBlockAt(pos).top + anchor.offset;
+      } catch {
+        return null;
+      }
+    },
+    write: (top, v) => {
+      if (top !== null) v.scrollDOM.scrollTop = top;
+    }
+  });
 }
 
 /** Word/char counts for the status strip. */

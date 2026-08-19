@@ -83,7 +83,11 @@ export interface DraftInfo {
 export interface SessionTab {
   path: string;
   cursor: number;
-  scrollTop: number;
+  /** Written by versions that stored a raw pixel offset; read for migration. */
+  scrollTop?: number;
+  /** The place in the text the reader was at, and how far above it. */
+  scrollPos?: number;
+  scrollOffset?: number;
 }
 
 export interface SessionState {

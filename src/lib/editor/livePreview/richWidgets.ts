@@ -35,6 +35,9 @@ let katexLoader: Promise<typeof import('katex')> | null = null;
 let mermaidLoader: Promise<typeof import('mermaid')> | null = null;
 let mermaidCounter = 0;
 
+/** Rendered height per diagram source, keyed by the text that produced it. */
+const measuredHeights = new Map<string, number>();
+
 function loadKatex(): Promise<typeof import('katex')> {
   if (!katexLoader) {
     katexLoader = Promise.all([import('katex'), import('katex/dist/katex.min.css')]).then(
@@ -127,8 +130,17 @@ export class MermaidWidget extends WidgetType {
     return other.source === this.source && other.theme === this.theme;
   }
 
+  /**
+   * The height this diagram had last time it was drawn.
+   *
+   * A diagram renders asynchronously, so its first estimate is a guess from
+   * the line count — and every position below it is computed against that
+   * guess until the SVG arrives. Remembering the measured height means the
+   * second time the document is opened, scrolled back to, or re-rendered,
+   * nothing shifts.
+   */
   get estimatedHeight(): number {
-    return Math.max(120, this.source.split('\n').length * 26);
+    return measuredHeights.get(this.source) ?? Math.max(120, this.source.split('\n').length * 26);
   }
 
   toDOM(view: EditorView): HTMLElement {
@@ -154,6 +166,13 @@ export class MermaidWidget extends WidgetType {
         if (node.nodeName.toLowerCase() !== 'svg') throw new Error('not an svg');
         node.querySelectorAll('script').forEach((s) => s.remove());
         host.replaceChildren(document.importNode(node, true));
+
+        // Remember what it actually came out as, so the next estimate is a
+        // measurement rather than a guess.
+        requestAnimationFrame(() => {
+          const height = host.getBoundingClientRect().height;
+          if (height > 0) measuredHeights.set(this.source, Math.round(height));
+        });
       })
       .catch((error) => {
         placeholder.classList.add('md-mermaid-error');

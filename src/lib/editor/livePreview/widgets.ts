@@ -102,6 +102,17 @@ export class ImageWidget extends WidgetType {
     return other.url === this.url && other.alt === this.alt && other.baseDir === this.baseDir;
   }
 
+  /**
+   * A guess, but a much better one than a line of text.
+   *
+   * Until a picture loads the editor has no idea how tall it is, and every
+   * position below it is computed against that wrong height — which is what
+   * makes a document jump about while images arrive.
+   */
+  get estimatedHeight(): number {
+    return 220;
+  }
+
   toDOM(view: EditorView): HTMLElement {
     const wrap = document.createElement('span');
     wrap.className = 'md-img-wrap';

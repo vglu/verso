@@ -80,9 +80,7 @@
     tabs.registerHandle(tabId, handle);
 
     if (tab.cursor > 0) handle.setCursor(tab.cursor);
-    if (tab.scrollTop > 0) {
-      requestAnimationFrame(() => handle.setScrollTop(tab.scrollTop));
-    }
+    if (tab.scroll.pos > 0 || tab.scroll.offset !== 0) handle.setScrollAnchor(tab.scroll);
     scheduleOutlineUpdate(tabId);
 
     return {
@@ -102,7 +100,7 @@
     const handle = tabs.handleOf(active.id);
     if (!handle) return;
     handle.focus();
-    if (active.scrollTop > 0) handle.setScrollTop(active.scrollTop);
+    if (active.scroll.pos > 0 || active.scroll.offset !== 0) handle.setScrollAnchor(active.scroll);
     scheduleOutlineUpdate(active.id);
   });
 </script>

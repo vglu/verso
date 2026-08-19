@@ -14,7 +14,7 @@ import {
 } from '../ipc/commands';
 import { isAppError, type AppError, type Encoding, type Eol, type FileMeta } from '../ipc/types';
 import { pickSaveTarget } from '../ipc/dialogs';
-import type { EditorHandle } from '../editor/createEditor';
+import type { EditorHandle, ScrollAnchor } from '../editor/createEditor';
 import { settings } from './settings.svelte';
 import { baseName, dirName } from '../editor/pathUtil';
 
@@ -38,7 +38,8 @@ export interface Tab {
   /** Set when the buffer came from a recovered draft rather than the file. */
   recovered: { savedAtMs: number; onDisk: string } | null;
   cursor: number;
-  scrollTop: number;
+  /** Where the reader was, as a place in the text rather than a pixel count. */
+  scroll: ScrollAnchor;
 }
 
 /** Editor handles live outside reactive state on purpose (see file header). */
@@ -64,7 +65,7 @@ function tabFromMeta(meta: FileMeta, content: string): Tab {
     external: 'none',
     recovered: null,
     cursor: 0,
-    scrollTop: 0
+    scroll: { pos: 0, offset: 0 }
   };
 }
 
@@ -167,7 +168,7 @@ class TabsStore {
       external: 'none',
       recovered: null,
       cursor: 0,
-      scrollTop: 0
+      scroll: { pos: 0, offset: 0 }
     });
     this.activateLast();
   }
@@ -179,7 +180,7 @@ class TabsStore {
       const handle = handles.get(current.id);
       if (handle) {
         current.cursor = handle.getCursor().pos;
-        current.scrollTop = handle.getScrollTop();
+        current.scroll = handle.getScrollAnchor();
       }
     }
     this.activeIndex = index;
@@ -341,6 +342,8 @@ class TabsStore {
       const opened = await readFile(tab.path);
       const handle = handles.get(tab.id);
       const cursor = handle?.getCursor().pos ?? 0;
+      // A file changing on disk is not a reason to lose the reader's place.
+      const scroll = handle?.getScrollAnchor() ?? tab.scroll;
 
       tab.content = opened.content;
       tab.baseMtimeMs = opened.meta.mtimeMs;
@@ -352,6 +355,10 @@ class TabsStore {
 
       handle?.setContent(opened.content);
       handle?.setCursor(Math.min(cursor, opened.content.length));
+      handle?.setScrollAnchor({
+        pos: Math.min(scroll.pos, opened.content.length),
+        offset: scroll.offset
+      });
       await draftDelete(tab.id).catch(() => undefined);
     } catch (error) {
       this.reportError(error, tab.path);
