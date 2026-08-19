@@ -1,3 +1,4 @@
+import { EditorSelection } from '@codemirror/state';
 import { EditorView, WidgetType } from '@codemirror/view';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { renderInline } from './inline';
@@ -131,21 +132,51 @@ export function resolveImageSrc(url: string, baseDir: string): string {
   }
 }
 
-/** Language chip shown on the opening line of a fenced code block. */
+/**
+ * Language chip on the opening line of a fenced code block.
+ *
+ * The chip stands in for the ``` marker and the language name, which means it
+ * is also the only way back to them: clicking it puts the caret in the
+ * language slot, so the fence reveals itself and the language can be changed.
+ * Without that the language is simply uneditable — visible, but out of reach.
+ */
 export class FenceChipWidget extends WidgetType {
-  constructor(readonly language: string) {
+  constructor(
+    readonly language: string,
+    readonly languageFrom = -1
+  ) {
     super();
   }
 
   eq(other: FenceChipWidget): boolean {
-    return other.language === this.language;
+    return other.language === this.language && other.languageFrom === this.languageFrom;
   }
 
-  toDOM(): HTMLElement {
+  toDOM(view: EditorView): HTMLElement {
     const chip = document.createElement('span');
     chip.className = 'md-fence-chip';
     chip.textContent = this.language || 'text';
+    chip.title = 'Click to change the language';
+
+    if (this.languageFrom >= 0) {
+      chip.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        const from = Math.min(this.languageFrom, view.state.doc.length);
+        const to = Math.min(from + this.language.length, view.state.doc.length);
+        // Select the language so typing replaces it outright.
+        view.dispatch({
+          selection: to > from ? EditorSelection.range(from, to) : EditorSelection.cursor(from),
+          scrollIntoView: false
+        });
+        view.focus();
+      });
+    }
+
     return chip;
+  }
+
+  ignoreEvent(): boolean {
+    return false;
   }
 }
 

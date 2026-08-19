@@ -10,7 +10,9 @@ import {
   nextHeading,
   prevBlock,
   prevHeading,
-  selectBlock
+  selectBlock,
+  stepDownIntoBlock,
+  stepUpIntoBlock
 } from './blockNav';
 import { setHeading, toggleList, toggleQuote } from './format';
 import { jumpBack, jumpForward, pushJump } from './history';
@@ -120,6 +122,12 @@ export function editorKeymap(hooks: KeymapHooks = {}): Extension {
         { key: 'Mod-Shift-7', run: (view) => toggleList(view, 'ordered') },
         { key: 'Mod-Shift-t', run: (view) => toggleList(view, 'task') },
         { key: 'Mod-Shift-q', run: toggleQuote },
+
+        // — Plain Up/Down step *into* a rendered block rather than over it.
+        //   These return false whenever no block is adjacent, so ordinary
+        //   line movement is untouched. —
+        { key: 'ArrowDown', run: stepDownIntoBlock },
+        { key: 'ArrowUp', run: stepUpIntoBlock },
 
         // — Moving around by block, the way a document editor does —
         { key: 'Mod-ArrowDown', run: nextBlock },

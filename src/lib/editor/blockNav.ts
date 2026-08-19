@@ -1,6 +1,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { EditorSelection, type EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { renderedBlocks } from './livePreview';
 
 /**
  * Moving around a document by its blocks.
@@ -160,4 +161,51 @@ export function moveBlockUp(view: EditorView): boolean {
 
 export function moveBlockDown(view: EditorView): boolean {
   return swapBlocks(view, 1);
+}
+
+/**
+ * Step the caret *into* a rendered block instead of over it.
+ *
+ * A table drawn as a widget has no visual lines inside it, so plain Up/Down
+ * skips the whole thing — twenty rows vanish in one keypress, which is
+ * exactly what makes navigation feel unpredictable. This runs before the
+ * default motion and, when the next line belongs to a rendered block, puts
+ * the caret on that block's near edge. The selection landing inside turns the
+ * block into source on the same transaction, so the following press continues
+ * line by line, and leaving the far edge renders it again.
+ */
+function stepIntoBlock(view: EditorView, direction: 1 | -1): boolean {
+  const state = view.state;
+  const head = state.selection.main.head;
+  if (!state.selection.main.empty) return false;
+
+  const line = state.doc.lineAt(head);
+  const targetNumber = line.number + direction;
+  if (targetNumber < 1 || targetNumber > state.doc.lines) return false;
+
+  const target = state.doc.line(targetNumber);
+  const block = renderedBlocks(state).find(
+    (b) => target.from >= b.from && target.from <= b.to
+  );
+  if (!block) return false;
+
+  // Already inside this block: its source is showing, so ordinary line
+  // movement is the right behaviour and we must not interfere.
+  if (head >= block.from && head <= block.to) return false;
+
+  const entry = direction === 1 ? block.from : state.doc.lineAt(block.to).from;
+  view.dispatch({
+    selection: EditorSelection.cursor(entry),
+    effects: EditorView.scrollIntoView(entry, { y: 'nearest', yMargin: 32 }),
+    scrollIntoView: false
+  });
+  return true;
+}
+
+export function stepDownIntoBlock(view: EditorView): boolean {
+  return stepIntoBlock(view, 1);
+}
+
+export function stepUpIntoBlock(view: EditorView): boolean {
+  return stepIntoBlock(view, -1);
 }

@@ -314,9 +314,11 @@ function handleNode(
     if (parent?.name === 'FencedCode' && node.from === parent.from && !lineActive(node.from)) {
       const info = parent.getChild('CodeInfo');
       const language = info ? state.doc.sliceString(info.from, info.to) : '';
+      // The chip carries where the language lives, so clicking it can select
+      // the language rather than leaving it unreachable behind the widget.
       pushReplace(
         built,
-        Decoration.replace({ widget: new FenceChipWidget(language) }),
+        Decoration.replace({ widget: new FenceChipWidget(language, info ? info.from : node.to) }),
         node.from,
         node.to
       );
@@ -627,6 +629,19 @@ const blockPreview = StateField.define<BlockState>({
 /** Exposed for tests: which blocks the field would render. */
 export function scanBlocksForTest(state: EditorState): BlockRange[] {
   return scanBlocks(state);
+}
+
+export type { BlockRange };
+
+/**
+ * The block ranges currently rendered as widgets.
+ *
+ * Vertical caret movement needs these: a replaced block has no visual lines
+ * inside it, so Up and Down step straight over it unless something puts the
+ * caret in deliberately.
+ */
+export function renderedBlocks(state: EditorState): BlockRange[] {
+  return state.field(blockPreview, false)?.blocks ?? [];
 }
 
 /**
