@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   release:
+    timeout-minutes: 45
     name: Build ${{ matrix.platform }}
     strategy:
       fail-fast: false
@@ -36,9 +37,18 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         # See ci.yml: libappindicator3-dev is unsatisfiable on the runner and
         # superseded by the ayatana package.
+        env:
+          # See ci.yml: an apt prompt here means a job that hangs for six hours.
+          DEBIAN_FRONTEND: noninteractive
         run: |
+          set -euxo pipefail
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev librsvg2-dev patchelf build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev libxdo-dev
+          sudo apt-get install -y --no-install-recommends \
+            -o Dpkg::Options::=--force-confdef \
+            -o Dpkg::Options::=--force-confold \
+            libwebkit2gtk-4.1-dev librsvg2-dev patchelf build-essential \
+            curl wget file libssl-dev libgtk-3-dev \
+            libayatana-appindicator3-dev libxdo-dev
 
       - uses: actions/setup-node@v7
         with:
@@ -76,6 +86,7 @@ jobs:
           args: ${{ matrix.args }}
 
   checksums:
+    timeout-minutes: 15
     name: Publish checksums
     needs: release
     runs-on: ubuntu-latest
