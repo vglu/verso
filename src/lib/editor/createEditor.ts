@@ -46,6 +46,8 @@ export interface EditorHandle {
   readonly view: EditorView;
   getContent(): string;
   setContent(content: string): void;
+  /** Replace the whole document as an edit: undoable, and it marks the tab dirty. */
+  replaceAll(content: string): void;
   focus(): void;
   destroy(): void;
   getOutline(): OutlineItem[];
@@ -221,6 +223,21 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
       if (content === view.state.doc.toString()) return;
       view.setState(EditorState.create({ doc: content, extensions: buildExtensions() }));
       options.onChange?.(content, { userInitiated: false });
+    },
+
+    /**
+     * Unlike setContent, this is an edit the reader made — one transaction, so
+     * Ctrl+Z puts the document back exactly as it was. Used by the formatters:
+     * a reformat that could not be undone would be a trap, not a feature.
+     */
+    replaceAll(content) {
+      if (content === view.state.doc.toString()) return;
+      const head = Math.min(view.state.selection.main.head, content.length);
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: content },
+        selection: { anchor: head },
+        scrollIntoView: true
+      });
     },
 
     focus: () => view.focus(),

@@ -190,6 +190,7 @@ export type MenuActionId =
   | 'goToLine'
   | 'foldAll'
   | 'unfoldAll'
+  | 'formatDocument'
   | 'zoomIn'
   | 'zoomOut'
   | 'zoomReset'

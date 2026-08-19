@@ -123,6 +123,11 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         MenuItemBuilder::with_id("unfoldAll", label(l, "unfoldAll", "Unfold All Sections"))
             .accelerator("CmdOrCtrl+Alt+]")
             .build(app)?;
+    let format_doc =
+        MenuItemBuilder::with_id("formatDocument", label(l, "formatDocument", "Format Document"))
+            .accelerator("Alt+Shift+F")
+            .build(app)?;
+
     // The window's own keydown handler does the zooming, so these carry no
     // accelerators of their own — two owners for one key means the menu wins
     // and the wheel gesture stops matching the keyboard. They are here to be
@@ -144,6 +149,8 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         .separator()
         .item(&fold_all)
         .item(&unfold_all)
+        .separator()
+        .item(&format_doc)
         .separator()
         .item(&zoom_in)
         .item(&zoom_out)

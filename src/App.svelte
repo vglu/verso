@@ -47,6 +47,7 @@
   } from './lib/editor/pathUtil';
   import { pushJump } from './lib/editor/history';
   import { exportToHtml, printDocument, type ExportRequest } from './lib/export';
+  import { formatDocument } from './lib/format';
 
   let revision = $state(0);
   let showSettings = $state(false);
@@ -260,6 +261,29 @@
     }
   }
 
+  /**
+   * Format the open document, if anything knows how.
+   *
+   * One undoable edit, and nothing at all when there is no formatter for this
+   * file type or the document is already as the formatter would leave it —
+   * an edit that changes no text would still cost a clean file its clean
+   * state and a place in the undo history.
+   */
+  function formatActive(): void {
+    const tab = activeTab;
+    const handle = tab ? tabs.handleOf(tab.id) : null;
+    if (!tab || !handle) return;
+
+    const result = formatDocument(handle.getContent(), tab.fileName);
+    if (!result) {
+      tabs.lastError = t('format.none');
+      return;
+    }
+
+    handle.replaceAll(result.text);
+    bump();
+  }
+
   async function printActive(): Promise<void> {
     const request = exportRequest();
     if (!request) return;
@@ -422,6 +446,9 @@
         break;
       case 'print':
         void printActive();
+        break;
+      case 'formatDocument':
+        formatActive();
         break;
       case 'zoomIn':
         settings.stepZoom(1);
