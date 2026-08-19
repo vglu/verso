@@ -4,6 +4,34 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] — 2026-08-20
+
+### Added
+
+- **Formatting, and the contract plugins will use.** A formatter is a pure
+  function from text to text — no DOM, no IPC, no network — which is exactly
+  the interface a plugin will implement later inside a worker. The built-in
+  ones are written against it first, because an extension point is only real
+  once something real is built on it. View → Format Document, or `Alt+Shift+F`.
+  - **JSON**, laid out or minified. A file that does not parse is left exactly
+    as it was: a formatter that "fixes" broken JSON by dropping what it could
+    not read is a data-loss bug in a helpful hat.
+  - **CSV into a Markdown table** — the conversion this program of all programs
+    should have. The parser follows RFC 4180: quoted fields, doubled quotes,
+    separators and line breaks inside quotes. Pipes in cells are escaped.
+  - Formatting is one undoable edit, never automatic, and does nothing at all
+    when there is nothing to do — an edit that changes no text would still cost
+    a clean file its clean state.
+- **Data files open as what they are.** A `.json` or `.csv` was parsed as
+  Markdown until now, so a `#` inside a JSON string became a heading and a row
+  of pipes became a table by accident. They now open with their own syntax
+  highlighting — loaded on demand, so a reader who only opens Markdown pays
+  nothing for it — at full width in a monospaced face, without the toolbar for
+  bold and headings. The status strip names the language. Markdown keeps
+  everything it had.
+- The open dialog and drag-and-drop accept those files too; they were already
+  openable by double-click, which made the dialog's refusal look like a bug.
+
 ## [0.1.0] — 2026-08-19
 
 First working release: open a Markdown file and read it beautifully, edit it
