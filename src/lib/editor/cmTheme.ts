@@ -64,7 +64,7 @@ const base = EditorView.theme({
     boxShadow: 'var(--shadow-panel)'
   },
 
-  // — Search panel: CodeMirror's own, dressed in our tokens —
+  // — Search panel: ours (searchPanel.ts), dressed in our tokens —
   '.cm-panels': {
     backgroundColor: 'var(--bg-panel)',
     color: 'var(--fg-ui)',
@@ -128,6 +128,78 @@ const base = EditorView.theme({
     fontSize: '16px',
     lineHeight: 1,
     padding: '2px 6px'
+  },
+
+  '.md-search': {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    padding: 'var(--sp-2) var(--sp-3)'
+  },
+  '.md-search-row': {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  },
+  '.md-search-field': {
+    flex: '1 1 auto',
+    minWidth: '120px'
+  },
+  '.md-search-count': {
+    flexShrink: 0,
+    minWidth: '84px',
+    fontSize: '11.5px',
+    fontVariantNumeric: 'tabular-nums',
+    color: 'var(--fg-faint)'
+  },
+  '.md-search-count.none': {
+    color: 'var(--warning)'
+  },
+  '.md-search-btn': {
+    flexShrink: 0
+  },
+  '.md-search-flags': {
+    display: 'flex',
+    gap: 'var(--sp-3)'
+  },
+  '.md-search-toggle': {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
+    fontSize: '11.5px',
+    color: 'var(--fg-muted)',
+    cursor: 'pointer',
+    userSelect: 'none'
+  },
+  '.md-search-hint': {
+    fontSize: '11px',
+    color: 'var(--fg-faint)',
+    lineHeight: 1.4
+  },
+
+  // — Where the matches are, down the right-hand edge —
+  '.md-search-rail': {
+    position: 'absolute',
+    right: '11px',
+    bottom: 0,
+    width: '5px',
+    pointerEvents: 'none',
+    zIndex: 4
+  },
+  '.md-search-tick': {
+    position: 'absolute',
+    right: 0,
+    width: '5px',
+    height: '2px',
+    borderRadius: '1px',
+    backgroundColor: 'var(--search-match-current)',
+    opacity: 0.75
+  },
+  '.md-search-tick.current': {
+    width: '9px',
+    height: '3px',
+    opacity: 1,
+    backgroundColor: 'var(--accent)'
   }
 });
 

@@ -171,8 +171,7 @@ export function buildInlineForRange(state: EditorState, from: number, to: number
   // block is showing its source for editing, and concealing the markup there
   // means the pipes no longer line up with the text).
   const owned = renderedBlocks(state);
-  const insideBlock = (pos: number): boolean =>
-    owned.some((b) => pos >= b.from && pos < b.to);
+  const insideBlock = (pos: number): boolean => owned.some((b) => pos >= b.from && pos < b.to);
 
   syntaxTree(state).iterate({
     from,

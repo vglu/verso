@@ -2,6 +2,8 @@ import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, dropCursor } from '@codemirror/view';
 import { bracketMatching, indentOnInput, syntaxTree } from '@codemirror/language';
 import { highlightSelectionMatches, search } from '@codemirror/search';
+import { createSearchPanel } from './searchPanel';
+import { searchRail } from './searchRail';
 import { markdownSupport } from './markdownLang';
 import { editorTheme } from './cmTheme';
 import { documentDir, livePreview, readerMode } from './livePreview';
@@ -169,7 +171,8 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     bracketMatching(),
     indentOnInput(),
     highlightSelectionMatches(),
-    search({ top: true }),
+    search({ top: true, createPanel: createSearchPanel }),
+    searchRail,
     EditorState.allowMultipleSelections.of(true),
     EditorView.contentAttributes.of({
       class: 'md-doc',

@@ -12,6 +12,8 @@
   --bg-hover: rgba(0, 0, 0, 0.045);
   --bg-active: rgba(0, 0, 0, 0.07);
   --bg-code: #f6f6f4;
+  /* Text fields sit *into* their panel rather than on top of it. */
+  --bg-field: #ffffff;
 
   /* — Text — */
   --fg: #1f2328;

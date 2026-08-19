@@ -11,14 +11,7 @@
   const { size = 16 }: Props = $props();
 </script>
 
-<svg
-  class="mark"
-  width={size}
-  height={size}
-  viewBox="0 0 400 400"
-  fill="none"
-  aria-hidden="true"
->
+<svg class="mark" width={size} height={size} viewBox="0 0 400 400" fill="none" aria-hidden="true">
   <path
     d="M 112 108 Q 112 86 134 86 L 238 86 L 288 136 L 288 292 Q 288 314 266 314 L 134 314 Q 112 314 112 292 Z"
     stroke="currentColor"

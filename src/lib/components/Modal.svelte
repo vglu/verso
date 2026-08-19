@@ -29,13 +29,7 @@
 <!-- Click-outside is a pointer convenience; keyboard users close with Escape,
      handled by the window listener above. -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
-<div
-  class="scrim"
-  role="presentation"
-  onclick={onClose}
-  in:scrimIn
-  out:scrimOut
->
+<div class="scrim" role="presentation" onclick={onClose} in:scrimIn out:scrimOut>
   <div
     class="modal"
     role="dialog"

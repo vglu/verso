@@ -12,7 +12,9 @@ import { blankRowLike } from './tableNav';
  */
 
 /** Lines the selection covers, inclusive. */
-function selectedLines(state: EditorState): { number: number; from: number; to: number; text: string }[] {
+function selectedLines(
+  state: EditorState
+): { number: number; from: number; to: number; text: string }[] {
   const { from, to } = state.selection.main;
   const first = state.doc.lineAt(from).number;
   const last = state.doc.lineAt(to).number;
@@ -90,9 +92,7 @@ export function toggleList(view: EditorView, kind: ListKind): boolean {
 export function toggleQuote(view: EditorView): boolean {
   const lines = selectedLines(view.state);
   const allQuoted = lines.every((l) => QUOTE.test(l.text));
-  return applyToLines(view, (text) =>
-    allQuoted ? text.replace(QUOTE, '$1') : `> ${text}`
-  );
+  return applyToLines(view, (text) => (allQuoted ? text.replace(QUOTE, '$1') : `> ${text}`));
 }
 
 /** Insert text, then place the caret where the user has to type next. */
@@ -166,9 +166,7 @@ export function insertCodeBlock(view: EditorView, language = ''): boolean {
     const body = selected || '';
     const text = `${before}\`\`\`${language}\n${body}\n\`\`\`${after}`;
     // Caret on the language slot when empty, otherwise at the start of the code.
-    const caret = language
-      ? before.length + 3 + language.length + 1
-      : before.length + 3;
+    const caret = language ? before.length + 3 + language.length + 1 : before.length + 3;
     return { text, caret };
   });
 }

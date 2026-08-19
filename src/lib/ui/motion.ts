@@ -12,10 +12,11 @@ import { cubicOut } from 'svelte/easing';
 import { fade, fly, scale, type TransitionConfig } from 'svelte/transition';
 
 export function prefersReducedMotion(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
+  // Asked during a transition, so it must not be the thing that throws: a
+  // host without matchMedia is a host that cannot state a preference, which
+  // is the same as not having one.
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 /** Modal panel: scales from its own centre, because it is not anchored to a trigger. */
@@ -36,6 +37,23 @@ export function scrimIn(node: Element): TransitionConfig {
 
 export function scrimOut(node: Element): TransitionConfig {
   return fade(node, { duration: 100 });
+}
+
+/**
+ * The go-to palette: it drops from the top edge it is pinned to.
+ *
+ * Shorter than a modal's entrance — this one is opened by a keystroke and
+ * closed by another, often several times in a row, and anything slower starts
+ * to feel like waiting.
+ */
+export function paletteIn(node: Element): TransitionConfig {
+  if (prefersReducedMotion()) return fade(node, { duration: 120 });
+  return fly(node, { y: -10, opacity: 0, duration: 160, easing: cubicOut });
+}
+
+export function paletteOut(node: Element): TransitionConfig {
+  if (prefersReducedMotion()) return fade(node, { duration: 90 });
+  return fly(node, { y: -6, opacity: 0, duration: 110, easing: cubicOut });
 }
 
 /** Banners drop in from the edge they are attached to, and leave the same way. */

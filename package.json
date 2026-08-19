@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "check:rust": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
     "check:colors": "node scripts/check-colors.mjs",
-    "check:all": "npm run lint && npm run typecheck && npm run check:colors && npm run test && npm run check:rust"
+    "check:all": "npm run lint && npm run typecheck && npm run check:colors && npm run test && npm run test:ui && npm run check:rust",
+    "test:ui": "vitest run --config vitest.ui.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

@@ -160,6 +160,8 @@ export type MenuActionId =
   | 'toggleSidebar'
   | 'toggleOutline'
   | 'find'
+  | 'goToHeading'
+  | 'goToLine'
   | 'about';
 
 export interface MenuActionPayload {

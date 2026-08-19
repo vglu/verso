@@ -46,10 +46,7 @@ class WorkspaceStore {
   }
 
   setOutlineWidth(value: number): void {
-    this.outlineWidth = Math.max(
-      MIN_OUTLINE_WIDTH,
-      Math.min(MAX_OUTLINE_WIDTH, Math.round(value))
-    );
+    this.outlineWidth = Math.max(MIN_OUTLINE_WIDTH, Math.min(MAX_OUTLINE_WIDTH, Math.round(value)));
   }
 
   async setRootFromFile(filePath: string): Promise<void> {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { workspace } from '../stores/workspace.svelte';
   import { t } from '../stores/i18n';
+  import { filterHeadings, splitByRanges } from '../editor/headingMatch';
 
   interface Props {
     onRevealHeading: (pos: number) => void;
@@ -10,6 +11,14 @@
 
   let resizing = $state(false);
   let listEl = $state<HTMLElement | null>(null);
+  let filter = $state('');
+
+  /**
+   * The same matcher the go-to palette uses. Typing the same thing in either
+   * place has to find the same headings, or the reader has two searches to
+   * learn instead of one.
+   */
+  const shown = $derived(filterHeadings(workspace.outline, filter));
 
   /** Drag from the panel's left edge, so the handle grows the panel leftwards. */
   function startResize(event: PointerEvent): void {
@@ -39,7 +48,12 @@
     const index = workspace.activeOutline;
     if (!listEl || index < 0) return;
 
-    const item = listEl.children[index] as HTMLElement | undefined;
+    // Rows are the filtered list, so the active heading's place in the panel
+    // is not its place in the outline.
+    const row = shown.findIndex((m) => m.index === index);
+    if (row < 0) return;
+
+    const item = listEl.children[row] as HTMLElement | undefined;
     if (!item) return;
 
     const panel = listEl.parentElement;
@@ -70,21 +84,44 @@
 
   <div class="head">{t('sidebar.outline')}</div>
 
+  {#if workspace.outline.length > 3}
+    <!-- Only worth the room once the list is long enough to need it. -->
+    <input
+      class="filter"
+      type="text"
+      bind:value={filter}
+      placeholder={t('sidebar.filter')}
+      aria-label={t('sidebar.filter')}
+      autocomplete="off"
+      spellcheck="false"
+      onkeydown={(e) => {
+        if (e.key === 'Escape' && filter) {
+          e.stopPropagation();
+          filter = '';
+        }
+      }}
+    />
+  {/if}
+
   <div class="body">
     {#if workspace.outline.length === 0}
       <div class="hint">{t('sidebar.noOutline')}</div>
+    {:else if shown.length === 0}
+      <div class="hint">{t('palette.noMatch')}</div>
     {:else}
       <nav bind:this={listEl} aria-label={t('sidebar.outline')}>
-        {#each workspace.outline as item, index (item.from)}
+        {#each shown as match (match.item.from)}
           <button
             class="item"
-            class:active={index === workspace.activeOutline}
-            class:top={item.level === 1}
-            style="padding-left: {10 + (item.level - 1) * 11}px"
-            onclick={() => onRevealHeading(item.from)}
-            title={item.text}
+            class:active={match.index === workspace.activeOutline}
+            class:top={match.item.level === 1}
+            style="padding-left: {10 + (match.item.level - 1) * 11}px"
+            onclick={() => onRevealHeading(match.item.from)}
+            title={match.item.text}
           >
-            {item.text}
+            {#each splitByRanges(match.item.text, match.ranges) as part, i (i)}
+              {#if part.hit}<mark>{part.text}</mark>{:else}{part.text}{/if}
+            {/each}
           </button>
         {/each}
       </nav>
@@ -123,11 +160,40 @@
     color: var(--fg-faint);
   }
 
+  .filter {
+    flex-shrink: 0;
+    margin: 0 var(--sp-3) var(--sp-2);
+    padding: 4px var(--sp-2);
+    font-size: 12px;
+    color: var(--fg-ui);
+    background: var(--bg-field);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    outline: none;
+    transition:
+      border-color var(--t-fast) var(--ease),
+      background-color var(--t-fast) var(--ease);
+  }
+
+  .filter::placeholder {
+    color: var(--fg-faint);
+  }
+
+  .filter:focus {
+    border-color: var(--accent);
+  }
+
   .body {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     padding-bottom: var(--sp-4);
+  }
+
+  mark {
+    background: transparent;
+    color: var(--accent);
+    font-weight: 600;
   }
 
   .hint {

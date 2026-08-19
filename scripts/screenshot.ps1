@@ -6,7 +6,11 @@
 param(
     [string]$Out = "shot.png",
     [string]$ProcessName = "mdviewer",
-    [int]$DelayMs = 0
+    [int]$DelayMs = 0,
+    # Grab the screen instead of asking the window to draw itself. Native
+    # popups — the menu bar's dropdowns, a file dialog — are separate windows,
+    # so PrintWindow of the main window never contains them.
+    [switch]$Screen
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -45,13 +49,15 @@ $bitmap = New-Object System.Drawing.Bitmap $w, $h
 $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
 
 $captured = $false
-try {
+if (-not $Screen) {
+  try {
     $hdc = $graphics.GetHdc()
     # flag 2 = PW_RENDERFULLCONTENT, required for hardware-composited webviews
     $captured = [Win32Cap]::PrintWindow($handle, $hdc, 2)
     $graphics.ReleaseHdc($hdc)
-} catch {
+  } catch {
     Write-Output "PrintWindow failed: $_"
+  }
 }
 
 if (-not $captured) {

@@ -47,6 +47,15 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let find = MenuItemBuilder::with_id("find", "Find…")
         .accelerator("CmdOrCtrl+F")
         .build(app)?;
+    // These two live in the menu rather than in the editor's own keymap on
+    // purpose: WebView2 claims Ctrl+P for printing before the page sees it,
+    // and the window's accelerators are handled first.
+    let go_to_heading = MenuItemBuilder::with_id("goToHeading", "Go to Heading…")
+        .accelerator("CmdOrCtrl+P")
+        .build(app)?;
+    let go_to_line = MenuItemBuilder::with_id("goToLine", "Go to Line…")
+        .accelerator("CmdOrCtrl+G")
+        .build(app)?;
 
     let edit = SubmenuBuilder::new(app, "Edit")
         .item(&PredefinedMenuItem::undo(app, None)?)
@@ -58,6 +67,8 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         .item(&PredefinedMenuItem::select_all(app, None)?)
         .separator()
         .item(&find)
+        .item(&go_to_heading)
+        .item(&go_to_line)
         .build()?;
 
     let toggle_sidebar = MenuItemBuilder::with_id("toggleSidebar", "Toggle Sidebar")

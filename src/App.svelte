@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { openSearchPanel } from '@codemirror/search';
+  import { gotoLine, openSearchPanel } from '@codemirror/search';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { getCurrentWebview } from '@tauri-apps/api/webview';
 
@@ -12,6 +12,7 @@
   import EditorHost from './lib/components/EditorHost.svelte';
   import StatusStrip from './lib/components/StatusStrip.svelte';
   import EmptyState from './lib/components/EmptyState.svelte';
+  import HeadingPalette from './lib/components/HeadingPalette.svelte';
   import Banner from './lib/components/Banner.svelte';
   import Modal from './lib/components/Modal.svelte';
   import SettingsModal from './lib/components/SettingsModal.svelte';
@@ -38,6 +39,7 @@
   let revision = $state(0);
   let showSettings = $state(false);
   let showAbout = $state(false);
+  let showPalette = $state(false);
   let pendingRecovery = $state<DraftInfo[]>([]);
   let closeRequest = $state<{ index: number; quitting: boolean } | null>(null);
   let narrow = $state(false);
@@ -182,9 +184,19 @@
     handle.revealPos(pos);
   }
 
+  /** Give the keyboard back to the document after an overlay closes. */
+  function focusEditor(): void {
+    if (activeTab) tabs.handleOf(activeTab.id)?.focus();
+  }
+
   function focusSearch(): void {
     const handle = activeTab ? tabs.handleOf(activeTab.id) : null;
-    if (handle) openSearchPanel(handle.view);
+    if (!handle) return;
+    // Remember where the reader was before they went looking. Escape leaves
+    // them wherever the search took them — which is right, they chose to go —
+    // and this is what makes Back bring them home.
+    pushJump(handle.view);
+    openSearchPanel(handle.view);
   }
 
   /**
@@ -289,6 +301,17 @@
       case 'find':
         focusSearch();
         break;
+      case 'goToHeading':
+        showPalette = true;
+        break;
+      case 'goToLine': {
+        const handle = activeTab ? tabs.handleOf(activeTab.id) : null;
+        if (handle) {
+          pushJump(handle.view);
+          gotoLine(handle.view);
+        }
+        break;
+      }
       case 'about':
         showAbout = true;
         break;
@@ -301,10 +324,7 @@
     if (!el) return false;
     const tag = el.tagName;
     return (
-      tag === 'INPUT' ||
-      tag === 'TEXTAREA' ||
-      tag === 'SELECT' ||
-      el.isContentEditable === true
+      tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable === true
     );
   }
 
@@ -523,6 +543,7 @@
         onFind={focusSearch}
         onSave={() => void save()}
         onToggleSource={toggleSourceMode}
+        onGoToHeading={() => (showPalette = true)}
         onActivity={bump}
       />
 
@@ -553,6 +574,16 @@
 
 {#if showAbout}
   <AboutModal onClose={() => (showAbout = false)} />
+{/if}
+
+{#if showPalette}
+  <HeadingPalette
+    onGo={(pos) => revealHeading(pos)}
+    onClose={() => {
+      showPalette = false;
+      focusEditor();
+    }}
+  />
 {/if}
 
 {#if closeRequest}

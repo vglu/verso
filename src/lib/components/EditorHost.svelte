@@ -11,11 +11,13 @@
     onFind: () => void;
     onSave: () => void;
     onToggleSource: () => void;
+    onGoToHeading: () => void;
     /** Fired on any edit or cursor move, so the chrome can refresh. */
     onActivity: () => void;
   }
 
-  const { onLinkClick, onFind, onSave, onToggleSource, onActivity }: Props = $props();
+  const { onLinkClick, onFind, onSave, onToggleSource, onGoToHeading, onActivity }: Props =
+    $props();
 
   // A mode switch applies to every open document, not just the active one.
   $effect(() => {
@@ -78,7 +80,7 @@
       onStructureChange: () => scheduleOutlineUpdate(tabId),
       onViewportChange: () => updateActiveOutlineOnly(tabId),
       onLinkClick: (href) => onLinkClick(href),
-      keymapHooks: { onFind, onSave, onToggleSource }
+      keymapHooks: { onFind, onSave, onToggleSource, onGoToHeading }
     });
 
     tabs.registerHandle(tabId, handle);

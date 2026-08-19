@@ -1,7 +1,7 @@
 import { EditorSelection, type Extension } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
-import { searchKeymap } from '@codemirror/search';
+import { gotoLine, searchKeymap } from '@codemirror/search';
 import { Prec } from '@codemirror/state';
 import {
   moveBlockDown,
@@ -83,7 +83,6 @@ export function insertLink(view: EditorView): boolean {
 export interface KeymapHooks {
   onFind?: () => void;
   onSave?: () => void;
-  onGoToLine?: () => void;
   onGoToHeading?: () => void;
   onToggleSource?: () => void;
 }
@@ -176,8 +175,12 @@ export function editorKeymap(hooks: KeymapHooks = {}): Extension {
         { key: 'Escape', run: exitTable },
 
         { key: 'Mod-f', run: fromHook(hooks.onFind) },
-        { key: 'Mod-g', run: fromHook(hooks.onGoToLine) },
-        { key: 'Mod-Shift-o', run: fromHook(hooks.onGoToHeading) },
+        // Go to line and go to heading are the menu's (menu.rs): WebView2
+        // takes Ctrl+P for printing before the page is asked, and the window's
+        // accelerators run first. The binding stays as a second route for when
+        // the menu is not the one that got the key.
+        { key: 'Mod-p', run: fromHook(hooks.onGoToHeading) },
+        { key: 'Mod-g', run: gotoLine },
         { key: 'Mod-/', run: fromHook(hooks.onToggleSource) },
         { key: 'Mod-s', run: fromHook(hooks.onSave) }
       ])

@@ -216,8 +216,7 @@ function stepIntoBlock(view: EditorView, direction: 1 | -1): boolean {
   );
   if (!crossed) return false;
 
-  const edgeLine =
-    direction === 1 ? state.doc.lineAt(crossed.from) : state.doc.lineAt(crossed.to);
+  const edgeLine = direction === 1 ? state.doc.lineAt(crossed.from) : state.doc.lineAt(crossed.to);
   const entry = keepColumn(view, head, edgeLine);
   if (entry === head) return false;
 
@@ -237,11 +236,7 @@ function stepIntoBlock(view: EditorView, direction: 1 | -1): boolean {
  * feel arbitrary. Falls back to the line start when there is no layout to
  * measure (tests, or before the first paint).
  */
-function keepColumn(
-  view: EditorView,
-  head: number,
-  line: { from: number; to: number }
-): number {
+function keepColumn(view: EditorView, head: number, line: { from: number; to: number }): number {
   try {
     const coords = view.coordsAtPos(head);
     if (!coords) return line.from;
