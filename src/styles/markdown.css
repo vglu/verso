@@ -257,6 +257,15 @@ input.md-task:checked {
   padding: 6px 12px;
   text-align: left;
   vertical-align: top;
+  /* Line wrapping in the editor is `overflow-wrap: anywhere`, which tells the
+     layout a column may be one character wide. Inside a table that is ruinous:
+     the space goes to whichever column has the most text and a five-letter
+     heading came out broken across three lines, one or two characters each.
+     `break-word` still breaks a word that genuinely cannot fit, but a column
+     is measured by its longest word again. */
+  overflow-wrap: break-word;
+  word-break: normal;
+  min-width: 5em;
 }
 
 .md-table th {

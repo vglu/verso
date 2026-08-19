@@ -162,6 +162,8 @@ export type MenuActionId =
   | 'find'
   | 'goToHeading'
   | 'goToLine'
+  | 'foldAll'
+  | 'unfoldAll'
   | 'about';
 
 export interface MenuActionPayload {

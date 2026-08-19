@@ -5,6 +5,7 @@ import { highlightSelectionMatches, search } from '@codemirror/search';
 import { createSearchPanel } from './searchPanel';
 import { searchRail } from './searchRail';
 import { markdownSupport } from './markdownLang';
+import { markdownFolding } from './folding';
 import { editorTheme } from './cmTheme';
 import { blocksRendered, documentDir, livePreview, readerMode } from './livePreview';
 import { editingField, setEditing } from './livePreview/editing';
@@ -172,6 +173,7 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     dropCursor(),
     bracketMatching(),
     indentOnInput(),
+    markdownFolding(),
     highlightSelectionMatches(),
     search({ top: true, createPanel: createSearchPanel }),
     searchRail,

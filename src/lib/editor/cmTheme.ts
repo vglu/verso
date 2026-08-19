@@ -28,7 +28,9 @@ const base = EditorView.theme({
     caretColor: 'var(--caret)'
   },
   '.cm-line': {
-    padding: '0'
+    padding: '0',
+    // Anchors the fold chevron, which sits in the margin beside its heading.
+    position: 'relative'
   },
   '&.cm-focused': {
     outline: 'none'
@@ -175,6 +177,48 @@ const base = EditorView.theme({
     fontSize: '11px',
     color: 'var(--fg-faint)',
     lineHeight: 1.4
+  },
+
+  // — Folding a section away —
+  //
+  // No fold gutter: a gutter is a permanent column down the side of a document
+  // that is meant to read like a page. The chevron sits in the margin beside
+  // its own heading, and is invisible until the pointer is on that line.
+  '.md-fold': {
+    position: 'absolute',
+    left: '-1.15em',
+    width: '1em',
+    textAlign: 'center',
+    fontSize: '0.7em',
+    lineHeight: 'inherit',
+    color: 'var(--fg-faint)',
+    cursor: 'pointer',
+    opacity: 0,
+    userSelect: 'none',
+    transition: 'opacity var(--t-fast) var(--ease), color var(--t-fast) var(--ease)'
+  },
+  '.cm-line:hover .md-fold': {
+    opacity: 0.55
+  },
+  '.md-fold:hover': {
+    opacity: '1 !important',
+    color: 'var(--fg-ui)'
+  },
+  // A folded section shows its chevron for good: it is the only sign that
+  // anything is missing.
+  '.md-fold-closed': {
+    opacity: 0.8,
+    color: 'var(--accent)'
+  },
+  '.md-fold-placeholder': {
+    display: 'inline-block',
+    margin: '0 0.35em',
+    padding: '0 0.4em',
+    borderRadius: 'var(--radius-s)',
+    background: 'var(--bg-hover)',
+    color: 'var(--fg-muted)',
+    fontSize: '0.8em',
+    cursor: 'pointer'
   },
 
   // — Where the matches are, down the right-hand edge —

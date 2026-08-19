@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { gotoLine, openSearchPanel } from '@codemirror/search';
+  import { foldAll, unfoldAll } from '@codemirror/language';
+  import type { EditorView } from '@codemirror/view';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { getCurrentWebview } from '@tauri-apps/api/webview';
 
@@ -189,6 +191,12 @@
     if (activeTab) tabs.handleOf(activeTab.id)?.focus();
   }
 
+  /** Run something against the active document's editor, if there is one. */
+  function withEditor(action: (view: EditorView) => void): void {
+    const handle = activeTab ? tabs.handleOf(activeTab.id) : null;
+    if (handle) action(handle.view);
+  }
+
   function focusSearch(): void {
     const handle = activeTab ? tabs.handleOf(activeTab.id) : null;
     if (!handle) return;
@@ -304,14 +312,18 @@
       case 'goToHeading':
         showPalette = true;
         break;
-      case 'goToLine': {
-        const handle = activeTab ? tabs.handleOf(activeTab.id) : null;
-        if (handle) {
-          pushJump(handle.view);
-          gotoLine(handle.view);
-        }
+      case 'foldAll':
+        withEditor((view) => foldAll(view));
         break;
-      }
+      case 'unfoldAll':
+        withEditor((view) => unfoldAll(view));
+        break;
+      case 'goToLine':
+        withEditor((view) => {
+          pushJump(view);
+          gotoLine(view);
+        });
+        break;
       case 'about':
         showAbout = true;
         break;

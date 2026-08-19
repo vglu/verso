@@ -15,7 +15,9 @@ import {
   stepUpIntoBlock
 } from './blockNav';
 import { setHeading, toggleList, toggleQuote } from './format';
+import { foldKeymap } from '@codemirror/language';
 import { cancelJump, jumpBack, jumpForward, jumpHistoryKeeper, pushJump } from './history';
+import { toggleSectionAt } from './folding';
 import { exitTable, nextTableCell, prevTableCell } from './tableNav';
 
 /**
@@ -156,6 +158,14 @@ export function editorKeymap(hooks: KeymapHooks = {}): Extension {
         { key: 'Mod-Alt-ArrowUp', run: asJump(prevHeading) },
         { key: 'Mod-l', run: selectBlock },
 
+        // — Folding a section away. Ctrl+Shift+[ / ] are CodeMirror's own
+        //   pair; this one adds "the section the caret is in", which is what
+        //   a document editor is usually asked for. —
+        {
+          key: 'Mod-Shift-f',
+          run: (view) => toggleSectionAt(view, view.state.selection.main.head)
+        },
+
         // — Moving the block itself. Alt+arrows stay with CodeMirror's own
         //   move-line, which is what every editor on this platform does; the
         //   block move is the Ctrl+Shift pair, which Typora and Notion use. —
@@ -185,6 +195,6 @@ export function editorKeymap(hooks: KeymapHooks = {}): Extension {
         { key: 'Mod-s', run: fromHook(hooks.onSave) }
       ])
     ),
-    keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab])
+    keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, ...foldKeymap, indentWithTab])
   ];
 }

@@ -79,6 +79,12 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let toggle_outline = MenuItemBuilder::with_id("toggleOutline", "Toggle Outline")
         .accelerator("CmdOrCtrl+Alt+O")
         .build(app)?;
+    let fold_all = MenuItemBuilder::with_id("foldAll", "Fold All Sections")
+        .accelerator("CmdOrCtrl+Alt+[")
+        .build(app)?;
+    let unfold_all = MenuItemBuilder::with_id("unfoldAll", "Unfold All Sections")
+        .accelerator("CmdOrCtrl+Alt+]")
+        .build(app)?;
     let settings = MenuItemBuilder::with_id("settings", "Settings…")
         .accelerator("CmdOrCtrl+,")
         .build(app)?;
@@ -86,6 +92,9 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let view = SubmenuBuilder::new(app, "View")
         .item(&toggle_sidebar)
         .item(&toggle_outline)
+        .separator()
+        .item(&fold_all)
+        .item(&unfold_all)
         .separator()
         .item(&settings)
         .build()?;
