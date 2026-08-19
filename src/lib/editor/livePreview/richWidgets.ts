@@ -86,7 +86,9 @@ export class MathWidget extends WidgetType {
 
   toDOM(view: EditorView): HTMLElement {
     const host = document.createElement(this.display ? 'div' : 'span');
-    if (this.display && this.from >= 0) editOnClick(host, view, this.from);
+    // Inline formulas need this as much as display ones: a rendered `$x$` is
+    // otherwise a hole in the line that the mouse cannot reach.
+    if (this.from >= 0) editOnClick(host, view, this.from);
     host.className = this.display ? 'md-math md-math-display' : 'md-math';
     // Until KaTeX arrives, show the source: never a blank gap.
     host.textContent = this.formula;

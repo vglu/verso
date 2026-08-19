@@ -14,6 +14,15 @@ export interface ActiveContext {
   frozen: boolean;
 }
 
+/**
+ * Beyond this many lines a selection stops revealing what it covers.
+ *
+ * Select-all on a long document would otherwise strip the formatting from the
+ * entire thing at once — the reader asked to select the text, not to see its
+ * markup.
+ */
+const MAX_REVEALED_LINES = 40;
+
 export function computeActive(state: EditorState, frozen = false): ActiveContext {
   const lines = new Set<number>();
   const ranges: { from: number; to: number }[] = [];
@@ -28,6 +37,13 @@ export function computeActive(state: EditorState, frozen = false): ActiveContext
       // that line, so shift+Down should not un-render it.
       if (range.to > range.from && state.doc.lineAt(range.to).from === range.to) {
         last = Math.max(first, last - 1);
+      }
+
+      if (last - first >= MAX_REVEALED_LINES) {
+        // Too broad to be about the markup: reveal only where the caret is.
+        const head = state.doc.lineAt(range.head).number;
+        lines.add(head);
+        continue;
       }
 
       for (let n = first; n <= last; n++) lines.add(n);

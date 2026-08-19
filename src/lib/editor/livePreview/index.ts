@@ -1,10 +1,10 @@
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import type { Tree } from '@lezer/common';
 import {
+  EditorState,
   Facet,
   Prec,
   StateField,
-  type EditorState,
   type Extension,
   type Range
 } from '@codemirror/state';
@@ -275,7 +275,7 @@ function addInlineMath(
     ) {
       pushReplace(
         built,
-        Decoration.replace({ widget: new MathWidget(formula, false) }),
+        Decoration.replace({ widget: new MathWidget(formula, false, start) }),
         start,
         end
       );
@@ -531,7 +531,12 @@ function handleNode(
   // — Rules —
   if (name === 'HorizontalRule') {
     if (!lineActive(node.from)) {
-      pushReplace(built, Decoration.replace({ widget: new HrWidget() }), node.from, node.to);
+      pushReplace(
+        built,
+        Decoration.replace({ widget: new HrWidget(node.from) }),
+        node.from,
+        node.to
+      );
     }
     return false;
   }
@@ -849,18 +854,53 @@ const blockPreview = StateField.define<BlockState>({
   },
 
   provide: (field) => [
-    EditorView.decorations.from(field, (value) => value.decorations)
-    // Deliberately NOT contributed to `atomicRanges`.
+    EditorView.decorations.from(field, (value) => value.decorations),
+    // Blocks are deliberately NOT in `atomicRanges`.
     //
-    // An atomic block is one the caret steps over, which is right for a hidden
-    // `**` marker and completely wrong for a table: pressing Down once would
-    // leap the entire table, twenty rows at a time, and there would be no way
-    // to walk into it at all. Left non-atomic, the caret enters the range, the
-    // selection turns the block active on the same transaction, and its source
-    // is showing by the time the frame is drawn — so Down steps into the table
-    // and then through it line by line, as it does in every other editor.
+    // An atomic range is one the caret steps over, which is right for a hidden
+    // `**` marker and wrong for a table: Down would leap the whole thing,
+    // twenty rows at a time, with no way to walk into it. Left non-atomic, the
+    // caret enters, the selection opens the block in the same transaction, and
+    // its source is showing by the time the frame is drawn.
+    //
+    // What a rendered block *does* need is protection from being deleted
+    // whole while it is drawn as one object.
+    protectRenderedBlocks(field)
   ]
 });
+
+/**
+ * Refuse a deletion that would swallow a block the reader cannot see the
+ * inside of.
+ *
+ * While a table is drawn as a grid it looks like one object, and a single
+ * Backspace at its edge would take all of it — twenty rows gone, with an undo
+ * the reader has no reason to expect they need. Deleting is fine once the
+ * block is open and its text is on screen; this only stops it happening
+ * blind.
+ */
+function protectRenderedBlocks(field: StateField<BlockState>): Extension {
+  return EditorState.transactionFilter.of((tr) => {
+    if (!tr.docChanged || tr.isUserEvent('input.reload')) return tr;
+
+    const blocks = tr.startState.field(field, false)?.blocks;
+    if (!blocks || blocks.length === 0) return tr;
+
+    const active = computeActive(tr.startState, isFrozen(tr.startState));
+    let blocked = false;
+
+    tr.changes.iterChangedRanges((fromA, toA) => {
+      if (toA <= fromA) return; // pure insertion
+      for (const block of blocks) {
+        if (isRangeActive(active, block.from, block.to)) continue; // open: visible
+        // Only a deletion that reaches past the block's own edges is blind.
+        if (fromA <= block.from && toA >= block.to) blocked = true;
+      }
+    });
+
+    return blocked ? [] : tr;
+  });
+}
 
 /** Exposed for tests: which blocks the field would render. */
 export function scanBlocksForTest(state: EditorState): BlockRange[] {

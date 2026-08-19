@@ -32,14 +32,38 @@ export class BulletWidget extends WidgetType {
 
 /** Horizontal rule replacing `---`. */
 export class HrWidget extends WidgetType {
-  eq(): boolean {
-    return true;
+  constructor(readonly from = -1) {
+    super();
   }
 
-  toDOM(): HTMLElement {
+  eq(other: HrWidget): boolean {
+    return other.from === this.from;
+  }
+
+  toDOM(view: EditorView): HTMLElement {
     const span = document.createElement('span');
     span.className = 'md-hr';
+
+    // A rule fills its line, so a click anywhere on that line lands on the
+    // widget. Without a handler there is no way to put the caret on it at
+    // all, and no way to delete it with the mouse.
+    if (this.from >= 0) {
+      span.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        view.dispatch({
+          selection: EditorSelection.cursor(Math.min(this.from, view.state.doc.length)),
+          effects: setEditing.of(true),
+          scrollIntoView: false
+        });
+        view.focus();
+      });
+    }
+
     return span;
+  }
+
+  ignoreEvent(): boolean {
+    return false;
   }
 }
 
