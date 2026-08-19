@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
@@ -27,10 +28,12 @@ const TABLE_LAST_LINE = 6;
 function viewOf(cursorLine: number): EditorView {
   const parent = document.createElement('div');
   document.body.appendChild(parent);
-  const state = EditorState.create({
-    doc,
-    extensions: [markdownSupport(), livePreview()]
-  });
+  const state = parseFully(
+    EditorState.create({
+      doc,
+      extensions: [markdownSupport(), livePreview()]
+    })
+  );
   const view = new EditorView({ parent, state });
   view.dispatch({ selection: EditorSelection.cursor(view.state.doc.line(cursorLine).from) });
   return view;

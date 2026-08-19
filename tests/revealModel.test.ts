@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
@@ -21,10 +22,12 @@ function viewOf(doc: string, cursor?: number): EditorView {
   document.body.appendChild(parent);
   const view = new EditorView({
     parent,
-    state: EditorState.create({
-      doc,
-      extensions: [markdownSupport(), livePreview(), documentDir.of('/docs')]
-    })
+    state: parseFully(
+      EditorState.create({
+        doc,
+        extensions: [markdownSupport(), livePreview(), documentDir.of('/docs')]
+      })
+    )
   });
   if (cursor !== undefined) {
     // Reveal only starts once the reader actually works in the document, so a

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import { EditorState } from '@codemirror/state';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
 import {
@@ -21,10 +22,12 @@ import {
  * plugin uses, without needing a laid-out browser view.
  */
 function build(doc: string, options: { editing?: boolean; cursor?: number } = {}): Built {
-  let state = EditorState.create({
-    doc,
-    extensions: [markdownSupport(), editingField, documentDir.of('/docs')]
-  });
+  let state = parseFully(
+    EditorState.create({
+      doc,
+      extensions: [markdownSupport(), editingField, documentDir.of('/docs')]
+    })
+  );
 
   if (options.cursor !== undefined) {
     state = state.update({ selection: { anchor: options.cursor } }).state;

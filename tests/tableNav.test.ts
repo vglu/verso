@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { EditorSelection, EditorState } from '@codemirror/state';
@@ -17,11 +18,13 @@ import { insertTable } from '../src/lib/editor/format';
 const fixture = readFileSync(join(process.cwd(), 'tests/fixtures/ragged-tables.md'), 'utf8');
 
 function stateOf(doc: string, pos = 0): EditorState {
-  return EditorState.create({
-    doc,
-    selection: EditorSelection.cursor(pos),
-    extensions: [markdownSupport()]
-  });
+  return parseFully(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(pos),
+      extensions: [markdownSupport()]
+    })
+  );
 }
 
 function viewOf(doc: string, pos: number): EditorView {

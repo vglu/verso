@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ensureSyntaxTree } from '@codemirror/language';
+import { parseFully } from './support/tree';
 import { EditorState } from '@codemirror/state';
 import { activeOutlineIndex, cleanHeadingText, extractOutline } from '../src/lib/editor/outline';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
@@ -13,9 +13,7 @@ import { computeStats } from '../src/lib/editor/createEditor';
  * simply wait for it.
  */
 function stateOf(doc: string): EditorState {
-  const state = EditorState.create({ doc, extensions: [markdownSupport()] });
-  ensureSyntaxTree(state, doc.length, 5000);
-  return state;
+  return parseFully(EditorState.create({ doc, extensions: [markdownSupport()] }));
 }
 
 describe('cleanHeadingText', () => {

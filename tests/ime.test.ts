@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
@@ -23,7 +24,7 @@ function viewOf(doc: string): EditorView {
   document.body.appendChild(parent);
   return new EditorView({
     parent,
-    state: EditorState.create({ doc, extensions: [markdownSupport(), livePreview()] })
+    state: parseFully(EditorState.create({ doc, extensions: [markdownSupport(), livePreview()] }))
   });
 }
 
@@ -40,15 +41,14 @@ describe('composition', () => {
 
   it('does not fire a second time once editing has begun', () => {
     const view = viewOf('**hi**\n');
-    let updates = 0;
-    view.dispatch({ effects: [] });
 
     view.contentDOM.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
     const after = view.state;
     view.contentDOM.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
-    updates = view.state === after ? 0 : 1;
 
-    expect(updates).toBe(0);
+    // Editing is already on, so the second composition has nothing to say —
+    // and says it by not producing a transaction at all.
+    expect(view.state).toBe(after);
     view.destroy();
   });
 });

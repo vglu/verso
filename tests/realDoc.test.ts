@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { EditorState } from '@codemirror/state';
-import { ensureSyntaxTree } from '@codemirror/language';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
 import { documentDir, editingField, scanBlocksForTest } from '../src/lib/editor/livePreview';
 
@@ -30,9 +30,8 @@ describe('a real 12 KB document', () => {
   });
 
   it('finds that table once the document is fully parsed', () => {
-    const state = stateOf(source);
     // Force the parser all the way to the end, the way scrolling eventually does.
-    ensureSyntaxTree(state, source.length, 10_000);
+    const state = parseFully(stateOf(source));
 
     const blocks = scanBlocksForTest(state);
     const tables = blocks.filter((b) => b.kind === 'table');
@@ -43,8 +42,7 @@ describe('a real 12 KB document', () => {
 
   it('parses the table into header, alignment and every row', async () => {
     const { parseTable } = await import('../src/lib/editor/livePreview/table');
-    const state = stateOf(source);
-    ensureSyntaxTree(state, source.length, 10_000);
+    const state = parseFully(stateOf(source));
 
     const table = scanBlocksForTest(state).find((b) => b.kind === 'table')!;
     const parsed = parseTable(table.source)!;

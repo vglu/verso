@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import { EditorState } from '@codemirror/state';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
 import {
@@ -10,10 +11,12 @@ import {
 import { MathWidget } from '../src/lib/editor/livePreview/richWidgets';
 
 function stateOf(doc: string): EditorState {
-  return EditorState.create({
-    doc,
-    extensions: [markdownSupport(), editingField, documentDir.of('/docs')]
-  });
+  return parseFully(
+    EditorState.create({
+      doc,
+      extensions: [markdownSupport(), editingField, documentDir.of('/docs')]
+    })
+  );
 }
 
 describe('block scanning', () => {

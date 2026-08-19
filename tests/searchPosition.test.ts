@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import {
   SearchQuery,
   closeSearchPanel,
@@ -31,11 +32,13 @@ function viewOf(): EditorView {
   document.body.appendChild(parent);
   return new EditorView({
     parent,
-    state: EditorState.create({
-      doc,
-      selection: EditorSelection.cursor(0),
-      extensions: [markdownSupport(), livePreview(), editorKeymap({}), search({ top: true })]
-    })
+    state: parseFully(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(0),
+        extensions: [markdownSupport(), livePreview(), editorKeymap({}), search({ top: true })]
+      })
+    )
   });
 }
 

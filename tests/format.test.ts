@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
@@ -26,11 +27,13 @@ function viewOf(doc: string, cursor = 0): EditorView {
   document.body.appendChild(parent);
   return new EditorView({
     parent,
-    state: EditorState.create({
-      doc,
-      selection: EditorSelection.cursor(cursor),
-      extensions: [markdownSupport()]
-    })
+    state: parseFully(
+      EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(cursor),
+        extensions: [markdownSupport()]
+      })
+    )
   });
 }
 

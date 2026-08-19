@@ -7,6 +7,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     include: ['tests/**/*.test.ts'],
+    // The performance budgets are timings, and timings need quiet: they run
+    // alone, from vitest.perf.config.ts (`npm run test:perf`).
+    exclude: ['tests/perf.test.ts'],
     globals: true
   }
 });

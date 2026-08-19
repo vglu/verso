@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import { SearchQuery, openSearchPanel, search, setSearchQuery } from '@codemirror/search';
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
@@ -13,15 +14,17 @@ function viewOf(text = doc, at = 0): EditorView {
   document.body.appendChild(parent);
   return new EditorView({
     parent,
-    state: EditorState.create({
-      doc: text,
-      selection: EditorSelection.cursor(at),
-      extensions: [
-        markdownSupport(),
-        search({ top: true, createPanel: createSearchPanel }),
-        searchRail
-      ]
-    })
+    state: parseFully(
+      EditorState.create({
+        doc: text,
+        selection: EditorSelection.cursor(at),
+        extensions: [
+          markdownSupport(),
+          search({ top: true, createPanel: createSearchPanel }),
+          searchRail
+        ]
+      })
+    )
   });
 }
 

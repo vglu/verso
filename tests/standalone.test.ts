@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ensureSyntaxTree } from '@codemirror/language';
+import { parseFully } from './support/tree';
 import { EditorState } from '@codemirror/state';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
 
@@ -16,9 +16,7 @@ vi.mock('../src/lib/ipc/commands', () => ({
 const { buildStandaloneHtml } = await import('../src/lib/export/standalone');
 
 function stateOf(doc: string): EditorState {
-  const state = EditorState.create({ doc, extensions: [markdownSupport()] });
-  ensureSyntaxTree(state, doc.length, 5000);
-  return state;
+  return parseFully(EditorState.create({ doc, extensions: [markdownSupport()] }));
 }
 
 const options = { title: 'Notes', dir: 'C:/docs' };

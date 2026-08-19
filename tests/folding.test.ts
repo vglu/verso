@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ensureSyntaxTree } from '@codemirror/language';
+import { parseFully, parseViewFully } from './support/tree';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
@@ -11,10 +11,8 @@ import { foldableSection, markdownFolding, toggleSectionAt } from '../src/lib/ed
  * unit worth collapsing.
  */
 function stateOf(doc: string): EditorState {
-  const state = EditorState.create({ doc, extensions: [markdownSupport()] });
   // The parser is lazy; folding asks about lines anywhere in the document.
-  ensureSyntaxTree(state, doc.length, 5000);
-  return state;
+  return parseFully(EditorState.create({ doc, extensions: [markdownSupport()] }));
 }
 
 function foldAtLine(doc: string, lineNumber: number): string | null {
@@ -83,7 +81,7 @@ describe('folding it, in a real view', () => {
       parent,
       state: EditorState.create({ doc: text, extensions: [markdownSupport(), markdownFolding()] })
     });
-    ensureSyntaxTree(view.state, text.length, 5000);
+    parseViewFully(view);
     return view;
   }
 

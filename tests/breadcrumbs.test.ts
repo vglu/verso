@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import { EditorState } from '@codemirror/state';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
 import { activeOutlineIndex, extractOutline, type OutlineItem } from '../src/lib/editor/outline';
@@ -23,7 +24,7 @@ function trailFor(items: OutlineItem[], index: number): OutlineItem[] {
 }
 
 function outlineOf(doc: string): OutlineItem[] {
-  return extractOutline(EditorState.create({ doc, extensions: [markdownSupport()] }));
+  return extractOutline(parseFully(EditorState.create({ doc, extensions: [markdownSupport()] })));
 }
 
 const doc = [

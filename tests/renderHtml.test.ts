@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ensureSyntaxTree } from '@codemirror/language';
+import { parseFully } from './support/tree';
 import { EditorState } from '@codemirror/state';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
 import { renderDocumentHtml } from '../src/lib/export/renderHtml';
@@ -12,8 +12,7 @@ import { renderDocumentHtml } from '../src/lib/export/renderHtml';
  * and where anything a document can carry must not become executable.
  */
 function html(markdown: string, options = {}): string {
-  const state = EditorState.create({ doc: markdown, extensions: [markdownSupport()] });
-  ensureSyntaxTree(state, markdown.length, 5000);
+  const state = parseFully(EditorState.create({ doc: markdown, extensions: [markdownSupport()] }));
   return renderDocumentHtml(state, options);
 }
 

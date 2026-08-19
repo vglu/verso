@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseFully } from './support/tree';
 import { EditorState } from '@codemirror/state';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
 import { buildInlineForRange, documentDir, editingField } from '../src/lib/editor/livePreview';
@@ -10,10 +11,12 @@ import { MathWidget } from '../src/lib/editor/livePreview/richWidgets';
  * against real Markdown before being fixed.
  */
 function build(doc: string) {
-  const state = EditorState.create({
-    doc,
-    extensions: [markdownSupport(), editingField, documentDir.of('/docs')]
-  });
+  const state = parseFully(
+    EditorState.create({
+      doc,
+      extensions: [markdownSupport(), editingField, documentDir.of('/docs')]
+    })
+  );
   return buildInlineForRange(state, 0, doc.length);
 }
 

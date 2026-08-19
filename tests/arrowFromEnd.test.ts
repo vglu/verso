@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { parseViewFully } from './support/tree';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
@@ -31,7 +31,7 @@ function viewOf(doc: string, at: number): EditorView {
       extensions: [markdownSupport(), livePreview()]
     })
   });
-  ensureSyntaxTree(view.state, doc.length, 5000);
+  parseViewFully(view);
   // The document is only rendered once it has been touched.
   view.dispatch({ effects: setEditing.of(true) });
   return view;
