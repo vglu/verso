@@ -35,7 +35,16 @@
   import { onFsChanged, onMenuAction, onOpenFile } from './lib/ipc/events';
   import { pickFile, pickFolder } from './lib/ipc/dialogs';
   import type { DraftInfo, MenuActionId } from './lib/ipc/types';
-  import { baseName, isRemoteUrl } from './lib/editor/pathUtil';
+  // Imported outright: the module is in the first chunk either way (several
+  // modules here import it statically), so loading it again on demand only
+  // bought an await on the path a reader takes to open a linked document.
+  import {
+    baseName,
+    decodeUrlPath,
+    isRemoteUrl,
+    joinPath,
+    stripUrlSuffix
+  } from './lib/editor/pathUtil';
   import { pushJump } from './lib/editor/history';
   import { exportToHtml, printDocument, type ExportRequest } from './lib/export';
 
@@ -270,7 +279,6 @@
     }
     // A relative link to another document opens as a tab.
     const dir = activeTab?.dirPath ?? '';
-    const { joinPath, stripUrlSuffix, decodeUrlPath } = await import('./lib/editor/pathUtil');
     const target = joinPath(dir, decodeUrlPath(stripUrlSuffix(href)));
     await openPath(target);
   }

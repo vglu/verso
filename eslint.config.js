@@ -19,7 +19,10 @@ export default [
     }
   },
   {
-    files: ['**/*.svelte'],
+    // `.svelte.ts` carries runes, so eslint-plugin-svelte claims those files
+    // too and parses them with the Svelte parser — which needs to be told what
+    // to hand the script contents to, exactly as for a component.
+    files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
     languageOptions: {
       parserOptions: { parser: ts.parser }
     }

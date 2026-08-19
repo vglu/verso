@@ -21,6 +21,9 @@ export default defineConfig({
   build: {
     target: 'esnext',
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
-    minify: process.env.TAURI_ENV_DEBUG ? false : 'esbuild'
+    // Whatever Vite ships with, rather than a named minifier: Vite 8 bundles
+    // with Rolldown and minifies with Oxc, and naming esbuild here now means
+    // installing it separately for no gain.
+    minify: !process.env.TAURI_ENV_DEBUG
   }
 });

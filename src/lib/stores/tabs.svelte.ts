@@ -53,7 +53,15 @@ export interface Tab {
   scroll: ScrollAnchor;
 }
 
-/** Editor handles live outside reactive state on purpose (see file header). */
+/**
+ * Editor handles live outside reactive state on purpose (see file header).
+ *
+ * A `SvelteMap` — what the lint rule asks for — would put every CodeMirror
+ * view behind a reactive proxy and re-run whatever read it on each edit. These
+ * are imperative handles: nothing renders from them, they are looked up and
+ * called. The plain Map is the point.
+ */
+// eslint-disable-next-line svelte/prefer-svelte-reactivity
 const handles = new Map<string, EditorHandle>();
 
 let untitledCounter = 0;
