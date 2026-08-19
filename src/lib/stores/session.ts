@@ -57,8 +57,19 @@ export async function flushSession(): Promise<void> {
   await sessionSave(snapshotSession()).catch((e) => console.warn('session flush failed', e));
 }
 
+export interface RestoreOptions {
+  /**
+   * Whether the restored session may choose the active tab.
+   *
+   * False when a document was double-clicked: that one is already open and is
+   * the one the reader is waiting for, and the session must not pull the rug
+   * out from under it a second later.
+   */
+  activate?: boolean;
+}
+
 /** Restore a previous session. Returns true if anything was reopened. */
-export async function restoreSession(): Promise<boolean> {
+export async function restoreSession({ activate = true }: RestoreOptions = {}): Promise<boolean> {
   const state = await sessionLoad().catch(() => null);
   if (!state) return false;
 
@@ -86,15 +97,16 @@ export async function restoreSession(): Promise<boolean> {
     opened += 1;
   }
 
-  if (opened > 0) {
+  if (opened > 0 && activate) {
     const index = Math.min(Math.max(state.activeIndex, 0), tabs.tabs.length - 1);
     tabs.activate(index);
   }
 
-  if (state.treeRoot) {
-    await workspace.setRoot(state.treeRoot).catch(() => undefined);
-  } else if (tabs.active?.path) {
-    await workspace.setRootFromFile(tabs.active.path);
+  // The folder tree only follows the session when nothing else has set it —
+  // a double-clicked document has already pointed it at its own folder.
+  if (!workspace.treeRoot) {
+    if (state.treeRoot) await workspace.setRoot(state.treeRoot).catch(() => undefined);
+    else if (tabs.active?.path) await workspace.setRootFromFile(tabs.active.path);
   }
 
   return opened > 0;

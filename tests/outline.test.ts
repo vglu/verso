@@ -1,11 +1,21 @@
 import { describe, expect, it } from 'vitest';
+import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { activeOutlineIndex, cleanHeadingText, extractOutline } from '../src/lib/editor/outline';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
 import { computeStats } from '../src/lib/editor/createEditor';
 
+/**
+ * Parsing is time-sliced, so a fresh state carries only as much tree as the
+ * parser got through — on a loaded machine that can be the first block alone,
+ * and the assertions below turn flaky rather than false. In the application
+ * the outline is rebuilt as the parse advances (`onStructureChange`); here we
+ * simply wait for it.
+ */
 function stateOf(doc: string): EditorState {
-  return EditorState.create({ doc, extensions: [markdownSupport()] });
+  const state = EditorState.create({ doc, extensions: [markdownSupport()] });
+  ensureSyntaxTree(state, doc.length, 5000);
+  return state;
 }
 
 describe('cleanHeadingText', () => {

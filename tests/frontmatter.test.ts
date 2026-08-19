@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
 import { frontmatterRange } from '../src/lib/editor/frontmatter';
@@ -6,7 +7,11 @@ import { extractOutline } from '../src/lib/editor/outline';
 import { buildInlineForRange, livePreview } from '../src/lib/editor/livePreview';
 
 function stateOf(doc: string): EditorState {
-  return EditorState.create({ doc, extensions: [markdownSupport(), livePreview()] });
+  const state = EditorState.create({ doc, extensions: [markdownSupport(), livePreview()] });
+  // Parsing is time-sliced; wait for the tree so the assertions are about the
+  // rules rather than about how busy the machine was.
+  ensureSyntaxTree(state, doc.length, 5000);
+  return state;
 }
 
 const withMatter = [

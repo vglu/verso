@@ -410,16 +410,21 @@
     const unlisteners: Array<() => void> = [];
 
     void (async () => {
-      // Files from a double-click take priority over the restored session.
+      // The document someone double-clicked is what they are waiting for, so
+      // it opens first and the session fills in behind it. Restoring first
+      // meant reading every file of the last session — a dozen of them —
+      // before the one they actually asked for reached the screen.
       const startup = await getStartupFiles().catch(() => [] as string[]);
 
-      if (settings.value.restoreSession && startup.length === 0) {
-        await restoreSession().catch((e) => console.warn('session restore failed', e));
-      } else if (settings.value.restoreSession) {
-        await restoreSession().catch(() => undefined);
-      }
-
       for (const path of startup) await openPath(path);
+      booted = startup.length > 0;
+
+      if (settings.value.restoreSession) {
+        // Do not let the restore steal the tab they opened.
+        await restoreSession({ activate: startup.length === 0 }).catch((e) =>
+          console.warn('session restore failed', e)
+        );
+      }
 
       booted = true;
 

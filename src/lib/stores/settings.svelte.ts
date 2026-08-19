@@ -5,7 +5,7 @@
  */
 import { DEFAULT_SETTINGS, type Settings, type ThemeSetting } from '../ipc/types';
 import { setMenuLabels, settingsLoad, settingsSave } from '../ipc/commands';
-import { menuLabels, setLang } from './i18n';
+import { getLang, menuLabels, setLang } from './i18n';
 import { THEME_CHANGED_EVENT } from '../editor/livePreview/richWidgets';
 
 const THEME_MIRROR_KEY = 'mdviewer.theme';
@@ -57,7 +57,16 @@ class SettingsStore {
    * a blemish, not a broken application.
    */
   private syncMenuLanguage(): void {
-    void setMenuLabels(menuLabels()).catch((e) => console.warn('menu labels failed', e));
+    // Rust builds the menu in English, so an English window needs nothing —
+    // and rebuilding a native menu bar is not free, least of all while the
+    // first document is trying to paint.
+    if (getLang() === 'en') return;
+
+    // Off the startup path either way: nobody reads the menu bar in the frame
+    // where their document appears.
+    setTimeout(() => {
+      void setMenuLabels(menuLabels()).catch((e) => console.warn('menu labels failed', e));
+    }, 0);
   }
 
   private persist(): void {

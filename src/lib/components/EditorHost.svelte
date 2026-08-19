@@ -87,7 +87,18 @@
 
     if (tab.cursor > 0) handle.setCursor(tab.cursor);
     if (tab.scroll.pos > 0 || tab.scroll.offset !== 0) handle.setScrollAnchor(tab.scroll);
-    scheduleOutlineUpdate(tabId);
+
+    // The editor is built the first time its tab is shown, which is after the
+    // effect that would normally hand it the focus and the outline has already
+    // run and found nothing. So it does that work here, where the editor
+    // actually exists.
+    if (tabs.active?.id === tabId) {
+      handle.focus();
+      outlineSync.schedule(tabId);
+      outlineSync.flush();
+    } else {
+      scheduleOutlineUpdate(tabId);
+    }
 
     return {
       destroy(): void {
@@ -96,6 +107,17 @@
     };
   }
 
+  /**
+   * Documents that have been looked at, and so have an editor.
+   *
+   * A restored session can be a dozen files, and building a CodeMirror
+   * instance for each one before the first is on screen is work done for
+   * nobody: twelve of them are behind a tab the reader has not chosen. The
+   * editor is built when its tab is first shown and kept from then on, so
+   * coming back to it is instant.
+   */
+  let opened = $state<string[]>([]);
+
   // Focus follows the active tab, and the outline follows with it.
   $effect(() => {
     const active = tabs.active;
@@ -103,6 +125,8 @@
       workspace.setOutline([], -1);
       return;
     }
+    if (!opened.includes(active.id)) opened = [...opened, active.id];
+
     const handle = tabs.handleOf(active.id);
     if (!handle) return;
     handle.focus();
@@ -115,12 +139,14 @@
 </script>
 
 {#each tabs.tabs as tab, index (tab.id)}
-  <div
-    class="host"
-    class:hidden={index !== tabs.activeIndex}
-    use:mountEditor={tab.id}
-    data-tab={tab.fileName}
-  ></div>
+  {#if opened.includes(tab.id)}
+    <div
+      class="host"
+      class:hidden={index !== tabs.activeIndex}
+      use:mountEditor={tab.id}
+      data-tab={tab.fileName}
+    ></div>
+  {/if}
 {/each}
 
 <style>
