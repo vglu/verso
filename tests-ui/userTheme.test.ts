@@ -19,9 +19,8 @@ vi.mock('../src/lib/ipc/commands', () => ({
   })
 }));
 
-const { applyUserThemeCss, clearUserTheme, loadUserTheme } = await import(
-  '../src/lib/ui/userTheme'
-);
+const { applyUserThemeCss, clearUserTheme, loadUserTheme } =
+  await import('../src/lib/ui/userTheme');
 
 beforeEach(() => {
   files.clear();

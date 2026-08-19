@@ -113,5 +113,10 @@ describe('a real document, at its end', () => {
 
 /** Offset of the start of a 1-based line, for readable test positions. */
 function view0(doc: string, line: number): number {
-  return doc.split('\n').slice(0, line - 1).join('\n').length + (line > 1 ? 1 : 0);
+  return (
+    doc
+      .split('\n')
+      .slice(0, line - 1)
+      .join('\n').length + (line > 1 ? 1 : 0)
+  );
 }
