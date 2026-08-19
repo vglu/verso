@@ -77,11 +77,14 @@ button {
   border-radius: 5px;
   border: 2px solid transparent;
   background-clip: content-box;
+  transition: background-color var(--t-fast) var(--ease);
 }
 
-*::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-hover);
-  background-clip: content-box;
+@media (hover: hover) and (pointer: fine) {
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-hover);
+    background-clip: content-box;
+  }
 }
 
 /* — App layout — */
@@ -120,15 +123,30 @@ button {
   font-weight: 500;
   transition:
     background-color var(--t-fast) var(--ease),
-    border-color var(--t-fast) var(--ease);
+    border-color var(--t-fast) var(--ease),
+    transform var(--t-press) var(--ease-out);
 }
 
-.btn:hover {
-  background: var(--bg-hover);
+/* Touch devices fire hover on tap, which leaves the state stuck. */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover {
+    background: var(--bg-hover);
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
+
+  .icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--fg-ui);
+  }
 }
 
 .btn:active {
   background: var(--bg-active);
+  transform: scale(var(--press-scale));
 }
 
 .btn-primary {
@@ -137,9 +155,8 @@ button {
   color: #fff;
 }
 
-.btn-primary:hover {
+.btn-primary:active {
   background: var(--accent-hover);
-  border-color: var(--accent-hover);
 }
 
 /* — Icon button (toolbar/tab affordances) — */
@@ -153,23 +170,23 @@ button {
   color: var(--fg-muted);
   transition:
     background-color var(--t-fast) var(--ease),
-    color var(--t-fast) var(--ease);
+    color var(--t-fast) var(--ease),
+    transform var(--t-press) var(--ease-out);
 }
 
-.icon-btn:hover {
-  background: var(--bg-hover);
-  color: var(--fg-ui);
+.icon-btn:active {
+  transform: scale(0.92);
 }
 
 /* — Fade-in used on first paint of content — */
 .fade-in {
-  animation: fade-in var(--t-med) var(--ease);
+  animation: fade-in var(--t-med) var(--ease-out) both;
 }
 
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(var(--enter-shift));
   }
   to {
     opacity: 1;
@@ -177,8 +194,27 @@ button {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .fade-in {
-    animation: none;
-  }
+/*
+ * A staggered entrance for the empty state: the one screen a new user meets
+ * first, and rare enough that a little presentation is worth it. Delays stay
+ * short — anything longer reads as the app being slow to start.
+ */
+.stagger > * {
+  animation: fade-in var(--t-med) var(--ease-out) both;
+}
+
+.stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 40ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 80ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 120ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 160ms;
 }

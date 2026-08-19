@@ -30,6 +30,7 @@ const en: Dict = {
   'recovery.restore': 'Restore',
   'recovery.discard': 'Discard',
   'save.prompt': 'Save changes to {name}?',
+  'save.body': "If you don't save, your changes will be lost.",
   'save.save': 'Save',
   'save.dontSave': "Don't save",
   'save.cancel': 'Cancel',
@@ -56,7 +57,16 @@ const en: Dict = {
   'error.binary': 'This file is not text',
   'error.notFound': 'File not found',
   'error.permission': 'Permission denied',
-  'error.tooLarge': 'File is too large to open'
+  'error.tooLarge': 'File is too large to open',
+  'about.title': 'About MDViewer',
+  'about.tagline':
+    'Opens a Markdown file instantly and renders it like a finished document. Your text stays exactly as you wrote it — same encoding, same line endings, byte for byte.',
+  'about.owner': 'Software owner',
+  'about.copy': 'Copy',
+  'about.copied': 'Copied',
+  'about.license': '{license} license',
+  'about.versionHint': 'Installed version',
+  'about.open': 'About'
 };
 
 const ru: Dict = {
@@ -83,6 +93,7 @@ const ru: Dict = {
   'recovery.restore': 'Восстановить',
   'recovery.discard': 'Удалить черновик',
   'save.prompt': 'Сохранить изменения в «{name}»?',
+  'save.body': 'Если не сохранить, изменения будут потеряны.',
   'save.save': 'Сохранить',
   'save.dontSave': 'Не сохранять',
   'save.cancel': 'Отмена',
@@ -109,7 +120,16 @@ const ru: Dict = {
   'error.binary': 'Это не текстовый файл',
   'error.notFound': 'Файл не найден',
   'error.permission': 'Нет доступа к файлу',
-  'error.tooLarge': 'Файл слишком велик для открытия'
+  'error.tooLarge': 'Файл слишком велик для открытия',
+  'about.title': 'О программе',
+  'about.tagline':
+    'Открывает файл Markdown мгновенно и показывает его как готовый документ. Ваш текст остаётся ровно таким, каким вы его написали, — та же кодировка, те же окончания строк, байт в байт.',
+  'about.owner': 'Владелец программы',
+  'about.copy': 'Копировать',
+  'about.copied': 'Скопировано',
+  'about.license': 'Лицензия {license}',
+  'about.versionHint': 'Установленная версия',
+  'about.open': 'О программе'
 };
 
 const dicts: Record<'ru' | 'en', Dict> = { ru, en };

@@ -12,6 +12,7 @@
   import Banner from './lib/components/Banner.svelte';
   import Modal from './lib/components/Modal.svelte';
   import SettingsModal from './lib/components/SettingsModal.svelte';
+  import AboutModal from './lib/components/AboutModal.svelte';
 
   import { tabs } from './lib/stores/tabs.svelte';
   import { workspace } from './lib/stores/workspace.svelte';
@@ -32,9 +33,16 @@
 
   let revision = $state(0);
   let showSettings = $state(false);
+  let showAbout = $state(false);
   let pendingRecovery = $state<DraftInfo[]>([]);
   let closeRequest = $state<{ index: number; quitting: boolean } | null>(null);
   let narrow = $state(false);
+  /**
+   * Restoring a session is asynchronous. Until it settles we render nothing
+   * in the document area — showing "no document open" first and filling it
+   * with tabs a moment later reads as the app changing its mind.
+   */
+  let booted = $state(false);
   /** Set once we are on the way out, so the close handler stops intervening. */
   let quitting = false;
 
@@ -226,7 +234,7 @@
         focusSearch();
         break;
       case 'about':
-        showSettings = true;
+        showAbout = true;
         break;
     }
   }
@@ -299,6 +307,8 @@
 
       for (const path of startup) await openPath(path);
 
+      booted = true;
+
       const drafts = await draftsList().catch(() => [] as DraftInfo[]);
       pendingRecovery = drafts.filter((d) => tabs.indexOfPath(d.path) < 0);
 
@@ -364,6 +374,7 @@
         const handle = activeTab ? tabs.handleOf(activeTab.id) : null;
         handle?.revealPos(pos);
       }}
+      onAbout={() => (showAbout = true)}
     />
   {/if}
 
@@ -413,7 +424,7 @@
         onActivity={bump}
       />
 
-      {#if !tabs.hasTabs}
+      {#if booted && !tabs.hasTabs}
         <EmptyState
           recent={settings.value.recentFiles}
           onOpenFile={() => void chooseFile()}
@@ -433,13 +444,18 @@
   <SettingsModal onClose={() => (showSettings = false)} />
 {/if}
 
+{#if showAbout}
+  <AboutModal onClose={() => (showAbout = false)} />
+{/if}
+
 {#if closeRequest}
   {@const tab = tabs.tabs[closeRequest.index]}
   <Modal
     title={t('save.prompt', { name: tab?.fileName ?? '' })}
     onClose={() => (closeRequest = null)}
   >
-    <p class="prompt">{t('save.prompt', { name: tab?.fileName ?? '' })}</p>
+    <!-- The title asks the question; the body states what is at stake. -->
+    <p class="prompt">{t('save.body')}</p>
 
     {#snippet footer()}
       <button class="btn" onclick={() => (closeRequest = null)}>{t('save.cancel')}</button>

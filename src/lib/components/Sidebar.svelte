@@ -1,16 +1,30 @@
 <script lang="ts">
   import FileTreeNode from './FileTreeNode.svelte';
+  import BrandMark from './BrandMark.svelte';
   import { workspace } from '../stores/workspace.svelte';
   import { tabs } from '../stores/tabs.svelte';
   import { t } from '../stores/i18n';
   import { baseName } from '../editor/pathUtil';
+  import { APP_NAME, SIDEBAR_CONDENSE_WIDTH, loadVersion, signatureLine } from '../ui/product';
 
   interface Props {
     onOpenFile: (path: string) => void;
     onRevealHeading: (pos: number) => void;
+    onAbout: () => void;
   }
 
-  const { onOpenFile, onRevealHeading }: Props = $props();
+  const { onOpenFile, onRevealHeading, onAbout }: Props = $props();
+
+  let version = $state('');
+  void loadVersion().then((v) => (version = v));
+
+  /**
+   * Narrow the panel and the signature gives up its words before it gives up
+   * its presence: name and copyright fold away, the version stays, and the
+   * full line survives in the tooltip.
+   */
+  const condensed = $derived(workspace.width < SIDEBAR_CONDENSE_WIDTH);
+  const signature = $derived(version ? signatureLine(version) : APP_NAME);
 
   const rootEntries = $derived(
     workspace.treeRoot ? (workspace.children[workspace.treeRoot] ?? []) : []
@@ -99,6 +113,18 @@
     {/if}
   </div>
 
+  <button class="footer" onclick={onAbout} title={signature} aria-label={t('about.open')}>
+    <span class="footer-mark"><BrandMark size={14} /></span>
+
+    {#if !condensed}
+      <span class="footer-name">{APP_NAME}</span>
+    {/if}
+
+    {#if version}
+      <span class="footer-version">{version}</span>
+    {/if}
+  </button>
+
   <div
     class="resizer"
     class:active={resizing}
@@ -145,11 +171,12 @@
     color: var(--fg-muted);
     transition:
       background-color var(--t-fast) var(--ease),
-      color var(--t-fast) var(--ease);
+      color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
   }
 
-  .seg-btn:hover {
-    background: var(--bg-hover);
+  .seg-btn:active {
+    transform: scale(var(--press-scale));
   }
 
   .seg-btn.on {
@@ -200,14 +227,71 @@
       color var(--t-fast) var(--ease);
   }
 
-  .outline-item:hover {
-    background: var(--bg-hover);
-    color: var(--fg-ui);
-  }
-
   .outline-item.active {
     color: var(--accent);
     border-left-color: var(--accent);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .seg-btn:hover {
+      background: var(--bg-hover);
+    }
+
+    .outline-item:hover {
+      background: var(--bg-hover);
+      color: var(--fg-ui);
+    }
+
+    .resizer:hover {
+      background: var(--accent-soft);
+    }
+  }
+
+  /* The product signature: quiet, always there, and the way into About. */
+  .footer {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-shrink: 0;
+    width: 100%;
+    padding: var(--sp-2) var(--sp-3);
+    border-top: 1px solid var(--border);
+    color: var(--fg-faint);
+    font-size: 11px;
+    overflow: hidden;
+    white-space: nowrap;
+    transition:
+      background-color var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease);
+  }
+
+  .footer-mark {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .footer-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+  }
+
+  .footer-version {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    opacity: 0.85;
+    flex-shrink: 0;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .footer:hover {
+      background: var(--bg-hover);
+      color: var(--fg-muted);
+    }
   }
 
   .resizer {
@@ -220,7 +304,6 @@
     z-index: 5;
   }
 
-  .resizer:hover,
   .resizer.active {
     background: var(--accent-soft);
   }

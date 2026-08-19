@@ -100,9 +100,11 @@
   cursor: default;
 }
 
-.md-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+@media (hover: hover) and (pointer: fine) {
+  .md-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 .md-html {
@@ -133,11 +135,19 @@ input.md-task {
   vertical-align: baseline;
   transition:
     background-color var(--t-fast) var(--ease),
-    border-color var(--t-fast) var(--ease);
+    border-color var(--t-fast) var(--ease),
+    transform var(--t-press) var(--ease-out);
 }
 
-input.md-task:hover {
-  border-color: var(--accent);
+/* The most-clicked element inside a document has to answer the press. */
+input.md-task:active {
+  transform: scale(0.88);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  input.md-task:hover {
+    border-color: var(--accent);
+  }
 }
 
 input.md-task:checked {

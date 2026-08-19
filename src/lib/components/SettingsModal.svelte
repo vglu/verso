@@ -154,16 +154,23 @@
     color: var(--fg-muted);
     transition:
       background-color var(--t-fast) var(--ease),
-      color var(--t-fast) var(--ease);
+      color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
   }
 
-  .seg:hover {
-    background: var(--bg-hover);
+  .seg:active {
+    transform: scale(var(--press-scale));
   }
 
   .seg.on {
     background: var(--accent-soft);
     color: var(--accent);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .seg:hover {
+      background: var(--bg-hover);
+    }
   }
 
   select,

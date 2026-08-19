@@ -31,7 +31,8 @@
   --search-match-current: rgba(255, 170, 30, 0.5);
   --scrollbar: rgba(255, 255, 255, 0.16);
   --scrollbar-hover: rgba(255, 255, 255, 0.28);
-  --shadow-panel: 0 4px 28px rgba(0, 0, 0, 0.45);
+  --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --scrim: rgba(0, 0, 0, 0.55);
 
   /* — Code syntax (One Dark palette) — */
   --syn-keyword: #c678dd;

@@ -38,27 +38,29 @@
       >
         <span class="name">{tab.fileName}</span>
 
-        {#if tab.dirty}
+        <!-- The unsaved dot and the close button share one cell: they
+             cross-fade instead of swapping, so nothing shifts on hover. -->
+        <span class="affordance" class:dirty={tab.dirty}>
           <span class="dot" aria-label="Unsaved changes"></span>
-        {/if}
 
-        <button
-          class="close"
-          aria-label="Close tab"
-          onclick={(e) => {
-            e.stopPropagation();
-            onCloseTab(index);
-          }}
-        >
-          <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
-            <path
-              d="M3 3l6 6M9 3l-6 6"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-            />
-          </svg>
-        </button>
+          <button
+            class="close"
+            aria-label="Close tab"
+            onclick={(e) => {
+              e.stopPropagation();
+              onCloseTab(index);
+            }}
+          >
+            <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+              <path
+                d="M3 3l6 6M9 3l-6 6"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </span>
       </div>
     {/each}
   </div>
@@ -98,8 +100,10 @@
       color var(--t-fast) var(--ease);
   }
 
-  .tab:hover {
-    background: var(--bg-hover);
+  @media (hover: hover) and (pointer: fine) {
+    .tab:hover {
+      background: var(--bg-hover);
+    }
   }
 
   .tab.active {
@@ -114,12 +118,30 @@
     white-space: nowrap;
   }
 
+  .affordance {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .dot,
+  .close {
+    grid-area: 1 / 1;
+  }
+
   .dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
     background: var(--accent);
-    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity var(--t-fast) var(--ease);
+  }
+
+  .affordance.dirty .dot {
+    opacity: 1;
   }
 
   .close {
@@ -131,24 +153,36 @@
     border-radius: var(--radius-s);
     color: var(--fg-faint);
     opacity: 0;
-    flex-shrink: 0;
     transition:
       opacity var(--t-fast) var(--ease),
-      background-color var(--t-fast) var(--ease);
+      background-color var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
   }
 
-  .tab:hover .close,
-  .tab.active .close {
+  /* A clean active tab shows its close button; a modified one keeps the dot,
+     so the unsaved signal is never traded away for an affordance. */
+  .tab.active .affordance:not(.dirty) .close,
+  .close:focus-visible {
     opacity: 1;
   }
 
-  .close:hover {
-    background: var(--bg-active);
-    color: var(--fg-ui);
+  .close:active {
+    transform: scale(0.88);
   }
 
-  /* The dirty dot yields to the close button while hovering. */
-  .tab:hover .dot {
-    display: none;
+  @media (hover: hover) and (pointer: fine) {
+    .tab:hover .close {
+      opacity: 1;
+    }
+
+    .tab:hover .affordance.dirty .dot {
+      opacity: 0;
+    }
+
+    .close:hover {
+      background: var(--bg-active);
+      color: var(--fg-ui);
+    }
   }
 </style>

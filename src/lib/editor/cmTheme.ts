@@ -111,10 +111,15 @@ const base = EditorView.theme({
     color: 'var(--fg-ui)',
     fontFamily: 'var(--font-ui)',
     fontSize: '12px',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition:
+      'background-color var(--t-fast) var(--ease), transform var(--t-press) var(--ease-out)'
   },
   '.cm-panel.cm-search button:hover': {
     backgroundColor: 'var(--bg-hover)'
+  },
+  '.cm-panel.cm-search button:active': {
+    transform: 'scale(var(--press-scale))'
   },
   '.cm-panel.cm-search button[name=close]': {
     border: 'none',

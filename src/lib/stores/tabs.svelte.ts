@@ -123,6 +123,10 @@ class TabsStore {
       if (draft && draft.content !== opened.content && draft.savedAtMs > opened.meta.mtimeMs) {
         tab.content = draft.content;
         tab.dirty = true;
+        // Re-persist it right away. Recovered text is still unsaved text, and
+        // until it is written again it exists only in memory — a second crash,
+        // or a cleanup pass that judges the draft stale, would take it for good.
+        this.scheduleDraft(tab);
       }
 
       this.tabs.push(tab);
@@ -197,6 +201,10 @@ class TabsStore {
     this.scheduleDraft(tab);
   }
 
+  /**
+   * Queue a draft write for this tab's current buffer. Debounced, so typing
+   * costs one write per pause rather than one per keystroke.
+   */
   private scheduleDraft(tab: Tab): void {
     if (!tab.path || settings.value.autosaveDraftMs <= 0) return;
 

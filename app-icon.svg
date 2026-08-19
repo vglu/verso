@@ -1,14 +1,68 @@
-<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <title>MDViewer</title>
+  <desc>A Markdown page whose first line has already become a heading</desc>
+
+  <!--
+    Same family as the umbrella mark: identical badge radius, background
+    gradient, lattice, corner brackets and pipeline spark. Only the centre
+    differs — where the umbrella carries a monogram, this carries the thing
+    the product actually does: raw text turning into typography.
+  -->
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#5b83e0"/>
-      <stop offset="100%" stop-color="#3c56b8"/>
+      <stop offset="0" stop-color="#0F4C81"/>
+      <stop offset="1" stop-color="#0A2540"/>
+    </linearGradient>
+    <linearGradient id="page" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E8F2FE"/>
+    </linearGradient>
+    <linearGradient id="heading" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0F4C81"/>
+      <stop offset="1" stop-color="#3AA6F0"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3AA6F0"/>
+      <stop offset="1" stop-color="#0F4C81"/>
     </linearGradient>
   </defs>
-  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
-  <g transform="translate(0,8)">
-    <rect x="268" y="208" width="488" height="600" rx="48" fill="#ffffff" opacity="0.97"/>
-    <path d="M352 372h236M352 476h320M352 580h180" stroke="#3c56b8" stroke-width="40" stroke-linecap="round" opacity="0.85"/>
-    <path d="M604 636l68 68 128-152" stroke="#ffffff" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Rounded badge -->
+  <rect x="0" y="0" width="400" height="400" rx="72" ry="72" fill="url(#bg)"/>
+
+  <!-- Subtle grid — the family's module / pipeline lattice -->
+  <g stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="1">
+    <line x1="0" y1="100" x2="400" y2="100"/>
+    <line x1="0" y1="200" x2="400" y2="200"/>
+    <line x1="0" y1="300" x2="400" y2="300"/>
+    <line x1="100" y1="0" x2="100" y2="400"/>
+    <line x1="200" y1="0" x2="200" y2="400"/>
+    <line x1="300" y1="0" x2="300" y2="400"/>
+  </g>
+
+  <!-- The page, with the folded corner the family uses as a depth cue -->
+  <path d="M 112 108 Q 112 86 134 86 L 238 86 L 288 136 L 288 292 Q 288 314 266 314 L 134 314 Q 112 314 112 292 Z"
+        fill="url(#page)"/>
+  <path d="M 238 86 L 288 136 L 252 136 Q 238 136 238 122 Z" fill="#A9D3FF"/>
+
+  <!-- First line is already a heading; the rest is still body text -->
+  <rect x="142" y="150" width="112" height="24" rx="8" fill="url(#heading)"/>
+  <rect x="142" y="196" width="116" height="12" rx="6" fill="#7FB3E8"/>
+  <rect x="142" y="226" width="88" height="12" rx="6" fill="#7FB3E8" opacity="0.85"/>
+  <rect x="142" y="256" width="104" height="12" rx="6" fill="#7FB3E8" opacity="0.65"/>
+
+  <!-- Pipeline spark, bottom-right, exactly as the umbrella mark places it -->
+  <g transform="translate(308 308)">
+    <circle cx="0" cy="0" r="8" fill="url(#spark)"/>
+    <circle cx="20" cy="0" r="6" fill="url(#spark)" opacity="0.7"/>
+    <circle cx="36" cy="0" r="4" fill="url(#spark)" opacity="0.45"/>
+  </g>
+
+  <!-- Corner brackets — the family's "tooling" cue -->
+  <g stroke="#A9D3FF" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.55">
+    <path d="M 46 74 L 46 46 L 74 46"/>
+    <path d="M 354 46 L 326 46"/>
+    <path d="M 46 326 L 46 354 L 74 354"/>
   </g>
 </svg>

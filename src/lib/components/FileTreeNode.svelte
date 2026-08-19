@@ -81,14 +81,16 @@
       color var(--t-fast) var(--ease);
   }
 
-  .row:hover {
-    background: var(--bg-hover);
-    color: var(--fg-ui);
-  }
-
   .row.active {
     background: var(--accent-soft);
     color: var(--accent);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .row:hover {
+      background: var(--bg-hover);
+      color: var(--fg-ui);
+    }
   }
 
   .row.dir {
@@ -100,7 +102,7 @@
     height: 12px;
     flex-shrink: 0;
     color: var(--fg-faint);
-    transition: transform var(--t-fast) var(--ease);
+    transition: transform var(--t-fast) var(--ease-out);
   }
 
   .chev.open {

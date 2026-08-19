@@ -16,7 +16,7 @@
   }
 </script>
 
-<div class="empty fade-in">
+<div class="empty stagger">
   <svg class="glyph" viewBox="0 0 48 48" fill="none" aria-hidden="true">
     <rect x="9" y="5" width="30" height="38" rx="4" stroke="currentColor" stroke-width="2" />
     <path
@@ -113,11 +113,19 @@
     padding: var(--sp-2) var(--sp-2);
     border-radius: var(--radius-s);
     text-align: left;
-    transition: background-color var(--t-fast) var(--ease);
+    transition:
+      background-color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
   }
 
-  .recent-item:hover {
-    background: var(--bg-hover);
+  .recent-item:active {
+    transform: scale(0.99);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .recent-item:hover {
+      background: var(--bg-hover);
+    }
   }
 
   .recent-name {

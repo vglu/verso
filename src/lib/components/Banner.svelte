@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { bannerIn, bannerOut } from '../ui/motion';
 
   interface Action {
     label: string;
@@ -18,7 +19,7 @@
   const { tone = 'warning', message, actions = [], onDismiss }: Props = $props();
 </script>
 
-<div class="banner" class:info={tone === 'info'} role="status">
+<div class="banner" class:info={tone === 'info'} role="status" in:bannerIn out:bannerOut>
   <span class="msg">{message}</span>
 
   <div class="actions">
@@ -54,28 +55,10 @@
     border-left: 3px solid var(--warning);
     font-size: 13px;
     color: var(--fg-ui);
-    animation: slide-down var(--t-med) var(--ease);
   }
 
   .banner.info {
     border-left-color: var(--accent);
-  }
-
-  @keyframes slide-down {
-    from {
-      opacity: 0;
-      transform: translateY(-6px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .banner {
-      animation: none;
-    }
   }
 
   .msg {
@@ -96,21 +79,19 @@
     background: var(--bg);
     font-size: 12px;
     color: var(--fg-ui);
-    transition: background-color var(--t-fast) var(--ease);
+    transition:
+      background-color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
   }
 
-  .act:hover {
-    background: var(--bg-hover);
+  .act:active {
+    transform: scale(var(--press-scale));
   }
 
   .act.primary {
     background: var(--accent);
     border-color: var(--accent);
     color: #fff;
-  }
-
-  .act.primary:hover {
-    background: var(--accent-hover);
   }
 
   .dismiss {
@@ -121,10 +102,28 @@
     height: 20px;
     border-radius: var(--radius-s);
     color: var(--fg-faint);
+    transition:
+      background-color var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
   }
 
-  .dismiss:hover {
-    background: var(--bg-hover);
-    color: var(--fg-ui);
+  .dismiss:active {
+    transform: scale(0.9);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .act:hover {
+      background: var(--bg-hover);
+    }
+
+    .act.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .dismiss:hover {
+      background: var(--bg-hover);
+      color: var(--fg-ui);
+    }
   }
 </style>

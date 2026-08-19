@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { modalIn, modalOut, scrimIn, scrimOut } from '../ui/motion';
 
   interface Props {
     title: string;
@@ -28,7 +29,13 @@
 <!-- Click-outside is a pointer convenience; keyboard users close with Escape,
      handled by the window listener above. -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
-<div class="scrim" role="presentation" onclick={onClose}>
+<div
+  class="scrim"
+  role="presentation"
+  onclick={onClose}
+  in:scrimIn
+  out:scrimOut
+>
   <div
     class="modal"
     role="dialog"
@@ -37,6 +44,8 @@
     tabindex="-1"
     use:autofocus
     onclick={(e) => e.stopPropagation()}
+    in:modalIn
+    out:modalOut
   >
     <header>
       <h2>{title}</h2>
@@ -71,18 +80,8 @@
     align-items: center;
     justify-content: center;
     padding: var(--sp-5);
-    background: var(--bg-hover);
-    backdrop-filter: blur(2px);
-    animation: fade var(--t-fast) var(--ease);
-  }
-
-  @keyframes fade {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+    background: var(--scrim);
+    backdrop-filter: blur(3px);
   }
 
   .modal {
@@ -95,25 +94,6 @@
     border-radius: var(--radius-l);
     box-shadow: var(--shadow-panel);
     outline: none;
-    animation: rise var(--t-med) var(--ease);
-  }
-
-  @keyframes rise {
-    from {
-      opacity: 0;
-      transform: translateY(8px) scale(0.99);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .scrim,
-    .modal {
-      animation: none;
-    }
   }
 
   header {
