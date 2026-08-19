@@ -68,10 +68,24 @@ export interface RestoreOptions {
   activate?: boolean;
 }
 
-/** Restore a previous session. Returns true if anything was reopened. */
-export async function restoreSession({ activate = true }: RestoreOptions = {}): Promise<boolean> {
+export interface RestoreResult {
+  opened: number;
+  /**
+   * The tab the session had active, whether or not we activated it.
+   *
+   * The caller needs this even when it asked us not to activate anything: if
+   * the document it was opening turns out not to be openable, something has
+   * to be on screen, and the reader's last document is the best answer.
+   */
+  activeIndex: number;
+}
+
+/** Restore a previous session. */
+export async function restoreSession({
+  activate = true
+}: RestoreOptions = {}): Promise<RestoreResult> {
   const state = await sessionLoad().catch(() => null);
-  if (!state) return false;
+  if (!state) return { opened: 0, activeIndex: -1 };
 
   workspace.sidebarVisible = state.sidebar?.visible ?? true;
   workspace.outlineVisible = state.sidebar?.outlineVisible ?? true;
@@ -94,10 +108,8 @@ export async function restoreSession({ activate = true }: RestoreOptions = {}): 
     opened += 1;
   }
 
-  if (opened > 0 && activate) {
-    const index = Math.min(Math.max(state.activeIndex, 0), tabs.tabs.length - 1);
-    tabs.activate(index);
-  }
+  const activeIndex = opened > 0 ? Math.min(Math.max(state.activeIndex, 0), opened - 1) : -1;
+  if (activeIndex >= 0 && activate) tabs.activate(activeIndex);
 
   // The folder tree only follows the session when nothing else has set it —
   // a double-clicked document has already pointed it at its own folder.
@@ -106,5 +118,5 @@ export async function restoreSession({ activate = true }: RestoreOptions = {}): 
     else if (tabs.active?.path) await workspace.setRootFromFile(tabs.active.path);
   }
 
-  return opened > 0;
+  return { opened, activeIndex };
 }

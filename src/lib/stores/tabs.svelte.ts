@@ -18,6 +18,7 @@ import type { EditorHandle, ScrollAnchor } from '../editor/createEditor';
 import { settings } from './settings.svelte';
 import { baseName, dirName } from '../editor/pathUtil';
 import { createDraftQueue } from './draftQueue';
+import { t } from './i18n';
 
 export type ExternalState = 'none' | 'modified' | 'removed';
 
@@ -628,6 +629,11 @@ function describeError(error: unknown, path: string | null): string {
       return `Permission denied: ${e.path}`;
     case 'IsBinary':
       return `Not a text file: ${e.path}`;
+    case 'EncodingLoss':
+      // Naming the character matters: it is usually one pasted symbol, and
+      // knowing which one is the difference between "save as UTF-8" and
+      // hunting through the document.
+      return t('error.encodingLoss', { character: e.character, encoding: e.encoding });
     case 'UnsupportedEncoding':
       return `Unsupported encoding (${e.detected}): ${e.path}`;
     case 'ExternalModified':

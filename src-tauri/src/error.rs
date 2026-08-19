@@ -22,6 +22,18 @@ pub enum AppError {
     #[error("not a text file: {path}")]
     IsBinary { path: String },
 
+    /// The text no longer fits the encoding the file was written in.
+    ///
+    /// encoding_rs would happily substitute an HTML escape for a character it
+    /// cannot represent, which is a silent change to someone's document. We
+    /// refuse the save instead and let them choose UTF-8.
+    #[error("{character:?} cannot be written in {encoding}: {path}")]
+    EncodingLoss {
+        path: String,
+        encoding: String,
+        character: String,
+    },
+
     #[error("{message}")]
     Io { message: String },
 }

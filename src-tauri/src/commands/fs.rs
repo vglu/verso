@@ -149,7 +149,8 @@ pub async fn save_file(
         &endings,
         meta.eol,
         meta.trailing_newline,
-    );
+        &path,
+    )?;
     atomic_write(&path, &bytes)?;
 
     let after = std::fs::metadata(&path).map_err(|e| AppError::from_io(e, &path))?;

@@ -51,7 +51,12 @@
     "longDescription": "MDViewer opens Markdown files instantly and renders them beautifully, with live WYSIWYG editing, tabs, a folder tree and an outline.",
     "fileAssociations": [
       {
-        "ext": ["md", "markdown", "mdown", "mkd"],
+        "ext": [
+          "md",
+          "markdown",
+          "mdown",
+          "mkd"
+        ],
         "name": "Markdown Document",
         "description": "Markdown Document",
         "role": "Editor",
@@ -67,6 +72,9 @@
       "nsis": {
         "installMode": "perMachine"
       }
-    }
+    },
+    "licenseFile": "../LICENSE",
+    "publisher": "SIMS tech",
+    "copyright": "Copyright (c) 2026 SIMS tech"
   }
 }

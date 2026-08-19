@@ -35,9 +35,10 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
     let open = MenuItemBuilder::with_id("open", label(l, "open", "Open File…"))
         .accelerator("CmdOrCtrl+O")
         .build(app)?;
-    let open_folder = MenuItemBuilder::with_id("openFolder", label(l, "openFolder", "Open Folder…"))
-        .accelerator("CmdOrCtrl+Shift+O")
-        .build(app)?;
+    let open_folder =
+        MenuItemBuilder::with_id("openFolder", label(l, "openFolder", "Open Folder…"))
+            .accelerator("CmdOrCtrl+Shift+O")
+            .build(app)?;
     let save = MenuItemBuilder::with_id("save", label(l, "save", "Save"))
         .accelerator("CmdOrCtrl+S")
         .build(app)?;
@@ -121,7 +122,8 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         .item(&settings)
         .build()?;
 
-    let about = MenuItemBuilder::with_id("about", label(l, "about", "About MDViewer")).build(app)?;
+    let about =
+        MenuItemBuilder::with_id("about", label(l, "about", "About MDViewer")).build(app)?;
     let help = SubmenuBuilder::new(app, label(l, "menu.help", "Help"))
         .item(&about)
         .build()?;

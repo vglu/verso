@@ -2,7 +2,9 @@
 name = "mdviewer"
 version = "0.1.0"
 description = "Beautiful, instant, cross-platform Markdown viewer & editor"
-authors = ["MDViewer"]
+authors = ["SIMS tech"]
+license = "MIT"
+repository = "https://github.com/sims-tech/mdviewer"
 edition = "2021"
 rust-version = "1.77"
 
@@ -24,6 +26,10 @@ thiserror = "2"
 notify = "6"
 notify-debouncer-full = "0.3"
 encoding_rs = "0.8"
+# Firefox's encoding detector. Guessing a legacy 8-bit encoding cannot be done
+# by validity — nearly every byte sequence is "valid" windows-1252 — so it
+# takes statistics over the text, which is exactly what this crate is.
+chardetng = "0.1"
 sha2 = "0.10"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]

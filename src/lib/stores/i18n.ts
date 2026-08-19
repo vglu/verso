@@ -73,6 +73,8 @@ const en: Dict = {
   'status.col': 'Col',
   'status.readonly': 'read-only',
   'status.reader': 'reading',
+  'error.encodingLoss':
+    '“{character}” cannot be written in {encoding}, which is what this file is in. Save it as UTF-8 (File → Save As) to keep the character.',
   'status.plainBlocks': 'blocks as source',
   'status.plainBlocksHint':
     'This document is large enough that tables, formulas and diagrams are left as their Markdown source — scanning for them on every keystroke would make typing lag.',
@@ -213,6 +215,8 @@ const ru: Dict = {
   'status.col': 'Кол',
   'status.readonly': 'только чтение',
   'status.reader': 'чтение',
+  'error.encodingLoss':
+    '«{character}» невозможно записать в {encoding}, а файл именно в ней. Сохраните его как UTF-8 (Файл → Сохранить как), чтобы символ остался.',
   'status.plainBlocks': 'блоки как есть',
   'status.plainBlocksHint':
     'Документ настолько большой, что таблицы, формулы и диаграммы оставлены исходным текстом: искать их на каждое нажатие клавиши — это лаг при наборе.',

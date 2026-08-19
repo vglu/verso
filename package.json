@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Beautiful, instant, cross-platform Markdown viewer & editor",
+  "description": "A beautiful, instant Markdown viewer and editor built on Tauri 2.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -55,5 +55,7 @@
     "@tauri-apps/plugin-window-state": "^2.2.1",
     "katex": "^0.18.4",
     "mermaid": "^11.16.1"
-  }
+  },
+  "license": "MIT",
+  "author": "SIMS tech"
 }

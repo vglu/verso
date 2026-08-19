@@ -15,6 +15,79 @@ pub enum Encoding {
     Utf16Le,
     #[serde(rename = "utf-16-be")]
     Utf16Be,
+    /// Cyrillic Windows. The encoding of every Russian text file written
+    /// before UTF-8 won, and still the default of a good deal of software.
+    #[serde(rename = "windows-1251")]
+    Windows1251,
+    /// Cyrillic DOS, the one inside old archives.
+    #[serde(rename = "ibm866")]
+    Ibm866,
+    /// Cyrillic Unix, from mail and Usenet.
+    #[serde(rename = "koi8-r")]
+    Koi8R,
+    /// Its Ukrainian sibling; the two differ in a handful of letters.
+    #[serde(rename = "koi8-u")]
+    Koi8U,
+    /// Cyrillic ISO. Rare in the wild, common in standards.
+    #[serde(rename = "iso-8859-5")]
+    Iso88595,
+    /// Western European Windows, and what a mislabelled file usually is.
+    #[serde(rename = "windows-1252")]
+    Windows1252,
+}
+
+/// The 8-bit encodings we can both read and write back exactly.
+///
+/// Which one a file is in cannot be decided by validity — almost any byte
+/// sequence is "valid" windows-1252 — so the detector decides by statistics,
+/// and it can only choose from this list. Anything outside it is refused at
+/// open: a file we could not save again would be a trap, not a feature.
+const LEGACY: &[(Encoding, &encoding_rs::Encoding, &str)] = &[
+    (
+        Encoding::Windows1251,
+        encoding_rs::WINDOWS_1251,
+        "windows-1251",
+    ),
+    (Encoding::Ibm866, encoding_rs::IBM866, "ibm866"),
+    (Encoding::Koi8R, encoding_rs::KOI8_R, "koi8-r"),
+    (Encoding::Koi8U, encoding_rs::KOI8_U, "koi8-u"),
+    (Encoding::Iso88595, encoding_rs::ISO_8859_5, "iso-8859-5"),
+    (
+        Encoding::Windows1252,
+        encoding_rs::WINDOWS_1252,
+        "windows-1252",
+    ),
+];
+
+impl Encoding {
+    /// The encoding_rs codec for the 8-bit encodings, or None for Unicode.
+    fn legacy_codec(self) -> Option<&'static encoding_rs::Encoding> {
+        LEGACY
+            .iter()
+            .find(|(e, _, _)| *e == self)
+            .map(|(_, c, _)| *c)
+    }
+
+    fn from_codec(codec: &'static encoding_rs::Encoding) -> Option<Encoding> {
+        LEGACY
+            .iter()
+            .find(|(_, c, _)| std::ptr::eq(*c, codec))
+            .map(|(e, _, _)| *e)
+    }
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Encoding::Utf8 => "utf-8",
+            Encoding::Utf8Bom => "utf-8-bom",
+            Encoding::Utf16Le => "utf-16-le",
+            Encoding::Utf16Be => "utf-16-be",
+            other => LEGACY
+                .iter()
+                .find(|(e, _, _)| *e == other)
+                .map(|(_, _, label)| *label)
+                .unwrap_or("unknown"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -80,12 +153,19 @@ pub fn decode(bytes: &[u8], path: &Path) -> AppResult<DecodedText> {
         reject_binary(bytes, path)?;
         match std::str::from_utf8(bytes) {
             Ok(s) => (Encoding::Utf8, s.to_string()),
-            Err(_) => {
-                return Err(AppError::UnsupportedEncoding {
-                    path: path.to_string_lossy().to_string(),
-                    detected: sniff_legacy_label(bytes).into(),
-                })
-            }
+            // Not UTF-8, so it is one of the 8-bit encodings that everything
+            // written before UTF-8 won is in. Which one cannot be decided by
+            // validity — almost any byte sequence is "valid" windows-1252 — so
+            // it is decided by statistics over the text.
+            Err(_) => match detect_legacy(bytes) {
+                Some((encoding, text)) => (encoding, text),
+                None => {
+                    return Err(AppError::UnsupportedEncoding {
+                        path: path.to_string_lossy().to_string(),
+                        detected: sniff_legacy_label(bytes).into(),
+                    })
+                }
+            },
         }
     };
 
@@ -172,7 +252,15 @@ pub fn endings_for(
 #[cfg(test)]
 pub fn encode(content: &str, encoding: Encoding, eol: Eol, trailing_newline: bool) -> Vec<u8> {
     let breaks = content.split('\n').count().saturating_sub(1);
-    encode_lines(content, encoding, &vec![eol; breaks], eol, trailing_newline)
+    encode_lines(
+        content,
+        encoding,
+        &vec![eol; breaks],
+        eol,
+        trailing_newline,
+        Path::new("test.md"),
+    )
+    .expect("test encodings must be representable")
 }
 
 /// Encode with a specific ending per line, so a file whose endings are
@@ -183,7 +271,8 @@ pub fn encode_lines(
     endings: &[Eol],
     dominant: Eol,
     trailing_newline: bool,
-) -> Vec<u8> {
+    path: &Path,
+) -> AppResult<Vec<u8>> {
     let mut text = String::with_capacity(content.len() + endings.len());
     for (i, line) in content.split('\n').enumerate() {
         if i > 0 {
@@ -201,7 +290,7 @@ pub fn encode_lines(
         text.push_str(if eol == Eol::Crlf { "\r\n" } else { "\n" });
     }
 
-    match encoding {
+    Ok(match encoding {
         Encoding::Utf8 => text.into_bytes(),
         Encoding::Utf8Bom => {
             let mut out = BOM_UTF8.to_vec();
@@ -210,7 +299,40 @@ pub fn encode_lines(
         }
         Encoding::Utf16Le => encode_utf16(&text, true),
         Encoding::Utf16Be => encode_utf16(&text, false),
+        _ => encode_legacy(&text, encoding, path)?,
+    })
+}
+
+/// Write text back in the 8-bit encoding the file came in.
+///
+/// A legacy encoding holds a few hundred characters, so text that has grown a
+/// character it cannot hold — an em dash pasted into a KOI8-R file, a Cyrillic
+/// word in a windows-1252 one — cannot be written. encoding_rs substitutes an
+/// HTML escape in that case and reports it only as a flag; taking that would
+/// mean writing something other than what is on screen. The save is refused
+/// instead, naming the character, so the answer can be "then save it as UTF-8".
+fn encode_legacy(text: &str, encoding: Encoding, path: &Path) -> AppResult<Vec<u8>> {
+    let codec = encoding
+        .legacy_codec()
+        .expect("encode_legacy called for a Unicode encoding");
+
+    let (bytes, _, had_unmappable) = codec.encode(text);
+    if !had_unmappable {
+        return Ok(bytes.into_owned());
     }
+
+    // Only now, on the error path, is it worth finding out which character.
+    let offender = text
+        .chars()
+        .find(|c| codec.encode(&c.to_string()).2)
+        .map(|c| c.to_string())
+        .unwrap_or_default();
+
+    Err(AppError::EncodingLoss {
+        path: path.to_string_lossy().to_string(),
+        encoding: encoding.label().to_string(),
+        character: offender,
+    })
 }
 
 fn decode_utf16(body: &[u8], little_endian: bool, path: &Path) -> AppResult<String> {
@@ -266,6 +388,24 @@ fn reject_binary(bytes: &[u8], path: &Path) -> AppResult<()> {
     Ok(())
 }
 
+/// Guess which 8-bit encoding this is, and decode it.
+///
+/// Returns None when the guess is not one of the encodings we can write back
+/// exactly, because opening a file we could not save again would be a trap
+/// rather than a feature.
+fn detect_legacy(bytes: &[u8]) -> Option<(Encoding, String)> {
+    let mut detector = chardetng::EncodingDetector::new();
+    detector.feed(bytes, true);
+    let codec = detector.guess(None, true);
+
+    let encoding = Encoding::from_codec(codec)?;
+    let (text, _, had_errors) = codec.decode(bytes);
+    if had_errors {
+        return None;
+    }
+    Some((encoding, text.into_owned()))
+}
+
 /// Best-effort label for the error message when we cannot decode.
 fn sniff_legacy_label(bytes: &[u8]) -> &'static str {
     let (_, _, had_errors) = encoding_rs::WINDOWS_1251.decode(bytes);
@@ -304,7 +444,15 @@ mod tests {
     fn assert_roundtrip(original: &[u8]) {
         let d = decode(original, &p()).expect("decodes");
         let endings = endings_for(&d.content, &d.content, &d.line_endings, d.eol);
-        let back = encode_lines(&d.content, d.encoding, &endings, d.eol, d.trailing_newline);
+        let back = encode_lines(
+            &d.content,
+            d.encoding,
+            &endings,
+            d.eol,
+            d.trailing_newline,
+            &p(),
+        )
+        .expect("re-encodes");
         assert_eq!(
             back, original,
             "round-trip changed bytes for {:?}/{:?}",
@@ -314,9 +462,20 @@ mod tests {
 
     /// Save `edited` over a file that held `original`, the way the command does.
     fn save_over(original: &[u8], edited: &str) -> Vec<u8> {
+        try_save_over(original, edited).expect("re-encodes")
+    }
+
+    fn try_save_over(original: &[u8], edited: &str) -> AppResult<Vec<u8>> {
         let d = decode(original, &p()).expect("decodes");
         let endings = endings_for(edited, &d.content, &d.line_endings, d.eol);
-        encode_lines(edited, d.encoding, &endings, d.eol, d.trailing_newline)
+        encode_lines(
+            edited,
+            d.encoding,
+            &endings,
+            d.eol,
+            d.trailing_newline,
+            &p(),
+        )
     }
 
     #[test]
@@ -437,11 +596,93 @@ mod tests {
         assert!(matches!(err, AppError::IsBinary { .. }));
     }
 
+    /// Everything written in Russian before UTF-8 won is in one of these, and
+    /// a viewer that cannot open them is of no use to the person who has them.
+    fn cp1251(text: &str) -> Vec<u8> {
+        encoding_rs::WINDOWS_1251.encode(text).0.into_owned()
+    }
+
     #[test]
-    fn rejects_unsupported_encoding() {
-        // Valid windows-1251, invalid UTF-8.
-        let err = decode(&[0xCF, 0xF0, 0xE8, 0xE2, 0xE5, 0xF2], &p()).unwrap_err();
-        assert!(matches!(err, AppError::UnsupportedEncoding { .. }));
+    fn reads_a_windows_1251_file() {
+        let bytes = cp1251("# Заметка\r\n\r\nСтарый документ.\r\n");
+        let d = decode(&bytes, &p()).expect("decodes");
+
+        assert_eq!(d.encoding, Encoding::Windows1251);
+        assert_eq!(d.content, "# Заметка\n\nСтарый документ.\n");
+    }
+
+    #[test]
+    fn writes_a_windows_1251_file_back_byte_for_byte() {
+        assert_roundtrip(&cp1251(
+            "# Инструкция\r\n\r\nПервый пункт — и тире.\r\nВторой.\r\n",
+        ));
+    }
+
+    #[test]
+    fn keeps_the_encoding_when_the_text_is_edited() {
+        let original = cp1251("Было\r\n");
+        let saved = save_over(&original, "Было\nСтало\n");
+        assert_eq!(saved, cp1251("Было\r\nСтало\r\n"));
+    }
+
+    #[test]
+    fn reads_the_other_cyrillic_encodings_too() {
+        // KOI8 and DOS Cyrillic order the alphabet differently, so the same
+        // sentence comes out as entirely different bytes in each.
+        //
+        // Which of the KOI8 pair a file is in cannot be told apart from a few
+        // sentences — they differ in a handful of Ukrainian letters — and no
+        // detector can do better without a declaration. What must hold is that
+        // the text reads correctly and the file writes back byte for byte.
+        for codec in [
+            encoding_rs::KOI8_R,
+            encoding_rs::IBM866,
+            encoding_rs::ISO_8859_5,
+        ] {
+            let bytes = codec
+                .encode("Здравствуйте, это письмо из архива.\n")
+                .0
+                .into_owned();
+
+            let d = decode(&bytes, &p()).expect("decodes");
+            assert!(
+                d.content.starts_with("Здравствуйте"),
+                "{} came out as {:?}",
+                codec.name(),
+                d.content
+            );
+            assert_roundtrip(&bytes);
+        }
+    }
+
+    /// The one thing a save must never do: change a character it cannot write.
+    #[test]
+    fn refuses_to_save_a_character_the_encoding_cannot_hold() {
+        let original = cp1251("Текст\r\n");
+        let err = try_save_over(&original, "Текст 漢字\n").unwrap_err();
+
+        match err {
+            AppError::EncodingLoss {
+                encoding,
+                character,
+                ..
+            } => {
+                assert_eq!(encoding, "windows-1251");
+                assert_eq!(character, "漢");
+            }
+            other => panic!("expected EncodingLoss, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn still_refuses_bytes_that_are_no_encoding_we_can_write() {
+        // A lone high byte in an otherwise UTF-8 file: not valid UTF-8, and
+        // not text the detector can place either.
+        let err = decode(&[0xE4, 0xF8, 0x00, 0x9D], &p()).unwrap_err();
+        assert!(matches!(
+            err,
+            AppError::IsBinary { .. } | AppError::UnsupportedEncoding { .. }
+        ));
     }
 
     #[test]

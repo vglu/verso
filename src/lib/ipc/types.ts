@@ -10,6 +10,8 @@ export type AppError =
   | { kind: 'ExternalModified'; path: string; diskMtimeMs: number }
   | { kind: 'UnsupportedEncoding'; path: string; detected: string }
   | { kind: 'IsBinary'; path: string }
+  /** The text has grown a character the file's own encoding cannot hold. */
+  | { kind: 'EncodingLoss'; path: string; encoding: string; character: string }
   | { kind: 'Io'; message: string };
 
 export function isAppError(e: unknown): e is AppError {
@@ -17,7 +19,19 @@ export function isAppError(e: unknown): e is AppError {
 }
 
 // ---- files ----
-export type Encoding = 'utf-8' | 'utf-8-bom' | 'utf-16-le' | 'utf-16-be';
+export type Encoding =
+  | 'utf-8'
+  | 'utf-8-bom'
+  | 'utf-16-le'
+  | 'utf-16-be'
+  // The 8-bit encodings everything written before UTF-8 won is in. A file
+  // opened in one of them is saved back in it, byte for byte.
+  | 'windows-1251'
+  | 'ibm866'
+  | 'koi8-r'
+  | 'koi8-u'
+  | 'iso-8859-5'
+  | 'windows-1252';
 export type Eol = 'lf' | 'crlf';
 
 export interface FileMeta {

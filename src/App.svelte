@@ -421,9 +421,17 @@
 
       if (settings.value.restoreSession) {
         // Do not let the restore steal the tab they opened.
-        await restoreSession({ activate: startup.length === 0 }).catch((e) =>
-          console.warn('session restore failed', e)
-        );
+        const restored = await restoreSession({ activate: startup.length === 0 }).catch((e) => {
+          console.warn('session restore failed', e);
+          return null;
+        });
+
+        // Unless there is nothing to steal. A document that cannot be opened —
+        // an encoding we do not read, a file that has moved — must not leave a
+        // window of tabs above an empty page.
+        if (restored && tabs.activeIndex < 0 && restored.activeIndex >= 0) {
+          tabs.activate(restored.activeIndex);
+        }
       }
 
       booted = true;
