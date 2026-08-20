@@ -1,6 +1,7 @@
 <script lang="ts">
   import Self from './FileTreeNode.svelte';
   import { workspace } from '../stores/workspace.svelte';
+  import { tabs } from '../stores/tabs.svelte';
   import type { TreeEntry } from '../ipc/types';
 
   interface Props {
@@ -15,6 +16,17 @@
 
   const isOpen = $derived(Boolean(workspace.expanded[entry.path]));
   const isActive = $derived(activePath === entry.path);
+
+  /**
+   * The same dot the tab shows, in the tree.
+   *
+   * A file with unsaved work is a fact about the file, and the tree is where
+   * people look at their files — being told only on the tab means being told
+   * only about the one you are looking at.
+   */
+  const isDirty = $derived(
+    !entry.isDir && tabs.tabs.some((tab) => tab.path === entry.path && tab.dirty)
+  );
   const children = $derived(workspace.children[entry.path] ?? []);
 
   function activate(): void {
@@ -69,6 +81,9 @@
   {/if}
 
   <span class="label">{entry.isDir ? entry.name : displayName(entry.name)}</span>
+  {#if isDirty}
+    <span class="dirty" title="Unsaved changes" aria-label="Unsaved changes"></span>
+  {/if}
 </div>
 
 {#if entry.isDir && isOpen}
@@ -130,5 +145,17 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* The same mark as the tab, at the same size, in the accent colour: two
+     places saying one thing should look like one thing. */
+  .dirty {
+    width: 6px;
+    height: 6px;
+    margin-left: auto;
+    margin-right: var(--sp-1);
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--accent);
   }
 </style>

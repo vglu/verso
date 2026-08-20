@@ -3,7 +3,7 @@
   import { settings } from '../stores/settings.svelte';
   import { tabs } from '../stores/tabs.svelte';
   import { t } from '../stores/i18n';
-  import type { LangSetting, ThemeSetting } from '../ipc/types';
+  import type { AutosaveSetting, LangSetting, ThemeSetting } from '../ipc/types';
   import { pickThemeFile } from '../ipc/dialogs';
   import { plugins } from '../plugins/registry.svelte';
   import { pluginsDir } from '../ipc/commands';
@@ -37,6 +37,12 @@
   function themeName(path: string): string {
     return path.split(/[\\/]/).pop() ?? path;
   }
+
+  const autosaveModes: { value: AutosaveSetting; labelKey: string }[] = [
+    { value: 'off', labelKey: 'settings.autosaveOff' },
+    { value: 'afterDelay', labelKey: 'settings.autosaveDelay' },
+    { value: 'onFocusChange', labelKey: 'settings.autosaveFocus' }
+  ];
 
   const langs: { value: LangSetting; label: string }[] = [
     { value: 'system', label: 'System' },
@@ -130,6 +136,36 @@
         <span class="value">{settings.value.editorMaxWidth}px</span>
       </div>
     </div>
+
+    <div class="row">
+      <span class="label">{t('settings.autosaveFile')}</span>
+      <div class="segment">
+        {#each autosaveModes as option (option.value)}
+          <button
+            class="seg"
+            class:on={settings.value.autosave === option.value}
+            onclick={() => settings.update({ autosave: option.value })}
+          >
+            {t(option.labelKey)}
+          </button>
+        {/each}
+      </div>
+    </div>
+
+    {#if settings.value.autosave === 'afterDelay'}
+      <div class="row">
+        <span class="label">{t('settings.autosaveDelayMs')}</span>
+        <input
+          class="num"
+          type="number"
+          min="200"
+          max="60000"
+          step="100"
+          value={settings.value.autosaveDelayMs}
+          onchange={(e) => settings.update({ autosaveDelayMs: Number(e.currentTarget.value) })}
+        />
+      </div>
+    {/if}
 
     <div class="row">
       <span class="label">{t('settings.autosave')}</span>

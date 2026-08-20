@@ -13,7 +13,14 @@ import { languages } from '@codemirror/language-data';
  * Markdown keeps everything it had — live preview, the outline, folding. The
  * rest get syntax highlighting and nothing that pretends to render them.
  */
-const MARKDOWN = ['md', 'markdown', 'mdown', 'mkd', 'mdx'];
+/**
+ * `.txt` is in this list on purpose. Verso has always opened plain text as
+ * Markdown — it is in the open dialog's Markdown filter and in the file
+ * association — and a note someone keeps in a .txt is prose, which is what
+ * Markdown renders. Treating it as a data file took the formatting toolbar
+ * and the live preview away from files that had always had them.
+ */
+const MARKDOWN = ['md', 'markdown', 'mdown', 'mkd', 'mdx', 'txt'];
 
 export function extensionOf(fileName: string): string {
   const name = fileName.split(/[\\/]/).pop() ?? fileName;

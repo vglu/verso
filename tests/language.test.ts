@@ -8,6 +8,12 @@ describe('what a file is', () => {
     }
   });
 
+  it('counts .txt as Markdown, as this program always has', () => {
+    // It is in the open dialog's Markdown filter and in the file association.
+    // A note kept in a .txt is prose, and prose is what Markdown renders.
+    expect(isMarkdownFile('notes.txt')).toBe(true);
+  });
+
   it('treats a file with no extension as Markdown', () => {
     // An untitled buffer is what someone writing here is writing; a document
     // that lost its Markdown support the moment it was created would be a
@@ -30,6 +36,7 @@ describe('what a file is', () => {
 
   it('names the language for the status strip', () => {
     expect(languageLabel('a.md')).toBe('Markdown');
+    expect(languageLabel('notes.txt')).toBe('Markdown');
     expect(languageLabel('package.json')).toBe('JSON');
     expect(languageLabel('weird.zzz')).toBe('ZZZ');
   });

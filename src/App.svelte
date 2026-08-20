@@ -696,6 +696,7 @@
   onresize={onResize}
   oncontextmenu={onContextMenu}
   onfocus={() => void tabs.recheckAll()}
+  onblur={() => void tabs.autosaveAll()}
 />
 
 <div class="app-shell">
@@ -712,8 +713,15 @@
 
     <!-- Bold, headings and tables mean nothing in a JSON file, and neither
          does a preview of it: the toolbar belongs to Markdown. -->
-    {#if settings.value.showToolbar && tabs.hasTabs && activeIsMarkdown}
-      <Toolbar {revision} />
+    {#if settings.value.showToolbar && tabs.hasTabs}
+      <Toolbar
+        {revision}
+        markdown={activeIsMarkdown}
+        onNew={() => newFile()}
+        onOpen={() => void chooseFile()}
+        onSave={() => void save()}
+        onFormat={() => void formatActive()}
+      />
     {/if}
 
     {#if tabs.hasTabs}

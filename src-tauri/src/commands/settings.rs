@@ -13,6 +13,11 @@ pub struct Settings {
     pub ui_lang: String,
     #[serde(default = "default_autosave")]
     pub autosave_draft_ms: u64,
+    /// off | afterDelay | onFocusChange — when to write the file itself.
+    #[serde(default = "default_autosave_mode")]
+    pub autosave: String,
+    #[serde(default = "default_autosave_delay")]
+    pub autosave_delay_ms: u64,
     #[serde(default = "default_true")]
     pub restore_session: bool,
     #[serde(default = "default_font_size")]
@@ -62,6 +67,12 @@ fn default_lang() -> String {
 fn default_autosave() -> u64 {
     800
 }
+fn default_autosave_mode() -> String {
+    "off".into()
+}
+fn default_autosave_delay() -> u64 {
+    1000
+}
 fn default_true() -> bool {
     true
 }
@@ -84,6 +95,8 @@ impl Default for Settings {
             theme: default_theme(),
             ui_lang: default_lang(),
             autosave_draft_ms: default_autosave(),
+            autosave: default_autosave_mode(),
+            autosave_delay_ms: default_autosave_delay(),
             restore_session: true,
             editor_font_size: default_font_size(),
             editor_max_width: default_max_width(),

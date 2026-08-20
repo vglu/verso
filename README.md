@@ -43,6 +43,8 @@ edit in place, and never damages your file.
   Mermaid — both loaded only when a document needs them.
 - **Tabs, folder tree, outline, find & replace**, session restore, section
   folding, go-to-heading.
+- **Autosave when you want it** — off, after a pause, or on focus change — and
+  never on a file that changed underneath you.
 - **Export and print.** A standalone HTML file that carries its own styles,
   pictures, diagrams and formulas — and the print dialog, which is where
   "Save as PDF" lives.
@@ -90,8 +92,8 @@ Download the installer for your system from the
 
 | System | File |
 | --- | --- |
-| Windows | `Verso_0.3.0_x64-setup.exe` (3.7 MB) or the `.msi` |
-| macOS | `Verso_0.3.0_x64.dmg`, or `_aarch64.dmg` on Apple silicon |
+| Windows | `Verso_0.4.0_x64-setup.exe` (3.7 MB) or the `.msi` |
+| macOS | `Verso_0.4.0_x64.dmg`, or `_aarch64.dmg` on Apple silicon |
 | Linux | `.deb`, `.rpm`, or the `.AppImage` if your distribution is neither |
 
 Every file is listed in `SHA256SUMS.txt` beside them; check it if you like:
@@ -143,7 +145,7 @@ Decisions are recorded as [ADRs](.cursor/decisions/).
 
 ## Status
 
-**0.3, released.** Everything described above works, and is built and used on
+**0.4, released.** Everything described above works, and is built and used on
 Windows every day: the Windows installer has been installed from the release
 and checked — file association, "Open with", and a clean uninstall. macOS and
 Linux are built by CI on every commit, and their installers have not yet been

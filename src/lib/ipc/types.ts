@@ -120,12 +120,25 @@ export interface SessionState {
 
 // ---- settings ----
 export type ThemeSetting = 'light' | 'dark' | 'system';
+/**
+ * When to write a document to disk without being asked.
+ *
+ * The names are the ones VS Code uses, because that is where people will have
+ * met the idea. `off` is the default: this program's first promise is that it
+ * never writes a byte you did not type, and writing on a timer is a decision
+ * the reader should make on purpose.
+ */
+export type AutosaveSetting = 'off' | 'afterDelay' | 'onFocusChange';
 export type LangSetting = 'system' | 'uk' | 'en';
 
 export interface Settings {
   theme: ThemeSetting;
   uiLang: LangSetting;
   autosaveDraftMs: number;
+  /** When to save the file itself (drafts are separate and always on). */
+  autosave: AutosaveSetting;
+  /** How long after the last keystroke `afterDelay` waits, in milliseconds. */
+  autosaveDelayMs: number;
   restoreSession: boolean;
   editorFontSize: number;
   editorMaxWidth: number;
@@ -163,6 +176,8 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   uiLang: 'system',
   autosaveDraftMs: 800,
+  autosave: 'off',
+  autosaveDelayMs: 1000,
   restoreSession: true,
   editorFontSize: 16,
   editorMaxWidth: 760,

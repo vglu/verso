@@ -4,6 +4,33 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — 2026-08-20
+
+### Added
+
+- **A toolbar that starts with the file.** New, open and save, then undo and
+  redo, then cut, copy and paste, before the Markdown tools that were already
+  there — and **Format Document** on the right, next to the Preview / Source
+  switch, because both act on the whole document. Buttons dim when they have
+  nothing to do: save on a clean file, undo with nothing to undo, cut with
+  nothing selected.
+- **Autosave**, in the vocabulary VS Code taught everyone: off, after a pause,
+  or on focus change. Off by default — this program's first promise is that it
+  writes nothing you did not type, so writing on a timer is a decision to
+  make on purpose. It never saves a document that has never been saved (that
+  would open a dialog nobody asked for), and it never writes over a file that
+  changed underneath you while the conflict banner is asking what to do.
+- **The unsaved dot in the file tree**, not only on the tab. Unsaved work is a
+  fact about a file, and the tree is where files are.
+
+### Fixed
+
+- `.txt` is Markdown again. Treating it as a data file in 0.3.0 took the live
+  preview and the formatting toolbar away from files that had always had them
+  — and `.txt` is in this program's own Markdown filter and file association.
+- Formatting was reachable only from a menu, which is why a plugin could be
+  installed, enabled and appear to do nothing at all. It has a button now.
+
 ## [0.3.0] — 2026-08-20
 
 ### Added
@@ -60,7 +87,9 @@ and versions follow [Semantic Versioning](https://semver.org/).
   - Formatting is one undoable edit, never automatic, and does nothing at all
     when there is nothing to do — an edit that changes no text would still cost
     a clean file its clean state.
-- **Data files open as what they are.** A `.json` or `.csv` was parsed as
+- **Data files open as what they are** — `.json`, `.csv`, `.xml` and the rest;
+  `.txt` stays Markdown, which is what this program has always treated it as.
+  A `.json` or `.csv` was parsed as
   Markdown until now, so a `#` inside a JSON string became a heading and a row
   of pipes became a table by accident. They now open with their own syntax
   highlighting — loaded on demand, so a reader who only opens Markdown pays

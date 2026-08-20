@@ -82,6 +82,41 @@ highlighted, and clicking a heading jumps to it.
 The session — open tabs, caret positions, sidebar state — comes back when you
 reopen the app. Turn that off in Settings if you prefer a clean start.
 
+## The toolbar
+
+Left to right: the file (new, open, save), what you just did (undo, redo), the
+clipboard (cut, copy, paste), then the Markdown tools — headings, emphasis,
+lists, links, tables, code, formulas, diagrams. **Format Document** and the
+**Preview / Source** switch sit on the right, because both act on the whole
+document rather than on the word under the caret.
+
+Buttons dim when they have nothing to do: Save on a file with no unsaved
+changes, Undo with nothing to undo, Cut with nothing selected. The Markdown
+half is hidden for data files — bold means nothing in a `.json` — and `.txt`
+counts as Markdown, as it always has here.
+
+Hide the whole bar in **Settings → Show the formatting toolbar** if you would
+rather have the shortcuts and the space.
+
+## Saving by itself
+
+**Settings → Autosave the file** offers what you may know from VS Code:
+
+| | |
+| --- | --- |
+| **Off** | The default. Nothing is written until you press `Ctrl+S` |
+| **After a pause** | Written once you stop typing — the delay is yours to set |
+| **On focus change** | Written when you switch to another tab or leave the window |
+
+Two things it will not do. It never saves a document that has never been
+saved — that would mean opening a Save As dialog you did not ask for. And it
+never writes over a file that changed underneath you: while the "changed on
+disk" banner is up, autosave stays out of the way and lets you answer it.
+
+Drafts are separate, and always on regardless of this setting: unsaved text is
+mirrored to a recovery file every second or so, which is what protects you
+from a crash. Autosave is about the file itself.
+
 ## Spell checking
 
 Off by default, and switched on in **Settings → Check spelling**. It uses the

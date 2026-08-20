@@ -336,6 +336,12 @@ class TabsStore {
         current.cursor = handle.getCursor().pos;
         current.scroll = handle.getScrollAnchor();
       }
+      // Leaving a document counts as a focus change: this is what
+      // `onFocusChange` means in the editor people know it from.
+      if (settings.value.autosave === 'onFocusChange' && current.dirty) {
+        const from = this.tabs.indexOf(current);
+        if (from >= 0) void this.save(from);
+      }
     }
     this.activeIndex = index;
   }
@@ -364,6 +370,54 @@ class TabsStore {
     if (!userInitiated) return;
     tab.dirty = true;
     this.scheduleDraft(tab);
+    this.scheduleAutosave(tab);
+  }
+
+  /**
+   * Autosave, when the reader has asked for it.
+   *
+   * The timer is per tab and restarts on every keystroke, so a document is
+   * written once the typing stops rather than in the middle of a word. A file
+   * that has never been saved is left alone: `save` would open a dialog, and a
+   * dialog nobody asked for is not an autosave.
+   *
+   * Drafts are unaffected either way — they are the crash net, and they are
+   * always on. This is about the file itself.
+   */
+  private autosaveTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  private scheduleAutosave(tab: Tab): void {
+    if (settings.value.autosave !== 'afterDelay' || !tab.path || tab.readonly) return;
+
+    const existing = this.autosaveTimers.get(tab.id);
+    if (existing) clearTimeout(existing);
+
+    const delay = Math.max(200, settings.value.autosaveDelayMs);
+    this.autosaveTimers.set(
+      tab.id,
+      setTimeout(() => {
+        this.autosaveTimers.delete(tab.id);
+        const index = this.tabs.findIndex((x) => x.id === tab.id);
+        // Not while a conflict is on screen: the banner is a question, and
+        // answering it by writing over the other program's version is exactly
+        // what it exists to prevent.
+        if (index < 0 || !this.tabs[index]?.dirty || this.tabs[index]?.external !== 'none') return;
+        void this.save(index);
+      }, delay)
+    );
+  }
+
+  /**
+   * Write every dirty document now — for `onFocusChange`, and for anything
+   * else that means "the reader has stepped away".
+   */
+  async autosaveAll(): Promise<void> {
+    if (settings.value.autosave === 'off') return;
+    for (let i = 0; i < this.tabs.length; i++) {
+      const tab = this.tabs[i];
+      if (!tab?.dirty || !tab.path || tab.readonly || tab.external !== 'none') continue;
+      await this.save(i);
+    }
   }
 
   /** Queue a draft write for this tab's current buffer. */
