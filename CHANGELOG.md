@@ -4,6 +4,16 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.2] — 2026-08-20
+
+### Fixed
+
+- **A table stayed wide while you read it and collapsed the moment you edited
+  it.** Opening a block for editing turns the widget back into ordinary lines,
+  and those lines still carried the prose measure — wide to read, narrow to
+  work in, which is precisely backwards. Revealed tables, formulas and image
+  sources now keep the width their rendered form had.
+
 ## [0.4.1] — 2026-08-20
 
 ### Fixed

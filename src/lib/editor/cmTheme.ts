@@ -36,7 +36,17 @@ const base = EditorView.theme({
     caretColor: 'var(--caret)'
   },
   // Code, and the widgets that stand on their own.
-  '.cm-line.md-codeblock-line': {
+  //
+  // The source classes matter as much as the widgets: a table opened for
+  // editing stops being a widget and becomes ordinary lines, and if those
+  // lines keep the prose measure the table collapses the moment the caret
+  // enters it — wide to read, narrow to edit, which is precisely backwards.
+  [[
+    '.cm-line.md-codeblock-line',
+    '.cm-line.md-table-src',
+    '.cm-line.md-math-src',
+    '.cm-line.md-img-src'
+  ].join(', ')]: {
     maxWidth: 'var(--editor-wide-width)'
   },
   '.cm-content > .md-table-wrap, .cm-content > .md-mermaid, .cm-content > .md-math-display': {
