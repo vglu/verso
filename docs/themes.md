@@ -31,6 +31,10 @@ place to start:
 Each carries its colour reasoning in its own comments — which hues, why those,
 and the measured contrast of every pair.
 
+![Overworld, underground](themes/overworld.png)
+
+![Blush, by day](themes/blush.png)
+
 ## Rules
 
 1. **Only override tokens.** Never target internal class names other than the
