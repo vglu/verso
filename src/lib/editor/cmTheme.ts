@@ -21,11 +21,33 @@ const base = EditorView.theme({
     overflowX: 'hidden',
     padding: 'var(--sp-6) 0 40vh'
   },
+  // The measure is applied to the lines rather than to the content box, and
+  // that one move is what lets a table be wider than the prose around it:
+  // block widgets — tables, diagrams, display formulas — are not inside a
+  // line, so they are free of it and take the wide width instead.
+  //
+  // It also means the empty space beside a paragraph belongs to the editor
+  // again: clicking out there now puts the caret on the nearest line, which
+  // is what clicking beside text is supposed to do.
   '.cm-content': {
-    maxWidth: 'var(--editor-max-width)',
-    margin: '0 auto',
+    maxWidth: 'none',
+    margin: '0',
     padding: '0 var(--sp-6)',
     caretColor: 'var(--caret)'
+  },
+  // Code, and the widgets that stand on their own.
+  '.cm-line.md-codeblock-line': {
+    maxWidth: 'var(--editor-wide-width)'
+  },
+  '.cm-content > .md-table-wrap, .cm-content > .md-mermaid, .cm-content > .md-math-display': {
+    maxWidth: 'var(--editor-wide-width)',
+    marginInline: 'auto'
+  },
+  // Source mode is editing, not reading: the measure that helps the eye
+  // follow prose is in the way when the thing being edited is a table of
+  // pipes. Same for a data file.
+  '&.cm-wide .cm-line, &.cm-code .cm-line': {
+    maxWidth: 'var(--editor-wide-width)'
   },
   // A data file is not a page of prose. The measure that makes Markdown
   // pleasant to read makes JSON hard to follow: it wants the full width, the
@@ -39,7 +61,10 @@ const base = EditorView.theme({
   '.cm-line': {
     padding: '0',
     // Anchors the fold chevron, which sits in the margin beside its heading.
-    position: 'relative'
+    position: 'relative',
+    // The measure lives here rather than on the content box; see above.
+    maxWidth: 'var(--editor-max-width)',
+    marginInline: 'auto'
   },
   '&.cm-focused': {
     outline: 'none'

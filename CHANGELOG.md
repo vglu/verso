@@ -4,6 +4,23 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.1] — 2026-08-20
+
+### Fixed
+
+- **Wide things are wide now.** The reading measure — the narrow column that
+  makes prose easy to follow — was applied to the whole document, so on a large
+  screen a table sat squeezed into 760 pixels with three thousand going spare
+  beside it. Prose keeps its measure; tables, diagrams, display formulas and
+  blocks of code take up to nearly twice it, centred on the same axis.
+- **Source mode is full width.** It is editing rather than reading, and the
+  measure that helps the eye follow a paragraph is in the way of a table of
+  pipes.
+- The text-width setting goes up to 1800px instead of 1100 — the old ceiling
+  was set for a laptop.
+- Clicking beside a paragraph now places the caret. The empty space either side
+  used to be outside the editable area entirely, so a click there did nothing.
+
 ## [0.4.0] — 2026-08-20
 
 ### Added

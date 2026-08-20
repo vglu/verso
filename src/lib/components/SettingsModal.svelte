@@ -128,7 +128,7 @@
         <input
           type="range"
           min="560"
-          max="1100"
+          max="1800"
           step="20"
           value={settings.value.editorMaxWidth}
           oninput={(e) => settings.update({ editorMaxWidth: Number(e.currentTarget.value) })}

@@ -211,6 +211,8 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     state: EditorState.create({ doc: options.doc, extensions: buildExtensions() })
   });
 
+  if (sourceOn) view.dom.classList.add('cm-wide');
+
   // A non-Markdown file gets its grammar as soon as it arrives. The document
   // is already on screen by then, as plain text — which is what it would have
   // been anyway, so nothing waits for this.
@@ -363,6 +365,10 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
       sourceOn = value;
       view.dispatch({ effects: previewComp.reconfigure(value ? [] : livePreview()) });
       view.contentDOM.classList.toggle('md-source', value);
+      // Source mode is editing rather than reading, and the reading measure is
+      // in the way of a table of pipes. The class goes on the editor itself,
+      // where the width rules look for it.
+      view.dom.classList.toggle('cm-wide', value);
     },
 
     isSourceMode: () => sourceOn,

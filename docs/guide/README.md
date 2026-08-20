@@ -117,6 +117,21 @@ Drafts are separate, and always on regardless of this setting: unsaved text is
 mirrored to a recovery file every second or so, which is what protects you
 from a crash. Autosave is about the file itself.
 
+## How wide the text is
+
+Prose is set in a column — around 760 pixels by default — because a line of
+65 to 75 characters is the one the eye follows most easily, and a paragraph
+stretched across a large monitor is genuinely harder to read.
+
+What is *not* prose does not obey that. Tables, diagrams, display formulas and
+blocks of code take nearly twice the width, centred on the same axis, so a wide
+table has room on a wide screen. Source mode is wider still: there you are
+editing rather than reading.
+
+The column itself is yours: **Settings → Text width**, from 560 to 1800 pixels.
+Zoom (`Ctrl+=`) scales everything together and is the other half of the answer
+on a very large display.
+
 ## Spell checking
 
 Off by default, and switched on in **Settings → Check spelling**. It uses the

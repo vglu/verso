@@ -49,6 +49,9 @@
   --font-size: 16px;
   --line-height: 1.75;
   --editor-max-width: 760px;
+  /* Prose keeps the measure; a table, a diagram or a block of code is not
+     prose and gets room — up to nearly twice it, and never past the window. */
+  --editor-wide-width: min(100%, calc(var(--editor-max-width) * 1.85));
 
   /* — Geometry — */
   --radius-s: 4px;
