@@ -4,6 +4,21 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.2] — 2026-08-21
+
+### Fixed
+
+- **A table started two hundred pixels to the left of the text.** Anything
+  that is not prose — a table, a diagram, a display formula, a block of code —
+  is allowed more room than the reading column, and that room was given by
+  centring a wider box around the column. The contents of that box are
+  left-aligned inside it, so a table narrower than the box began well to the
+  left of the paragraph above it and looked like it had come loose.
+
+  Wide blocks now begin on the column's left edge and grow to the right from
+  there, which is where the eye is already looking. Measured on the running
+  application: paragraph, heading and table all start at the same pixel.
+
 ## [0.6.1] — 2026-08-21
 
 ### Fixed

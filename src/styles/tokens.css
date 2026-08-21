@@ -61,6 +61,16 @@
   --editor-max-width: 1400px; /* the ceiling — the "text width" setting */
   --editor-floor: min(760px, var(--editor-max-width));
   --editor-measure: min(100%, clamp(var(--editor-floor), 70%, var(--editor-max-width)));
+  /*
+   * Where a block that is not prose begins.
+   *
+   * The same left edge as the paragraph above it, and it grows to the right
+   * from there. Centring a wide box around the column instead left every
+   * table, diagram and block of code starting to the left of the text — a
+   * table two hundred pixels out on its own, which reads as a mistake even
+   * when the box around it is doing exactly what it was told.
+   */
+  --editor-block-inset: max(0px, calc((100% - var(--editor-measure)) / 2));
   /* Prose keeps the measure; a table, a diagram or a block of code is not
      prose and gets room — never past the window, and never so far past the
      column that it stops looking like part of the same document. Once the

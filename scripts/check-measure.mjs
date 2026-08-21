@@ -23,8 +23,12 @@ const SCAN = [join('src', 'styles')];
 
 /** Properties that move a line sideways, and so cannot appear on one. */
 const OFFENDING = /^\s*(margin|margin-left|margin-right|margin-inline(-start|-end)?)\s*:/;
-/** Except the one declaration that puts it back on the axis. */
-const ALLOWED = /^\s*margin-inline\s*:\s*auto\s*;?\s*$/;
+/**
+ * Except the two that are the axis rather than a departure from it: `auto`,
+ * which centres the reading column, and the block inset, which starts a
+ * table or a block of code on the column's left edge.
+ */
+const ALLOWED = /^\s*margin-inline\s*:\s*(auto|var\(--editor-block-inset\)\s+auto)\s*;?\s*$/;
 
 const offenders = [];
 

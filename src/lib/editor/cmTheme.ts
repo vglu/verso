@@ -47,17 +47,19 @@ const base = EditorView.theme({
     '.cm-line.md-math-src',
     '.cm-line.md-img-src'
   ].join(', ')]: {
-    maxWidth: 'var(--editor-wide-width)'
+    maxWidth: 'var(--editor-wide-width)',
+    marginInline: 'var(--editor-block-inset) auto'
   },
   '.cm-content > .md-table-wrap, .cm-content > .md-mermaid, .cm-content > .md-math-display': {
     maxWidth: 'var(--editor-wide-width)',
-    marginInline: 'auto'
+    marginInline: 'var(--editor-block-inset) auto'
   },
   // Source mode is editing, not reading: the measure that helps the eye
   // follow prose is in the way when the thing being edited is a table of
   // pipes. Same for a data file.
   '&.cm-wide .cm-line, &.cm-code .cm-line': {
-    maxWidth: 'var(--editor-wide-width)'
+    maxWidth: 'var(--editor-wide-width)',
+    marginInline: 'var(--editor-block-inset) auto'
   },
   // A data file is not a page of prose. The measure that makes Markdown
   // pleasant to read makes JSON hard to follow: it wants the full width, the
