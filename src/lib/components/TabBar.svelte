@@ -1,6 +1,6 @@
 <script lang="ts">
   import { flip } from 'svelte/animate';
-  import { tabs } from '../stores/tabs.svelte';
+  import { tabs, type PaneId } from '../stores/tabs.svelte';
   import { t } from '../stores/i18n';
   import { revealInOs } from '../ipc/commands';
   import { flipMotion } from '../ui/motion';
@@ -9,12 +9,18 @@
   import ContextMenu, { type ContextItem } from './ContextMenu.svelte';
 
   interface Props {
+    /** The half of the window this strip belongs to. */
+    pane: PaneId;
     onCloseTab: (index: number) => void;
     /** Close a set of tabs, asking about any with unsaved changes. */
     onCloseTabs: (ids: string[]) => void;
   }
 
-  const { onCloseTab, onCloseTabs }: Props = $props();
+  const { pane, onCloseTab, onCloseTabs }: Props = $props();
+
+  const entries = $derived(tabs.entriesIn(pane));
+  /** What this strip shows as current — its own, whether focused or not. */
+  const currentIndex = $derived(tabs.activeIndexIn(pane));
 
   let context = $state<{ x: number; y: number; items: ContextItem[] } | null>(null);
   let strip = $state<HTMLElement | null>(null);
@@ -28,8 +34,8 @@
    * click having missed.
    */
   $effect(() => {
-    void tabs.activeIndex;
-    void tabs.tabs.length;
+    void currentIndex;
+    void entries.length;
     const active = strip?.querySelector<HTMLElement>('[aria-selected="true"]');
     active?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   });
@@ -58,6 +64,11 @@
       {
         label: t('tab.closeAll'),
         onSelect: () => onCloseTabs(ids(tabs.tabs.map((_, i) => i)))
+      },
+      {
+        label: pane === 0 ? t('tab.toRight') : t('tab.toLeft'),
+        onSelect: () => tabs.moveToPane(index, pane === 0 ? 1 : 0),
+        divider: true
       },
       { label: t('tab.save'), onSelect: () => void tabs.save(index), divider: true },
       { label: t('tab.saveAs'), onSelect: () => void tabs.saveAs(index) }
@@ -118,8 +129,21 @@
 
   function focusActiveTab(from: HTMLElement): void {
     const strip = from.closest('.tabbar');
-    const next = strip?.querySelectorAll<HTMLElement>('[role="tab"]')[tabs.activeIndex];
+    const at = entries.findIndex((entry) => entry.index === tabs.activeIndexIn(pane));
+    const next = strip?.querySelectorAll<HTMLElement>('[role="tab"]')[at];
     next?.focus();
+  }
+
+  /**
+   * A tab is draggable so it can be thrown into the other half of the window.
+   *
+   * The payload is a private type rather than text: a tab dropped on the
+   * document, on the tree, or outside the window must do nothing at all, and
+   * `text/plain` would make it look like something to insert.
+   */
+  function onDragStart(event: DragEvent, id: string): void {
+    event.dataTransfer?.setData('application/x-verso-tab', id);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
   }
 
   function onWheel(event: WheelEvent): void {
@@ -130,7 +154,7 @@
   }
 </script>
 
-{#if tabs.hasTabs}
+{#if entries.length > 0}
   <!-- The frame carries the surface and the hairline; the strip inside it
        scrolls and fades at the edges, so the chrome never dissolves with it. -->
   <div class="tabbar-frame">
@@ -141,15 +165,17 @@
       bind:this={strip}
       use:scrollFade
     >
-      {#each tabs.tabs as tab, index (tab.id)}
+      {#each entries as { tab, index } (tab.id)}
         <div
           class="tab"
-          class:active={index === tabs.activeIndex}
+          class:active={index === currentIndex}
           role="tab"
-          tabindex={index === tabs.activeIndex ? 0 : -1}
-          aria-selected={index === tabs.activeIndex}
+          tabindex={index === currentIndex ? 0 : -1}
+          aria-selected={index === currentIndex}
           animate:flip={flipMotion()}
           use:tip={tab.path ?? tab.fileName}
+          draggable="true"
+          ondragstart={(e) => onDragStart(e, tab.id)}
           onclick={() => tabs.activate(index)}
           onauxclick={(e) => onAuxClick(e, index)}
           oncontextmenu={(e) => openTabMenu(e, index)}

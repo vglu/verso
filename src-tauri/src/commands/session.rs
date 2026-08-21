@@ -25,6 +25,9 @@ pub struct SessionTab {
     pub scroll_pos: usize,
     #[serde(default)]
     pub scroll_offset: f64,
+    /// Which half of a split window the document was in.
+    #[serde(default)]
+    pub pane: u8,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -60,8 +63,17 @@ fn default_outline_width() -> f64 {
 pub struct SessionState {
     pub tabs: Vec<SessionTab>,
     pub active_index: i32,
+    /// Whether the window was showing two panes, and where the divider sat.
+    #[serde(default)]
+    pub split: bool,
+    #[serde(default = "default_split_ratio")]
+    pub split_ratio: f64,
     pub sidebar: SidebarState,
     pub tree_root: Option<String>,
+}
+
+fn default_split_ratio() -> f64 {
+    0.5
 }
 
 #[tauri::command]

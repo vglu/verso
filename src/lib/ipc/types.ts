@@ -101,11 +101,16 @@ export interface SessionTab {
   /** The place in the text the reader was at, and how far above it. */
   scrollPos?: number;
   scrollOffset?: number;
+  /** Which half of a split window it was in. */
+  pane?: 0 | 1;
 }
 
 export interface SessionState {
   tabs: SessionTab[];
   activeIndex: number;
+  /** Whether the window was showing two panes. */
+  split?: boolean;
+  splitRatio?: number;
   sidebar: {
     visible: boolean;
     /** Kept for sessions written before the outline moved to its own panel. */
@@ -140,6 +145,7 @@ export interface Settings {
   autosaveDelayMs: number;
   restoreSession: boolean;
   editorFontSize: number;
+  /** The widest the text column may become; it grows to this, not at this. */
   editorMaxWidth: number;
   /**
    * Window zoom, as a factor. Separate from the font size on purpose: that is
@@ -179,7 +185,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autosaveDelayMs: 1000,
   restoreSession: true,
   editorFontSize: 16,
-  editorMaxWidth: 760,
+  editorMaxWidth: 1400,
   zoom: 1,
   fontFamily: 'default',
   showStatusStrip: true,
@@ -213,6 +219,7 @@ export type MenuActionId =
   | 'settings'
   | 'toggleSidebar'
   | 'toggleOutline'
+  | 'toggleSplit'
   | 'find'
   | 'goToHeading'
   | 'goToLine'

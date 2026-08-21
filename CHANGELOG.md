@@ -4,6 +4,37 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] — 2026-08-21
+
+### Added
+
+- **Two documents side by side.** `Ctrl+Alt+\`, or **View → Split Editor**,
+  divides the window in two. Each half keeps its own tabs, its own scroll and
+  its own caret; the divider drags; a tab moves across by being dragged into
+  the other half or through its own context menu. The half being typed into is
+  marked with a hairline of accent along its top edge rather than by dimming
+  the other one — two panes are two documents, not one document and one
+  disabled area.
+
+  Underneath it there is still one list of open documents. Everything that
+  acts on a document — saving, watching, drafts, reloading — is indifferent to
+  which half it is being shown in, and splitting that list in two would have
+  meant splitting all of it. A pane is a property of a tab.
+
+  The layout comes back with the session, and folds itself away when the last
+  document of a pane is closed.
+
+### Changed
+
+- **The text column grows with the window instead of staying 760px wide.** On
+  a 3440px screen the old fixed measure left two thirds of the window empty;
+  filling it entirely would give lines of two hundred characters, where the
+  eye loses the start of the next one on the way back. So the column takes
+  seventy per cent of the room available, never narrower than the classic
+  measure and never wider than the ceiling in Settings — which is what the
+  "text width" setting now means. A stored value of the old default is moved
+  to the new one, because that number was never a choice anyone made.
+
 ## [0.5.1] — 2026-08-21
 
 ### Fixed

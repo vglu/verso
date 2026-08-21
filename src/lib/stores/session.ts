@@ -19,7 +19,8 @@ export function snapshotSession(): SessionState {
         path: tab.path!,
         cursor: handle?.getCursor().pos ?? tab.cursor,
         scrollPos: scroll.pos,
-        scrollOffset: scroll.offset
+        scrollOffset: scroll.offset,
+        pane: tab.pane
       };
     });
 
@@ -30,6 +31,8 @@ export function snapshotSession(): SessionState {
   return {
     tabs: openTabs,
     activeIndex,
+    split: tabs.split,
+    splitRatio: workspace.splitRatio,
     sidebar: {
       visible: workspace.sidebarVisible,
       panel: 'files',
@@ -98,14 +101,32 @@ export async function restoreSession({
   // start for every other one. Each file is read when its tab is first shown.
   let opened = 0;
   for (const tab of state.tabs ?? []) {
-    tabs.addRestored(tab.path, tab.cursor ?? 0, {
-      // Sessions written before positions became anchors carry only a pixel
-      // offset; there is nothing to resolve it against, so it is dropped
-      // rather than applied to the wrong place.
-      pos: tab.scrollPos ?? 0,
-      offset: tab.scrollOffset ?? 0
-    });
+    tabs.addRestored(
+      tab.path,
+      tab.cursor ?? 0,
+      {
+        // Sessions written before positions became anchors carry only a pixel
+        // offset; there is nothing to resolve it against, so it is dropped
+        // rather than applied to the wrong place.
+        pos: tab.scrollPos ?? 0,
+        offset: tab.scrollOffset ?? 0
+      },
+      // A session written before the window could be split has no panes in it,
+      // and everything in it belongs on the left.
+      state.split ? (tab.pane ?? 0) : 0
+    );
     opened += 1;
+  }
+
+  if (state.split && tabs.hasTabsIn(1)) {
+    tabs.split = true;
+    if (state.splitRatio) workspace.setSplitRatio(state.splitRatio);
+    // Give each pane something to show. The active tab, below, then decides
+    // which of the two had the keyboard.
+    const right = tabs.entriesIn(1)[0];
+    if (right) tabs.activate(right.index);
+    const left = tabs.entriesIn(0)[0];
+    if (left) tabs.activate(left.index);
   }
 
   const activeIndex = opened > 0 ? Math.min(Math.max(state.activeIndex, 0), opened - 1) : -1;

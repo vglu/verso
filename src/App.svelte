@@ -11,9 +11,8 @@
   import Breadcrumbs from './lib/components/Breadcrumbs.svelte';
   import Sidebar from './lib/components/Sidebar.svelte';
   import OutlinePanel from './lib/components/OutlinePanel.svelte';
-  import EditorHost from './lib/components/EditorHost.svelte';
+  import EditorPane from './lib/components/EditorPane.svelte';
   import StatusStrip from './lib/components/StatusStrip.svelte';
-  import EmptyState from './lib/components/EmptyState.svelte';
   import HeadingPalette from './lib/components/HeadingPalette.svelte';
   import Banner from './lib/components/Banner.svelte';
   import Modal from './lib/components/Modal.svelte';
@@ -58,6 +57,39 @@
   let showSettings = $state(false);
   let showAbout = $state(false);
   let showPalette = $state(false);
+  let splitResizing = $state(false);
+
+  /**
+   * Drag the divider between the panes.
+   *
+   * The ratio is worked out against the content area rather than the window:
+   * the sidebar and the outline panel are outside it, and measuring against
+   * the window would make the divider drift away from the pointer by exactly
+   * their width.
+   */
+  function startSplitResize(event: PointerEvent): void {
+    if (splitResizing) return;
+    const area = (event.currentTarget as HTMLElement).parentElement;
+    if (!area) return;
+
+    splitResizing = true;
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    document.documentElement.classList.add('resizing');
+
+    const move = (e: PointerEvent): void => {
+      const box = area.getBoundingClientRect();
+      workspace.setSplitRatio((e.clientX - box.left) / box.width);
+    };
+    const stop = (): void => {
+      splitResizing = false;
+      document.documentElement.classList.remove('resizing');
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+    };
+
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop);
+  }
   let pendingRecovery = $state<DraftInfo[]>([]);
   let closeRequest = $state<{
     index: number;
@@ -448,6 +480,10 @@
         workspace.toggleOutline();
         bump();
         break;
+      case 'toggleSplit':
+        tabs.toggleSplit();
+        bump();
+        break;
       case 'find':
         focusSearch();
         break;
@@ -517,8 +553,10 @@
     }
     if (event.key === '\\') {
       event.preventDefault();
-      // Files on the left, outline on the right — one key each, no mode switch.
-      if (event.shiftKey) workspace.toggleOutline();
+      // Files on the left, outline on the right, two documents side by
+      // side — one key each, no mode switch.
+      if (event.altKey) tabs.toggleSplit();
+      else if (event.shiftKey) workspace.toggleOutline();
       else workspace.toggleSidebar();
       bump();
       return;
@@ -711,7 +749,11 @@
   {/if}
 
   <div class="app-main">
-    <TabBar onCloseTab={requestClose} onCloseTabs={closeTabs} />
+    <!-- One strip across the window while there is one pane; split, each
+         pane carries its own (see EditorPane). -->
+    {#if !tabs.split}
+      <TabBar pane={0} onCloseTab={requestClose} onCloseTabs={closeTabs} />
+    {/if}
 
     <!-- Bold, headings and tables mean nothing in a JSON file, and neither
          does a preview of it: the toolbar belongs to Markdown. -->
@@ -785,24 +827,42 @@
       <Banner message={tabs.lastError} onDismiss={() => (tabs.lastError = null)} />
     {/if}
 
-    <div class="app-content">
-      <EditorHost
-        onLinkClick={(href) => void handleLink(href)}
-        onFind={focusSearch}
-        onSave={() => void save()}
-        onToggleSource={toggleSourceMode}
-        onGoToHeading={() => (showPalette = true)}
-        onActivity={bump}
-      />
-
-      {#if booted && !tabs.hasTabs}
-        <EmptyState
-          recent={settings.value.recentFiles}
+    <div
+      class="app-content"
+      class:split={tabs.split}
+      style={tabs.split ? `--split-ratio: ${workspace.splitRatio}` : undefined}
+    >
+      {#snippet pane(id: 0 | 1)}
+        <EditorPane
+          pane={id}
+          {booted}
+          onCloseTab={requestClose}
+          onCloseTabs={closeTabs}
+          onLinkClick={(href) => void handleLink(href)}
+          onFind={focusSearch}
+          onSave={() => void save()}
+          onToggleSource={toggleSourceMode}
+          onGoToHeading={() => (showPalette = true)}
+          onActivity={bump}
           onNewFile={() => newFile()}
           onOpenFile={() => void chooseFile()}
           onOpenFolder={() => void chooseFolder()}
           onOpenRecent={(path) => void openPath(path)}
         />
+      {/snippet}
+
+      {@render pane(0)}
+
+      {#if tabs.split}
+        <div
+          class="split-divider"
+          class:active={splitResizing}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={t('view.split')}
+          onpointerdown={startSplitResize}
+        ></div>
+        {@render pane(1)}
       {/if}
     </div>
 
@@ -862,5 +922,36 @@
     margin: 0;
     font-size: 13px;
     color: var(--fg-ui);
+  }
+
+  /* Two panes side by side; the ratio is a share of the room, not a width. */
+  .app-content.split {
+    display: flex;
+    align-items: stretch;
+  }
+
+  .app-content.split > :global(.pane:first-of-type) {
+    flex: 0 0 calc(var(--split-ratio) * 100%);
+  }
+
+  .split-divider {
+    flex: 0 0 6px;
+    margin: 0 -2px;
+    z-index: 6;
+    cursor: col-resize;
+    background: var(--border);
+    background-clip: content-box;
+    border-inline: 2px solid transparent;
+    transition: background-color var(--t-fast) var(--ease);
+  }
+
+  .split-divider.active {
+    background: var(--accent-soft);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .split-divider:hover {
+      background: var(--accent-soft);
+    }
   }
 </style>

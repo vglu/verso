@@ -21,6 +21,19 @@ class WorkspaceStore {
   outlineVisible = $state(true);
   outlineWidth = $state(240);
 
+  /**
+   * Where the divider between the two panes sits, as a share of the room.
+   *
+   * A fraction rather than a width: the window is resized far more often than
+   * the divider is dragged, and a pixel value would quietly stop being half
+   * the window the first time it happened.
+   */
+  splitRatio = $state(0.5);
+
+  setSplitRatio(value: number): void {
+    this.splitRatio = Math.min(0.8, Math.max(0.2, value));
+  }
+
   /** Narrow windows float the panels over the document instead of pushing it. */
   overlayMode = $state(false);
 

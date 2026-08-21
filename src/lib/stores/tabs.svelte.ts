@@ -22,6 +22,17 @@ import { t } from './i18n';
 
 export type ExternalState = 'none' | 'modified' | 'removed';
 
+/**
+ * Which half of the window a document is in.
+ *
+ * There is one list of open documents, not two: everything that acts on a
+ * document — saving, watching, drafts, reloading — is indifferent to where it
+ * is being shown, and splitting that list in two would have meant splitting
+ * all of it. A pane is a property of a tab, and the second pane exists only
+ * while `split` is true.
+ */
+export type PaneId = 0 | 1;
+
 export interface Tab {
   id: string;
   path: string | null;
@@ -51,6 +62,7 @@ export interface Tab {
   cursor: number;
   /** Where the reader was, as a place in the text rather than a pixel count. */
   scroll: ScrollAnchor;
+  pane: PaneId;
 }
 
 /**
@@ -67,7 +79,7 @@ const handles = new Map<string, EditorHandle>();
 let untitledCounter = 0;
 let unreadCounter = 0;
 
-function tabFromMeta(meta: FileMeta, content: string): Tab {
+function tabFromMeta(meta: FileMeta, content: string, pane: PaneId): Tab {
   return {
     id: meta.docId,
     path: meta.path,
@@ -86,13 +98,26 @@ function tabFromMeta(meta: FileMeta, content: string): Tab {
     external: 'none',
     recovered: null,
     cursor: 0,
-    scroll: { pos: 0, offset: 0 }
+    scroll: { pos: 0, offset: 0 },
+    pane
   };
 }
 
 class TabsStore {
   tabs = $state<Tab[]>([]);
-  activeIndex = $state(-1);
+
+  /** Whether the second pane is on screen. */
+  split = $state(false);
+  /** The pane the keyboard, the toolbar and the outline belong to. */
+  focusedPane = $state<PaneId>(0);
+  /**
+   * What each pane is showing, by tab id rather than by index.
+   *
+   * Indexes shift under every close and every move; an id does not. The
+   * active *index* is still what the rest of the store speaks, so it is
+   * derived from this — one place where the two representations meet.
+   */
+  private currentIds = $state<[string | null, string | null]>([null, null]);
   /** Set while a save is in flight, so the UI can show progress. */
   saving = $state(false);
   lastError = $state<string | null>(null);
@@ -116,12 +141,137 @@ class TabsStore {
   /** mtimes we produced ourselves — used to ignore our own watch events. */
   private selfWrites = new Map<string, number>();
 
+  get activeIndex(): number {
+    const id = this.currentIds[this.focusedPane];
+    return id === null ? -1 : this.tabs.findIndex((tab) => tab.id === id);
+  }
+
+  /**
+   * Setting it moves the focus as well: activating a tab is how a reader says
+   * which half of the window they are working in.
+   */
+  set activeIndex(index: number) {
+    const tab = this.tabs[index];
+    if (!tab) {
+      this.currentIds[this.focusedPane] = null;
+      return;
+    }
+    this.focusedPane = tab.pane;
+    this.currentIds[tab.pane] = tab.id;
+  }
+
   get active(): Tab | null {
     return this.tabs[this.activeIndex] ?? null;
   }
 
   get hasTabs(): boolean {
     return this.tabs.length > 0;
+  }
+
+  // ---- panes ----
+
+  /** The tabs of one pane, each with its index in the flat list. */
+  entriesIn(pane: PaneId): Array<{ tab: Tab; index: number }> {
+    const out: Array<{ tab: Tab; index: number }> = [];
+    this.tabs.forEach((tab, index) => {
+      if (tab.pane === pane) out.push({ tab, index });
+    });
+    return out;
+  }
+
+  hasTabsIn(pane: PaneId): boolean {
+    return this.tabs.some((tab) => tab.pane === pane);
+  }
+
+  /** The tab a pane is showing — its own, whether or not the pane has focus. */
+  activeIndexIn(pane: PaneId): number {
+    const id = this.currentIds[pane];
+    return id === null ? -1 : this.tabs.findIndex((tab) => tab.id === id);
+  }
+
+  focusPane(pane: PaneId): void {
+    if (!this.split && pane === 1) return;
+    this.focusedPane = pane;
+  }
+
+  /**
+   * Open the second pane, or fold it back into the first.
+   *
+   * Opening it takes the current document across when there is another one to
+   * leave behind: splitting a window to look at one file twice is not what the
+   * gesture means, and a pane that opens empty next to your only document is a
+   * pane you then have to fill.
+   */
+  toggleSplit(): void {
+    if (this.split) {
+      this.unsplit();
+      return;
+    }
+
+    const staying = this.tabs.filter((tab) => tab.pane === 0);
+    const moving =
+      staying.length > 1 ? this.tabs.findIndex((t) => t.id === this.currentIds[0]) : -1;
+
+    this.split = true;
+    this.focusedPane = 1;
+    this.currentIds[1] = null;
+    if (moving >= 0) this.moveToPane(moving, 1);
+  }
+
+  /** Everything back into one pane, keeping whatever was in front. */
+  unsplit(): void {
+    const keep = this.currentIds[this.focusedPane] ?? this.currentIds[0] ?? this.currentIds[1];
+    for (const tab of this.tabs) tab.pane = 0;
+    this.currentIds = [keep, null];
+    this.split = false;
+    this.focusedPane = 0;
+  }
+
+  /** Send one document to the other half of the window. */
+  moveToPane(index: number, pane: PaneId): void {
+    const tab = this.tabs[index];
+    if (!tab || tab.pane === pane) return;
+
+    const from = tab.pane;
+    tab.pane = pane;
+    if (pane === 1) this.split = true;
+    if (this.currentIds[from] === tab.id) this.currentIds[from] = this.neighbourIn(from, index);
+    this.currentIds[pane] = tab.id;
+    this.focusedPane = pane;
+  }
+
+  /**
+   * A document's id changes twice in its life: when a restored tab is finally
+   * read, and when an untitled buffer is saved to a path. Both replace a
+   * provisional id with the real one — and a pane remembers what it is
+   * showing by id, so both have to be followed here or the pane goes blank
+   * while the document is right there.
+   */
+  private retargetPanes(oldId: string, newId: string): void {
+    if (oldId === newId) return;
+    for (const pane of [0, 1] as PaneId[]) {
+      if (this.currentIds[pane] === oldId) this.currentIds[pane] = newId;
+    }
+  }
+
+  /** The tab a pane should fall back to once one of its own is gone. */
+  private neighbourIn(pane: PaneId, hole: number): string | null {
+    const entries = this.entriesIn(pane).filter((entry) => entry.index !== hole);
+    if (entries.length === 0) return null;
+    const after = entries.find((entry) => entry.index >= hole);
+    return (after ?? entries[entries.length - 1]!).tab.id;
+  }
+
+  /**
+   * A pane that has just lost its last document gives the window back.
+   *
+   * Only after a close: moving a document out of a pane deliberately leaves
+   * an empty one, which is how a reader makes room for the next file.
+   */
+  private collapseEmptyPane(): void {
+    if (!this.split) return;
+    if (this.hasTabsIn(0) && this.hasTabsIn(1)) return;
+    this.unsplit();
   }
 
   handleOf(id: string): EditorHandle | null {
@@ -174,7 +324,7 @@ class TabsStore {
 
     try {
       const opened = await readFile(path);
-      const tab = tabFromMeta(opened.meta, opened.content);
+      const tab = tabFromMeta(opened.meta, opened.content, this.focusedPane);
       await this.applyDraft(tab, opened.content, opened.meta.mtimeMs);
 
       this.tabs.push(tab);
@@ -218,7 +368,7 @@ class TabsStore {
    * per-line ending scans before the window was usable — all for documents
    * behind tabs nobody had chosen.
    */
-  addRestored(path: string, cursor: number, scroll: ScrollAnchor): void {
+  addRestored(path: string, cursor: number, scroll: ScrollAnchor, pane: PaneId = 0): void {
     if (this.indexOfPath(path) >= 0) return;
 
     unreadCounter += 1;
@@ -245,7 +395,8 @@ class TabsStore {
       external: 'none',
       recovered: null,
       cursor,
-      scroll
+      scroll,
+      pane
     });
   }
 
@@ -266,8 +417,10 @@ class TabsStore {
       const opened = await readFile(path);
       const cursor = tab.cursor;
       const scroll = tab.scroll;
+      const provisionalId = tab.id;
 
-      Object.assign(tab, tabFromMeta(opened.meta, opened.content));
+      Object.assign(tab, tabFromMeta(opened.meta, opened.content, tab.pane));
+      this.retargetPanes(provisionalId, tab.id);
       tab.cursor = cursor;
       tab.scroll = scroll;
       await this.applyDraft(tab, opened.content, opened.meta.mtimeMs);
@@ -311,7 +464,8 @@ class TabsStore {
       external: 'none',
       recovered: null,
       cursor: 0,
-      scroll: { pos: 0, offset: 0 }
+      scroll: { pos: 0, offset: 0 },
+      pane: this.focusedPane
     });
     this.activateLast();
     return tabId;
@@ -350,10 +504,13 @@ class TabsStore {
     this.activate(this.tabs.length - 1);
   }
 
+  /** Next or previous document — within the pane being worked in. */
   activateNext(delta: number): void {
-    if (this.tabs.length === 0) return;
-    const next = (this.activeIndex + delta + this.tabs.length) % this.tabs.length;
-    this.activate(next);
+    const entries = this.entriesIn(this.focusedPane);
+    if (entries.length === 0) return;
+    const at = entries.findIndex((entry) => entry.tab.id === this.currentIds[this.focusedPane]);
+    const next = entries[(at + delta + entries.length) % entries.length]!;
+    this.activate(next.index);
   }
 
   // ---- editing ----
@@ -487,7 +644,8 @@ class TabsStore {
       const opened = await readFile(target);
       const handle = handles.get(oldId);
 
-      Object.assign(tab, tabFromMeta(opened.meta, tab.content));
+      Object.assign(tab, tabFromMeta(opened.meta, tab.content, tab.pane));
+      this.retargetPanes(oldId, tab.id);
       tab.dirty = false;
       tab.baseMtimeMs = result.mtimeMs;
 
@@ -520,13 +678,15 @@ class TabsStore {
     // so it stays and is offered at the next launch.
     if (discardDraft && tab.loaded) void draftDelete(tab.id).catch(() => undefined);
 
+    // Whichever panes were showing it need something else to show, and they
+    // look for it among their own tabs — closing a file on the left must not
+    // reach across and change what is on the right.
+    const orphaned = ([0, 1] as PaneId[]).filter((pane) => this.currentIds[pane] === tab.id);
+
     // The editor instance is torn down by the host element unmounting.
     this.tabs.splice(index, 1);
-    if (this.tabs.length === 0) {
-      this.activeIndex = -1;
-    } else if (this.activeIndex >= this.tabs.length) {
-      this.activeIndex = this.tabs.length - 1;
-    }
+    for (const pane of orphaned) this.currentIds[pane] = this.neighbourIn(pane, index);
+    this.collapseEmptyPane();
     void this.syncWatchList();
   }
 

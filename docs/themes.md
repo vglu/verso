@@ -121,7 +121,9 @@ and the measured contrast of every pair.
 | `--font-mono` | JetBrains Mono, system mono stack |
 | `--font-size` | `16px` (user setting) |
 | `--line-height` | `1.75` |
-| `--editor-max-width` | `760px` (user setting) |
+| `--editor-max-width` | `1400px` (user setting) — the widest the text column may become |
+| `--editor-measure` | The column itself: 70% of the room, floored at 760px, capped at the setting |
+| `--editor-wide-width` | What a table, diagram or block of code may take instead |
 
 ### Geometry and motion
 

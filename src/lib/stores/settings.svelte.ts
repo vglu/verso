@@ -13,6 +13,8 @@ import { plugins } from '../plugins/registry.svelte';
 import { THEME_CHANGED_EVENT } from '../editor/livePreview/richWidgets';
 
 const THEME_MIRROR_KEY = 'verso.theme';
+/** The text width before it became a ceiling; see migrateTextWidth. */
+const LEGACY_FIXED_WIDTH = 760;
 
 class SettingsStore {
   value = $state<Settings>({ ...DEFAULT_SETTINGS });
@@ -25,6 +27,7 @@ class SettingsStore {
     try {
       const loaded = await settingsLoad();
       this.value = { ...DEFAULT_SETTINGS, ...loaded };
+      this.migrateTextWidth(loaded);
     } catch (e) {
       console.warn('settings load failed, using defaults', e);
     }
@@ -37,6 +40,18 @@ class SettingsStore {
     this.watchSystemTheme();
     void this.applyUserTheme();
     void plugins.load(this.value.enabledPlugins);
+  }
+
+  /**
+   * Text width used to be a fixed column and is now a ceiling the column grows
+   * to. A file holding the old default would freeze the old behaviour — and
+   * that number was never a choice anyone made, it is the one nobody changed.
+   * Any other value is a decision and is left alone.
+   */
+  private migrateTextWidth(loaded: Partial<Settings>): void {
+    if (loaded.editorMaxWidth === LEGACY_FIXED_WIDTH) {
+      this.value = { ...this.value, editorMaxWidth: DEFAULT_SETTINGS.editorMaxWidth };
+    }
   }
 
   /** The user's own theme file, if they have chosen one. */

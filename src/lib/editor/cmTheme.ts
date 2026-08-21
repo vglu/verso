@@ -73,7 +73,7 @@ const base = EditorView.theme({
     // Anchors the fold chevron, which sits in the margin beside its heading.
     position: 'relative',
     // The measure lives here rather than on the content box; see above.
-    maxWidth: 'var(--editor-max-width)',
+    maxWidth: 'var(--editor-measure)',
     marginInline: 'auto'
   },
   '&.cm-focused': {

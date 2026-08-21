@@ -116,6 +116,12 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         MenuItemBuilder::with_id("toggleOutline", label(l, "toggleOutline", "Toggle Outline"))
             .accelerator("CmdOrCtrl+Alt+O")
             .build(app)?;
+    // Two documents side by side. Ctrl+\ is already the sidebar and
+    // Ctrl+Shift+\ the outline, so the split takes the third of that family.
+    let split_editor =
+        MenuItemBuilder::with_id("toggleSplit", label(l, "toggleSplit", "Split Editor"))
+            .accelerator("CmdOrCtrl+Alt+\\")
+            .build(app)?;
     let fold_all = MenuItemBuilder::with_id("foldAll", label(l, "foldAll", "Fold All Sections"))
         .accelerator("CmdOrCtrl+Alt+[")
         .build(app)?;
@@ -146,6 +152,7 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
     let view = SubmenuBuilder::new(app, label(l, "menu.view", "View"))
         .item(&toggle_sidebar)
         .item(&toggle_outline)
+        .item(&split_editor)
         .separator()
         .item(&fold_all)
         .item(&unfold_all)

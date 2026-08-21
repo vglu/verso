@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tabs } from '../stores/tabs.svelte';
+  import { tabs, type PaneId } from '../stores/tabs.svelte';
   import { workspace } from '../stores/workspace.svelte';
   import { settings } from '../stores/settings.svelte';
   import { createEditor } from '../editor/createEditor';
@@ -7,6 +7,8 @@
   import { createOutlineSync } from '../editor/outlineSync';
 
   interface Props {
+    /** Which half of the window this host draws. */
+    pane: PaneId;
     onLinkClick: (href: string) => void;
     onFind: () => void;
     onSave: () => void;
@@ -16,8 +18,12 @@
     onActivity: () => void;
   }
 
-  const { onLinkClick, onFind, onSave, onToggleSource, onGoToHeading, onActivity }: Props =
+  const { pane, onLinkClick, onFind, onSave, onToggleSource, onGoToHeading, onActivity }: Props =
     $props();
+
+  /** The document this pane is showing — its own, focused or not. */
+  const shownIndex = $derived(tabs.activeIndexIn(pane));
+  const shown = $derived(tabs.tabs[shownIndex] ?? null);
 
   // A mode switch applies to every open document, not just the active one.
   $effect(() => {
@@ -109,6 +115,18 @@
     };
   }
 
+  // A document shown in the other pane still has to be read: it is on screen,
+  // it is simply not the one being typed into.
+  $effect(() => {
+    const tab = shown;
+    if (!tab) return;
+    if (!tab.loaded) {
+      void tabs.ensureLoaded(tab.id);
+      return;
+    }
+    if (!opened.includes(tab.id)) opened = [...opened, tab.id];
+  });
+
   /**
    * Documents that have been looked at, and so have an editor.
    *
@@ -120,8 +138,11 @@
    */
   let opened = $state<string[]>([]);
 
-  // Focus follows the active tab, and the outline follows with it.
+  // Focus follows the active tab, and the outline follows with it. Only the
+  // pane being worked in does this: the other one keeps its document on
+  // screen without taking the keyboard or repainting the outline panel.
   $effect(() => {
+    if (tabs.focusedPane !== pane) return;
     const active = tabs.active;
     if (!active) {
       workspace.setOutline([], -1);
@@ -147,13 +168,13 @@
   });
 </script>
 
-{#each tabs.tabs as tab, index (tab.id)}
-  {#if opened.includes(tab.id)}
+{#each tabs.entriesIn(pane) as entry (entry.tab.id)}
+  {#if opened.includes(entry.tab.id)}
     <div
       class="host"
-      class:hidden={index !== tabs.activeIndex}
-      use:mountEditor={tab.id}
-      data-tab={tab.fileName}
+      class:hidden={entry.index !== shownIndex}
+      use:mountEditor={entry.tab.id}
+      data-tab={entry.tab.fileName}
     ></div>
   {/if}
 {/each}

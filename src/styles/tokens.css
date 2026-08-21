@@ -48,10 +48,28 @@
   --font-mono: 'JetBrains Mono', 'Cascadia Code', 'SF Mono', Consolas, 'Liberation Mono', monospace;
   --font-size: 16px;
   --line-height: 1.75;
-  --editor-max-width: 760px;
+  /*
+   * The reading measure, which is a range rather than a number.
+   *
+   * A column frozen at 760px on a 3440px screen leaves two thirds of the
+   * window empty; a column that fills that screen is two hundred characters
+   * wide and the eye loses the start of the next line on the way back. So it
+   * grows with the room it is given and then stops: seventy per cent of what
+   * is available, never narrower than the classic measure, never wider than
+   * the ceiling in Settings.
+   */
+  --editor-max-width: 1400px; /* the ceiling — the "text width" setting */
+  --editor-floor: min(760px, var(--editor-max-width));
+  --editor-measure: min(100%, clamp(var(--editor-floor), 70%, var(--editor-max-width)));
   /* Prose keeps the measure; a table, a diagram or a block of code is not
-     prose and gets room — up to nearly twice it, and never past the window. */
-  --editor-wide-width: min(100%, calc(var(--editor-max-width) * 1.85));
+     prose and gets room — never past the window, and never so far past the
+     column that it stops looking like part of the same document. Once the
+     column itself is wide, a quarter more is plenty; while it is narrow, the
+     old near-double still applies. */
+  --editor-wide-width: min(
+    100%,
+    max(calc(var(--editor-floor) * 1.85), calc(var(--editor-measure) * 1.25))
+  );
 
   /* — Geometry — */
   --radius-s: 4px;

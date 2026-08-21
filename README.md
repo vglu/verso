@@ -53,6 +53,10 @@ edit in place, and never damages your file.
   including a Minecraft palette, a soft rose one, the little blue box and a
   herb garden; every colour in them is measured against WCAG rather than
   eyeballed.
+- **Two documents side by side.** Split the window with `Ctrl+Alt+\`, drag a
+  tab across, and each half keeps its own tabs, its own scroll and its own
+  caret. The reading column grows with the window rather than staying a narrow
+  strip on a wide screen.
 - **Plugins** that add formatters, [in about thirty lines](docs/plugins.md).
   They run in a worker with no DOM, no file system and no network, and none of
   their code runs until you switch them on.
@@ -93,8 +97,8 @@ Download the installer for your system from the
 
 | System | File |
 | --- | --- |
-| Windows | `Verso_0.5.1_x64-setup.exe` (3.7 MB) or the `.msi` |
-| macOS | `Verso_0.5.1_x64.dmg`, or `_aarch64.dmg` on Apple silicon |
+| Windows | `Verso_0.6.0_x64-setup.exe` (3.7 MB) or the `.msi` |
+| macOS | `Verso_0.6.0_x64.dmg`, or `_aarch64.dmg` on Apple silicon |
 | Linux | `.deb`, `.rpm`, or the `.AppImage` if your distribution is neither |
 
 Every file is listed in `SHA256SUMS.txt` beside them; check it if you like:
@@ -146,7 +150,7 @@ Decisions are recorded as [ADRs](.cursor/decisions/).
 
 ## Status
 
-**0.5, released.** Everything described above works, and is built and used on
+**0.6, released.** Everything described above works, and is built and used on
 Windows every day: the Windows installer has been installed from the release
 and checked — file association, "Open with", and a clean uninstall. macOS and
 Linux are built by CI on every commit, and their installers have not yet been
