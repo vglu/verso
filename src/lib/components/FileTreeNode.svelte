@@ -3,6 +3,7 @@
   import { workspace } from '../stores/workspace.svelte';
   import { tabs } from '../stores/tabs.svelte';
   import type { TreeEntry } from '../ipc/types';
+  import { tip } from '../ui/tooltip';
 
   interface Props {
     entry: TreeEntry;
@@ -57,7 +58,7 @@
   aria-selected={isActive}
   aria-current={isActive ? 'true' : undefined}
   tabindex="-1"
-  title={entry.path}
+  use:tip={entry.path}
   onclick={activate}
   oncontextmenu={(e) => {
     e.preventDefault();
@@ -82,7 +83,7 @@
 
   <span class="label">{entry.isDir ? entry.name : displayName(entry.name)}</span>
   {#if isDirty}
-    <span class="dirty" title="Unsaved changes" aria-label="Unsaved changes"></span>
+    <span class="dirty" use:tip={'Unsaved changes'} aria-label="Unsaved changes"></span>
   {/if}
 </div>
 
@@ -106,7 +107,12 @@
     border-radius: var(--radius-s);
     transition:
       background-color var(--t-fast) var(--ease),
-      color var(--t-fast) var(--ease);
+      color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
+  }
+
+  .row:active {
+    transform: scale(var(--press-scale-row));
   }
 
   .row.active {

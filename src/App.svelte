@@ -99,8 +99,10 @@
   async function openPath(path: string): Promise<void> {
     const ok = await tabs.openPath(path);
     if (!ok) return;
-    if (!workspace.treeRoot) await workspace.setRootFromFile(path);
     bump();
+    // Deliberately not awaited: the tree fills in after the document is on
+    // screen. See workspace.scheduleRootFromFile.
+    workspace.scheduleRootFromFile(path);
   }
 
   async function chooseFile(): Promise<void> {

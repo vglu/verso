@@ -1,0 +1,123 @@
+/*
+ * Tiffany — the little blue box, as a reading surface.
+ *
+ * The colour is famous and famously hard to use: 1837 blue is a *tint*, sitting
+ * at around 78% lightness, and type cannot be made of it. Every attempt to make
+ * an interface "Tiffany blue" by painting things Tiffany blue fails at the first
+ * paragraph. What the box actually does is subtler — the blue is the object, and
+ * everything around it is white, silver and a single warm ribbon.
+ *
+ *   Robin's egg  176°  the voice of the theme. Held at almost no saturation it
+ *                      makes the white cool rather than blue; at full strength
+ *                      it appears exactly once, on the accent, and again in the
+ *                      dark theme where a tint can finally be itself.
+ *   Petrol       178°  the same hue driven down into type. Cool dark instead of
+ *                      black — a neutral grey next to this blue reads as dirt.
+ *   Silver       200°  hairlines and scrollbars: the tissue paper, the ribbon
+ *                      channel, the metal.
+ *   Coral         12°  the split complement, and the one warm thing on the page.
+ *                      It carries danger and, in code, the properties — one warm
+ *                      note against all that cool is what keeps crisp from
+ *                      turning clinical.
+ *   Gold          42°  warning. Yellow gold against blue-green is the oldest
+ *                      pairing this house owns.
+ *
+ * Crispness here is a measurement, not a mood: surfaces stay above 90% lightness
+ * so the page reads as white, and every text colour was solved down against the
+ * surface it sits on until it cleared WCAG. The ratios are in the comments.
+ *   node scripts/check-theme-contrast.mjs docs/themes/tiffany.css
+ */
+
+:root {
+  /* — Surfaces: robin's egg at 0.06 saturation. Cool white, not blue — */
+  --bg: #fbfefe;
+  --bg-app: #e8f4f3;
+  --bg-panel: #e0f0ee;
+  --bg-hover: rgba(20, 66, 63, 0.055);
+  --bg-active: rgba(20, 66, 63, 0.09);
+  --bg-code: #e9f5f4;
+  --bg-field: #ffffff;
+
+  /* — Text: petrol. The blue taken down until it is type — */
+  --fg: #14403d; /* 11.31:1 on --bg */
+  --fg-ui: #275350; /*  7.65:1 on --bg-app */
+  --fg-muted: #46706c; /*  4.71:1 on --bg-panel */
+  --fg-faint: #6c8e8b; /*  3.04:1 on --bg-panel */
+  --heading: #0b5a54; /*  7.95:1 — deep robin's egg */
+
+  /* — Accent: 1837 blue at the only strength type can carry — */
+  --accent: #077771; /* 4.60:1 on --bg-panel, 5.36:1 on --bg */
+  --accent-hover: #066b66;
+  --accent-soft: rgba(7, 119, 113, 0.12);
+
+  /* — Utility: silver hardware, one coral ribbon — */
+  --border: rgba(20, 66, 63, 0.13);
+  --selection: rgba(7, 119, 113, 0.16);
+  --caret: #077771;
+  --warning: #846611; /* gold,   4.60:1 */
+  --danger: #bc3f2f; /* coral,  4.60:1 */
+  --success: #21784f; /* jade,   4.60:1 */
+  --quote-border: #bfdcd9;
+  --search-match: rgba(255, 206, 108, 0.42);
+  --search-match-current: rgba(240, 168, 48, 0.62);
+  --scrollbar: rgba(20, 66, 63, 0.2);
+  --scrollbar-hover: rgba(20, 66, 63, 0.32);
+  --shadow-panel: 0 12px 32px rgba(20, 66, 63, 0.13), 0 2px 8px rgba(20, 66, 63, 0.07);
+  --scrim: rgba(10, 38, 36, 0.42);
+
+  /* — Code: the cool family, with coral for the one warm accent — */
+  --syn-keyword: #0f6fa8; /* 4.88:1 — sea blue */
+  --syn-string: #1b7d54; /* 4.60:1 — jade */
+  --syn-number: #96631f; /* 4.60:1 — gold */
+  --syn-comment: #71918f; /* 3.05:1 — silver */
+  --syn-function: #4d63cc; /* 4.74:1 — sapphire */
+  --syn-type: #896912; /* 4.60:1 */
+  --syn-property: #c04333; /* 4.60:1 — coral */
+  --syn-operator: #275350;
+}
+
+/* Evening: the velvet inside the lid. The dark is a blue-green so deep it
+   reads as black until something sits on it — and against it the tint can
+   finally appear as itself, 1837 blue used at the strength it was mixed at. */
+[data-theme='dark'] {
+  --bg: #0f1f21;
+  --bg-app: #0a1719;
+  --bg-panel: #0d1c1e;
+  --bg-hover: rgba(190, 226, 223, 0.07);
+  --bg-active: rgba(190, 226, 223, 0.11);
+  --bg-code: #142a2d;
+  --bg-field: #122527;
+
+  --fg: #c5e3e0; /* 12.47:1 on --bg */
+  --fg-ui: #a8cbc8; /* 10.48:1 on --bg-app */
+  --fg-muted: #7fa4a1; /*  6.43:1 on --bg-panel */
+  --fg-faint: #5c7d7b; /*  3.89:1 on --bg-panel */
+  --heading: #81d8d0; /* 10.23:1 — 1837 blue, at last */
+
+  --accent: #5ec8c0; /* 8.48:1 */
+  --accent-hover: #81d8d0;
+  --accent-soft: rgba(94, 200, 192, 0.16);
+
+  --border: rgba(190, 226, 223, 0.13);
+  --selection: rgba(94, 200, 192, 0.2);
+  --caret: #5ec8c0;
+  --warning: #a58024;
+  --danger: #d65d49;
+  --success: #2f9668;
+  --quote-border: #24413f;
+  --search-match: rgba(255, 206, 108, 0.26);
+  --search-match-current: rgba(240, 168, 48, 0.48);
+  --scrollbar: rgba(190, 226, 223, 0.2);
+  --scrollbar-hover: rgba(190, 226, 223, 0.32);
+  --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.35);
+  --scrim: rgba(5, 15, 16, 0.58);
+
+  --syn-keyword: #4bb0e0; /* 4.62:1 — sea blue, lit */
+  --syn-string: #3d9f72; /* 4.61:1 — jade */
+  --syn-number: #c1832f; /* 4.60:1 — gold */
+  --syn-comment: #5f807e; /* 3.02:1 — silver */
+  --syn-function: #7f92ea; /* 4.62:1 — sapphire */
+  --syn-type: #a68128; /* 4.61:1 */
+  --syn-property: #e0705c; /* 4.62:1 — coral */
+  --syn-operator: #a8cbc8;
+}

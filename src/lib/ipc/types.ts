@@ -74,7 +74,6 @@ export interface TreeEntry {
   name: string;
   path: string;
   isDir: boolean;
-  hasChildren: boolean;
 }
 
 // ---- drafts ----

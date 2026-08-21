@@ -9,14 +9,24 @@ pub struct TreeEntry {
     pub name: String,
     pub path: String,
     pub is_dir: bool,
-    pub has_children: bool,
 }
 
 /// One directory level: sub-directories plus Markdown files, hidden entries
 /// filtered out, directories first then case-insensitive alphabetical.
+///
+/// One `read_dir` and nothing else. There used to be a second one per
+/// sub-directory — a probe that opened every child folder to decide whether
+/// its row deserved a disclosure arrow — and in a folder like Downloads, with
+/// a hundred and fifty sub-folders, that was a hundred and fifty directory
+/// opens on the path between double-clicking a file and seeing it. The arrow
+/// is drawn for every folder either way; nothing ever read the answer.
 #[tauri::command]
 pub async fn list_dir(path: String) -> AppResult<Vec<TreeEntry>> {
-    let dir = paths::canonicalize(Path::new(&path))?;
+    read_level(Path::new(&path))
+}
+
+fn read_level(path: &Path) -> AppResult<Vec<TreeEntry>> {
+    let dir = paths::canonicalize(path)?;
     let entries = std::fs::read_dir(&dir).map_err(|e| AppError::from_io(e, &dir))?;
 
     let mut out: Vec<TreeEntry> = Vec::new();
@@ -36,7 +46,6 @@ pub async fn list_dir(path: String) -> AppResult<Vec<TreeEntry>> {
                 continue;
             }
             out.push(TreeEntry {
-                has_children: dir_has_visible_children(&entry_path),
                 name,
                 path: entry_path.to_string_lossy().to_string(),
                 is_dir: true,
@@ -46,7 +55,6 @@ pub async fn list_dir(path: String) -> AppResult<Vec<TreeEntry>> {
                 name,
                 path: entry_path.to_string_lossy().to_string(),
                 is_dir: false,
-                has_children: false,
             });
         }
     }
@@ -77,30 +85,32 @@ fn is_ignored_dir(name: &str) -> bool {
     )
 }
 
-/// Cheap probe so the tree can show a disclosure arrow only when it opens
-/// to something: stop at the first visible child.
-fn dir_has_visible_children(dir: &Path) -> bool {
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return false;
-    };
-    for entry in entries.flatten() {
-        let name = entry.file_name().to_string_lossy().to_string();
-        if name.starts_with('.') {
-            continue;
-        }
-        match entry.file_type() {
-            Ok(t) if t.is_dir() => {
-                if !is_ignored_dir(&name) {
-                    return true;
-                }
-            }
-            Ok(_) => {
-                if paths::is_markdown(&entry.path()) {
-                    return true;
-                }
-            }
-            Err(_) => continue,
-        }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn lists_folders_first_then_markdown_alphabetically() {
+        let temp = std::env::temp_dir().join("verso-dir-test");
+        let _ = fs::remove_dir_all(&temp);
+        fs::create_dir_all(temp.join("Zebra")).unwrap();
+        fs::create_dir_all(temp.join("apple")).unwrap();
+        fs::create_dir_all(temp.join("node_modules")).unwrap();
+        fs::create_dir_all(temp.join(".git")).unwrap();
+        fs::write(temp.join("b.md"), "b").unwrap();
+        fs::write(temp.join("A.md"), "a").unwrap();
+        fs::write(temp.join("photo.png"), "x").unwrap();
+
+        let names: Vec<String> = read_level(&temp)
+            .unwrap()
+            .into_iter()
+            .map(|e| e.name)
+            .collect();
+
+        // Folders first, case-insensitively sorted; ignored and hidden ones
+        // gone; only Markdown among the files.
+        assert_eq!(names, vec!["apple", "Zebra", "A.md", "b.md"]);
+        let _ = fs::remove_dir_all(&temp);
     }
-    false
 }

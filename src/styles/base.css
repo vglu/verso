@@ -57,6 +57,32 @@ button {
     border-color var(--t-slow) var(--ease) !important;
 }
 
+/*
+ * Everything except the document itself.
+ *
+ * A long file is tens of thousands of nodes, and putting a transition on
+ * every one of them is the only style recalculation in this program that
+ * grows with the size of what is being read — paid at the exact moment the
+ * user is watching a colour change. The editor still crossfades as a surface;
+ * the spans inside it swap under a background that is already moving, which
+ * at 300ms nobody has ever seen.
+ */
+.theme-transition .cm-content,
+.theme-transition .cm-content * {
+  transition: none !important;
+}
+
+/*
+ * A drag on a six-pixel divider owns the pointer until it is let go: the
+ * cursor stops flickering between arrow and resize as it crosses the edge,
+ * and nothing behind it starts selecting text.
+ */
+html.resizing,
+html.resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
 /* — Scrollbars: thin and quiet — */
 * {
   scrollbar-width: thin;
@@ -175,7 +201,7 @@ button {
 }
 
 .icon-btn:active {
-  transform: scale(0.92);
+  transform: scale(var(--press-scale-icon));
 }
 
 /* — Fade-in used on first paint of content — */
@@ -217,4 +243,103 @@ button {
 }
 .stagger > *:nth-child(5) {
   animation-delay: 160ms;
+}
+
+/*
+ * — Tooltips (see ui/tooltip.ts) —
+ *
+ * One element, moved to whichever trigger asked for it. Small, quiet, and
+ * quick: 120ms is short enough that the tooltip is simply *there* rather than
+ * arriving, which is the difference between an answer and an animation.
+ */
+.tooltip {
+  position: fixed;
+  z-index: 200;
+  max-width: 320px;
+  padding: 4px 8px;
+  display: flex;
+  gap: var(--sp-2);
+  align-items: baseline;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  box-shadow: var(--shadow-panel);
+  color: var(--fg-ui);
+  font-size: 11.5px;
+  line-height: 1.45;
+  /* A file path is the longest thing that ever lands in here; it wraps rather
+     than being cut off, because half a path answers nothing. */
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  opacity: 0;
+  /* Scaled from the trigger, not from the middle of a tooltip that had to be
+     nudged away from the window's edge. */
+  transform: scale(0.96);
+  transform-origin: var(--tip-origin-x, 50%) top;
+  transition:
+    opacity var(--t-fast) var(--ease-out),
+    transform var(--t-fast) var(--ease-out);
+}
+
+.tooltip[data-placement='top'] {
+  transform-origin: var(--tip-origin-x, 50%) bottom;
+}
+
+.tooltip.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* The second tooltip in a row does not animate; it is already the answer to a
+   question the reader is in the middle of asking. */
+.tooltip.is-instant {
+  transition: none;
+}
+
+.tip-key {
+  flex-shrink: 0;
+  color: var(--fg-faint);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.tip-key:empty {
+  display: none;
+}
+
+/*
+ * — Strips that scroll sideways (see ui/scrollFade.ts) —
+ * The scrollbar is hidden, so the edge fade is the only thing left that can
+ * say there is more this way.
+ */
+.strip-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: var(--strip-mask, none);
+  mask-image: var(--strip-mask, none);
+}
+
+.strip-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* A mask reads only the alpha channel, so `black` here means "opaque" and
+   never reaches the screen as a colour. */
+.strip-scroll[data-overflow='end'] {
+  --strip-mask: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+}
+
+.strip-scroll[data-overflow='start'] {
+  --strip-mask: linear-gradient(to right, transparent 0, black 28px);
+}
+
+.strip-scroll[data-overflow='both'] {
+  --strip-mask: linear-gradient(
+    to right,
+    transparent 0,
+    black 28px,
+    black calc(100% - 28px),
+    transparent 100%
+  );
 }

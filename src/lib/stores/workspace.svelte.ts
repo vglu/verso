@@ -2,6 +2,7 @@
  * Sidebar state: the folder tree and the document outline.
  */
 import { listDir, resolveTreeRoot } from '../ipc/commands';
+import { afterPaint } from '../ui/afterPaint';
 import type { TreeEntry } from '../ipc/types';
 import type { OutlineItem } from '../editor/outline';
 
@@ -47,6 +48,36 @@ class WorkspaceStore {
 
   setOutlineWidth(value: number): void {
     this.outlineWidth = Math.max(MIN_OUTLINE_WIDTH, Math.min(MAX_OUTLINE_WIDTH, Math.round(value)));
+  }
+
+  /**
+   * True from the moment a document is opened until its folder is on screen.
+   *
+   * It guards against two files starting two loads, and it is also what the
+   * sidebar reads: with the tree arriving a beat later, the panel must not
+   * spend that beat saying there is no folder open. Empty and quiet, then the
+   * tree — never a sentence that turns out to be untrue.
+   */
+  rootPending = $state(false);
+
+  /**
+   * The folder is not what the reader is waiting for.
+   *
+   * Opening a document used to wait for the folder beside it: resolve the
+   * root, list it, build every row — all before the file that was
+   * double-clicked reached the screen. They answer two different questions,
+   * "show me this" and "what else is here", and only the first one was asked
+   * by the double-click. So the document is painted, and the tree arrives
+   * behind it.
+   */
+  scheduleRootFromFile(filePath: string): void {
+    if (this.treeRoot || this.rootPending) return;
+    this.rootPending = true;
+    afterPaint(() => {
+      void this.setRootFromFile(filePath).finally(() => {
+        this.rootPending = false;
+      });
+    });
   }
 
   async setRootFromFile(filePath: string): Promise<void> {

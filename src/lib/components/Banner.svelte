@@ -119,7 +119,7 @@
   }
 
   .dismiss:active {
-    transform: scale(0.9);
+    transform: scale(var(--press-scale-icon));
   }
 
   @media (hover: hover) and (pointer: fine) {

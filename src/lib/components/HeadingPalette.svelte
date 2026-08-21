@@ -2,7 +2,6 @@
   import { workspace } from '../stores/workspace.svelte';
   import { t } from '../stores/i18n';
   import { filterHeadings, splitByRanges } from '../editor/headingMatch';
-  import { paletteIn, paletteOut, scrimIn, scrimOut } from '../ui/motion';
 
   interface Props {
     onGo: (pos: number) => void;
@@ -69,9 +68,17 @@
   }
 </script>
 
-<!-- Click-outside dismisses; Escape is handled on the field, which has focus. -->
+<!--
+  Click-outside dismisses; Escape is handled on the field, which has focus.
+
+  Nothing here animates, and that is the design. This palette is opened with a
+  keystroke and closed with a keystroke, often several times while chasing a
+  heading through a long file — the same class of action as a keyboard
+  shortcut, which is repeated far too often to be worth watching. An entrance
+  of even a hundred milliseconds turns "go there" into "wait, then go there".
+-->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
-<div class="scrim" role="presentation" onclick={onClose} in:scrimIn out:scrimOut>
+<div class="scrim" role="presentation" onclick={onClose}>
   <div
     class="palette"
     role="dialog"
@@ -79,8 +86,6 @@
     aria-label={t('palette.title')}
     tabindex="-1"
     onclick={(e) => e.stopPropagation()}
-    in:paletteIn
-    out:paletteOut
   >
     <input
       class="field"

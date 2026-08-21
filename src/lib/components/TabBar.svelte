@@ -1,7 +1,11 @@
 <script lang="ts">
+  import { flip } from 'svelte/animate';
   import { tabs } from '../stores/tabs.svelte';
   import { t } from '../stores/i18n';
   import { revealInOs } from '../ipc/commands';
+  import { flipMotion } from '../ui/motion';
+  import { scrollFade } from '../ui/scrollFade';
+  import { tip } from '../ui/tooltip';
   import ContextMenu, { type ContextItem } from './ContextMenu.svelte';
 
   interface Props {
@@ -13,6 +17,22 @@
   const { onCloseTab, onCloseTabs }: Props = $props();
 
   let context = $state<{ x: number; y: number; items: ContextItem[] } | null>(null);
+  let strip = $state<HTMLElement | null>(null);
+
+  /**
+   * Keep the open document visible in the strip.
+   *
+   * With a dozen files open the tab that was just activated — or the one that
+   * was just opened, which lands at the end — can be past the right edge. The
+   * document changes and the strip shows no sign of it, which reads as the
+   * click having missed.
+   */
+  $effect(() => {
+    void tabs.activeIndex;
+    void tabs.tabs.length;
+    const active = strip?.querySelector<HTMLElement>('[aria-selected="true"]');
+    active?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  });
 
   /**
    * The menu a tab strip is expected to have.
@@ -111,47 +131,58 @@
 </script>
 
 {#if tabs.hasTabs}
-  <div class="tabbar" role="tablist" onwheel={onWheel}>
-    {#each tabs.tabs as tab, index (tab.id)}
-      <div
-        class="tab"
-        class:active={index === tabs.activeIndex}
-        role="tab"
-        tabindex={index === tabs.activeIndex ? 0 : -1}
-        aria-selected={index === tabs.activeIndex}
-        title={tab.path ?? tab.fileName}
-        onclick={() => tabs.activate(index)}
-        onauxclick={(e) => onAuxClick(e, index)}
-        oncontextmenu={(e) => openTabMenu(e, index)}
-        onkeydown={(e) => onTabKeydown(e, index)}
-      >
-        <span class="name">{tab.fileName}</span>
+  <!-- The frame carries the surface and the hairline; the strip inside it
+       scrolls and fades at the edges, so the chrome never dissolves with it. -->
+  <div class="tabbar-frame">
+    <div
+      class="tabbar strip-scroll"
+      role="tablist"
+      onwheel={onWheel}
+      bind:this={strip}
+      use:scrollFade
+    >
+      {#each tabs.tabs as tab, index (tab.id)}
+        <div
+          class="tab"
+          class:active={index === tabs.activeIndex}
+          role="tab"
+          tabindex={index === tabs.activeIndex ? 0 : -1}
+          aria-selected={index === tabs.activeIndex}
+          animate:flip={flipMotion()}
+          use:tip={tab.path ?? tab.fileName}
+          onclick={() => tabs.activate(index)}
+          onauxclick={(e) => onAuxClick(e, index)}
+          oncontextmenu={(e) => openTabMenu(e, index)}
+          onkeydown={(e) => onTabKeydown(e, index)}
+        >
+          <span class="name">{tab.fileName}</span>
 
-        <!-- The unsaved dot and the close button share one cell: they
+          <!-- The unsaved dot and the close button share one cell: they
              cross-fade instead of swapping, so nothing shifts on hover. -->
-        <span class="affordance" class:dirty={tab.dirty}>
-          <span class="dot" aria-label="Unsaved changes"></span>
+          <span class="affordance" class:dirty={tab.dirty}>
+            <span class="dot" aria-label="Unsaved changes"></span>
 
-          <button
-            class="close"
-            aria-label="Close tab"
-            onclick={(e) => {
-              e.stopPropagation();
-              onCloseTab(index);
-            }}
-          >
-            <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
-              <path
-                d="M3 3l6 6M9 3l-6 6"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-              />
-            </svg>
-          </button>
-        </span>
-      </div>
-    {/each}
+            <button
+              class="close"
+              aria-label="Close tab"
+              onclick={(e) => {
+                e.stopPropagation();
+                onCloseTab(index);
+              }}
+            >
+              <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                <path
+                  d="M3 3l6 6M9 3l-6 6"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+          </span>
+        </div>
+      {/each}
+    </div>
   </div>
 {/if}
 
@@ -160,21 +191,18 @@
 {/if}
 
 <style>
+  .tabbar-frame {
+    flex-shrink: 0;
+    background: var(--bg-app);
+    border-bottom: 1px solid var(--border);
+  }
+
   .tabbar {
     display: flex;
     align-items: stretch;
     height: var(--tabbar-height);
-    flex-shrink: 0;
-    background: var(--bg-app);
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
     overflow-y: hidden;
-    scrollbar-width: none;
     user-select: none;
-  }
-
-  .tabbar::-webkit-scrollbar {
-    display: none;
   }
 
   .tab {
@@ -261,7 +289,7 @@
   }
 
   .close:active {
-    transform: scale(0.88);
+    transform: scale(var(--press-scale-icon));
   }
 
   @media (hover: hover) and (pointer: fine) {

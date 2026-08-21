@@ -1,5 +1,6 @@
 <script lang="ts">
   import FileTreeNode from './FileTreeNode.svelte';
+  import { tip } from '../ui/tooltip';
   import BrandMark from './BrandMark.svelte';
   import { workspace } from '../stores/workspace.svelte';
   import { tabs } from '../stores/tabs.svelte';
@@ -91,14 +92,22 @@
   }
 
   function startResize(event: PointerEvent): void {
+    // A second finger arriving mid-drag would otherwise take over and teleport
+    // the divider to wherever it landed.
+    if (resizing) return;
+
     resizing = true;
     const startX = event.clientX;
     const startWidth = workspace.width;
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    // The cursor stays a resize cursor for the length of the drag, and nothing
+    // behind the pointer starts selecting text.
+    document.documentElement.classList.add('resizing');
 
     const move = (e: PointerEvent): void => workspace.setWidth(startWidth + (e.clientX - startX));
     const stop = (): void => {
       resizing = false;
+      document.documentElement.classList.remove('resizing');
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', stop);
     };
@@ -119,7 +128,7 @@
     <button
       class="head-action"
       onclick={() => onNewFile(workspace.treeRoot ?? '')}
-      title={t('sidebar.newFile')}
+      use:tip={t('sidebar.newFile')}
       aria-label={t('sidebar.newFile')}
     >
       <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -135,7 +144,7 @@
 
   <div class="body">
     {#if workspace.treeRoot}
-      <div class="root-name" title={workspace.treeRoot}>{baseName(workspace.treeRoot)}</div>
+      <div class="root-name" use:tip={workspace.treeRoot}>{baseName(workspace.treeRoot)}</div>
       {#if rootEntries.length === 0}
         <div class="hint">{t('sidebar.emptyTree')}</div>
       {:else}
@@ -159,12 +168,12 @@
           {/each}
         </div>
       {/if}
-    {:else}
+    {:else if !workspace.rootPending}
       <div class="hint">{t('empty.hint')}</div>
     {/if}
   </div>
 
-  <button class="footer" onclick={onAbout} title={signature} aria-label={t('about.open')}>
+  <button class="footer" onclick={onAbout} use:tip={signature} aria-label={t('about.open')}>
     <span class="footer-mark"><BrandMark size={14} /></span>
 
     {#if !condensed}
@@ -246,7 +255,7 @@
   }
 
   .head-action:active {
-    transform: scale(0.94);
+    transform: scale(var(--press-scale-icon));
   }
 
   .head-action:focus-visible {
@@ -349,6 +358,7 @@
     height: 100%;
     cursor: col-resize;
     z-index: 5;
+    transition: background-color var(--t-fast) var(--ease);
   }
 
   .resizer.active {

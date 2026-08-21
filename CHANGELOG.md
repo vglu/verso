@@ -4,6 +4,107 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Two more themes, both blue-green and deliberately opposite.**
+  - `docs/themes/tiffany.css` — the little blue box. 1837 blue is a tint and
+    cannot be made into type, so it does what the box does: cool white
+    surfaces, silver hairlines, the colour itself saved for the accent and for
+    the headings in the dark theme, where a tint can finally be itself. One
+    coral ribbon is the only warm thing on the page.
+  - `docs/themes/mint.css` — the herb rather than the sweet, built as the
+    opposite temperature: the hue pulled 20° toward green and every surface
+    given a trace of yellow, so the white reads as cream instead of ice. Leaf
+    green carries the strings in code, and a raspberry complement keeps all
+    that green from turning institutional.
+
+  Both are measured, not eyeballed: `npm run check:themes` clears all
+  thirty-six pairs — eighteen in the light block, eighteen in the dark — and
+  the ratio of every colour is written next to it in the file.
+
+- **Tooltips of our own.** The native `title` attribute was the last place the
+  operating system showed through: it arrived about a second late, in the
+  system's grey, and could not tell you that `Ctrl+B` is a key rather than a
+  word. All twenty-two of them are now one shared element, themed, with the
+  shortcut set as a key — and with the timing that makes a toolbar feel fast:
+  the first waits half a second, every one after it is instant and does not
+  animate at all, until the pointer has been away long enough to have stopped
+  asking.
+- **The mode switch is one pill that slides** between Preview and Source
+  rather than two that light up in turn — the two halves are one setting with
+  two positions, and something that travels between them says so.
+- **The tab strip settles instead of jumping.** Closing a tab in the middle
+  used to teleport the ones after it; they now move to where they belong. The
+  open document is also kept in view, which with a dozen tabs it was not.
+- **Strips that scroll say so.** The toolbar and the tab strip hide their
+  scrollbars, so in a narrow window buttons simply stopped at a hard edge with
+  nothing to suggest there were more. Both now fade at whichever edge still has
+  content past it.
+- **The tick in a checkbox grows into place** instead of being stamped. The
+  fill and the border were already animating; the mark — the one part the eye
+  is on — was the only thing that arrived finished.
+
+### Performance
+
+- **A document in a crowded folder opens two to six times faster.** Opening a
+  file used to wait for the folder beside it: resolve the root, list it, build
+  every row — all before the thing that was double-clicked reached the screen.
+  They answer two different questions, and only one of them was asked. The
+  document is painted first now and the tree arrives behind it.
+
+  Underneath it, the listing itself stopped opening every sub-folder. Each
+  directory row carried a `hasChildren` flag, computed by reading the whole
+  child directory to find out whether the row deserved a disclosure arrow —
+  a hundred and forty-seven extra directory reads in a folder like Downloads,
+  for a flag no part of the interface has ever read. The arrow is drawn for
+  every folder either way.
+
+  Measured on `D:\Downloads` — 1,556 entries, 147 sub-folders — from the
+  first line of application script to the document on screen:
+
+  | | before | after |
+  | --- | ---: | ---: |
+  | document painted | 210–669 ms | 95–114 ms |
+  | tree finished | 195–655 ms | 116–134 ms |
+
+  The spread matters as much as the median: the slow runs were the ones where
+  the folder was not in the filesystem cache, which is exactly the run that
+  happens after switching on the computer.
+
+### Changed
+
+- **Nothing animates when the go-to-heading palette opens.** It is opened with
+  a keystroke and closed with a keystroke, often several times while chasing a
+  heading through a long file, and an entrance of even a hundred milliseconds
+  turns "go there" into "wait, then go there".
+- **Context menus grow out of the pointer**, from the corner the click
+  happened in — including when the menu had to flip up or left to stay on
+  screen, which is exactly when scaling from the wrong corner looks like the
+  menu came from somewhere else.
+- **Press depth is a token now** (`--press-scale`, `--press-scale-icon`,
+  `--press-scale-row`). Seven buttons had it written in as a number and so
+  went on shrinking under `prefers-reduced-motion`, which is the one setting
+  that asks them not to.
+- **The transitions written in JavaScript use the same curve and the same
+  durations as the ones written in CSS.** They had drifted onto different
+  easing, so a banner and the button beside it animated in two dialects.
+- **The theme crossfade no longer touches the document.** It put a transition
+  on every element on the page, which in a long file is tens of thousands of
+  nodes — the only style recalculation in the program that grew with the size
+  of what was being read.
+
+### Fixed
+
+- The zoom indicator, breadcrumbs, outline rows, file rows and context-menu
+  items answer a press; they were the only clickable things that did not.
+- A second finger landing on a panel divider mid-drag no longer takes over and
+  teleports it. The cursor also stays a resize cursor for the length of the
+  drag, and nothing behind it starts selecting text.
+- The search panel's buttons keep their hover state on touch no longer — the
+  one `:hover` in the program that was not behind the `hover: hover` guard.
+
 ## [0.4.2] — 2026-08-20
 
 ### Fixed

@@ -4,6 +4,7 @@
   import { t } from '../stores/i18n';
   import { DEFAULT_ZOOM, zoomLabel } from '../ui/zoom';
   import { languageLabel } from '../editor/language';
+  import { tip } from '../ui/tooltip';
 
   interface Props {
     /** Bumped by the parent whenever the document or cursor changes. */
@@ -43,7 +44,7 @@
 
 {#if info}
   <div class="strip">
-    <span class="path" title={info.path}>{info.path}</span>
+    <span class="path" use:tip={info.path}>{info.path}</span>
 
     <span class="spacer"></span>
 
@@ -54,7 +55,7 @@
       <span class="badge">{t('status.readonly')}</span>
     {/if}
     {#if info.plainBlocks}
-      <span class="badge" title={t('status.plainBlocksHint')}>{t('status.plainBlocks')}</span>
+      <span class="badge" use:tip={t('status.plainBlocksHint')}>{t('status.plainBlocks')}</span>
     {/if}
     <span>{info.words} {t('status.words')}</span>
     <span>{info.chars} {t('status.chars')}</span>
@@ -63,13 +64,13 @@
          to be told they have not zoomed, and one who has needs to know why
          everything is suddenly large. Click it to go back. -->
     {#if settings.value.zoom !== DEFAULT_ZOOM}
-      <button class="zoom" onclick={() => settings.stepZoom(null)} title={t('status.zoomReset')}>
+      <button class="zoom" onclick={() => settings.stepZoom(null)} use:tip={t('status.zoomReset')}>
         {zoomLabel(settings.value.zoom)}
       </button>
     {/if}
     <span>{info.language}</span>
     <span>{info.encoding}</span>
-    <span title={info.mixedEol ? t('status.mixedEolHint') : undefined}>
+    <span use:tip={info.mixedEol ? t('status.mixedEolHint') : undefined}>
       {info.eol}{info.mixedEol ? ` ${t('status.mixed')}` : ''}
     </span>
   </div>
@@ -81,7 +82,13 @@
     font: inherit;
     padding: 0 4px;
     border-radius: var(--radius-s);
-    transition: background-color var(--t-fast) var(--ease);
+    transition:
+      background-color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
+  }
+
+  .zoom:active {
+    transform: scale(var(--press-scale));
   }
 
   @media (hover: hover) and (pointer: fine) {

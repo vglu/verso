@@ -161,8 +161,12 @@ const base = EditorView.theme({
     transition:
       'background-color var(--t-fast) var(--ease), transform var(--t-press) var(--ease-out)'
   },
-  '.cm-panel.cm-search button:hover': {
-    backgroundColor: 'var(--bg-hover)'
+  // Touch fires hover on tap and leaves it stuck, the same way it does
+  // everywhere else in the chrome.
+  '@media (hover: hover) and (pointer: fine)': {
+    '.cm-panel.cm-search button:hover': {
+      backgroundColor: 'var(--bg-hover)'
+    }
   },
   '.cm-panel.cm-search button:active': {
     transform: 'scale(var(--press-scale))'

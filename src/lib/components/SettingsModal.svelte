@@ -8,6 +8,7 @@
   import { plugins } from '../plugins/registry.svelte';
   import { pluginsDir } from '../ipc/commands';
   import { revealInOs } from '../ipc/commands';
+  import { tip } from '../ui/tooltip';
 
   async function openPluginsFolder(): Promise<void> {
     try {
@@ -75,7 +76,7 @@
       <span class="label">{t('settings.customTheme')}</span>
       <div class="theme-file">
         {#if settings.value.themeFile}
-          <span class="theme-name" title={settings.value.themeFile}>
+          <span class="theme-name" use:tip={settings.value.themeFile}>
             {themeName(settings.value.themeFile)}
           </span>
           <button class="btn" onclick={chooseTheme}>{t('settings.themeChange')}</button>

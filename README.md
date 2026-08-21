@@ -49,9 +49,10 @@ edit in place, and never damages your file.
   pictures, diagrams and formulas — and the print dialog, which is where
   "Save as PDF" lives.
 - **Light and dark themes** built from CSS tokens — [write your own](docs/themes.md)
-  and Verso repaints as you save the file. Three ship in `docs/themes/`,
-  including a Minecraft palette and a soft rose one; every colour in them is
-  measured against WCAG rather than eyeballed.
+  and Verso repaints as you save the file. Five ship in `docs/themes/`,
+  including a Minecraft palette, a soft rose one, the little blue box and a
+  herb garden; every colour in them is measured against WCAG rather than
+  eyeballed.
 - **Plugins** that add formatters, [in about thirty lines](docs/plugins.md).
   They run in a worker with no DOM, no file system and no network, and none of
   their code runs until you switch them on.

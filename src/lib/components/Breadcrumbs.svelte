@@ -1,6 +1,7 @@
 <script lang="ts">
   import { workspace } from '../stores/workspace.svelte';
   import type { OutlineItem } from '../editor/outline';
+  import { tip } from '../ui/tooltip';
 
   interface Props {
     onRevealHeading: (pos: number) => void;
@@ -47,7 +48,7 @@
   <div class="crumbs" aria-label="Location">
     {#each trail as item, i (item.from)}
       {#if i > 0}<span class="sep" aria-hidden="true">›</span>{/if}
-      <button class="crumb" onclick={() => onRevealHeading(item.from)} title={item.text}>
+      <button class="crumb" onclick={() => onRevealHeading(item.from)} use:tip={item.text}>
         {item.text}
       </button>
     {/each}
@@ -82,7 +83,12 @@
     max-width: 34ch;
     transition:
       background-color var(--t-fast) var(--ease),
-      color var(--t-fast) var(--ease);
+      color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
+  }
+
+  .crumb:active {
+    transform: scale(var(--press-scale));
   }
 
   /* The section you are actually in reads a shade stronger than its parents. */

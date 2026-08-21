@@ -19,7 +19,7 @@ built-in theme and remembered between sessions, and Verso watches it: save
 the file in your editor and the window repaints, which is the difference
 between writing a theme and guessing at one.
 
-Three complete themes ship in `docs/themes/`, and any of them is a reasonable
+Five complete themes ship in `docs/themes/`, and any of them is a reasonable
 place to start:
 
 | Theme | |
@@ -27,6 +27,8 @@ place to start:
 | [`paper.css`](themes/paper.css) | Warm light paper, burnt-orange accent |
 | [`overworld.css`](themes/overworld.css) | Minecraft's palette: sandstone by day, deepslate underground, diamond as the accent |
 | [`blush.css`](themes/blush.css) | Soft rose with a sage complement; wine-dark in the evening |
+| [`tiffany.css`](themes/tiffany.css) | The little blue box: cool white and silver, one coral ribbon, velvet after dark |
+| [`mint.css`](themes/mint.css) | The herb, not the sweet — warm cream and leaf green, with a berry complement; deep pine in the evening |
 
 Each carries its colour reasoning in its own comments — which hues, why those,
 and the measured contrast of every pair.
@@ -34,6 +36,14 @@ and the measured contrast of every pair.
 ![Overworld, underground](themes/overworld.png)
 
 ![Blush, by day](themes/blush.png)
+
+![Tiffany, by day](themes/tiffany.png)
+
+![Tiffany, after dark](themes/tiffany-dark.png)
+
+![Mint, by day](themes/mint.png)
+
+![Mint, after dark](themes/mint-dark.png)
 
 ## Rules
 
@@ -115,9 +125,16 @@ and the measured contrast of every pair.
 
 ### Geometry and motion
 
-`--radius-s|m|l`, `--sp-1` … `--sp-6`, `--ease`, `--t-fast|med|slow`.
-Setting the duration tokens to `0ms` disables animation; the app already does
-this automatically under `prefers-reduced-motion`.
+`--radius-s|m|l`, `--sp-1` … `--sp-6`, `--ease`, `--ease-out`, `--ease-in-out`,
+`--t-fast|press|med|exit|slow`.
+
+`--press-scale`, `--press-scale-icon` and `--press-scale-row` are how far a
+button, an icon and a full-width row shrink while held — a small target needs a
+deeper scale than a wide one to read as the same gesture.
+
+Setting the duration tokens to `0ms` disables animation and setting the press
+scales to `1` disables the press; the app already does both automatically under
+`prefers-reduced-motion`.
 
 ### Code syntax
 

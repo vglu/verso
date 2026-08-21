@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../stores/i18n';
+  import { tip } from '../ui/tooltip';
 
   interface Props {
     recent?: string[];
@@ -41,7 +42,7 @@
     <div class="recent">
       <div class="recent-title">{t('empty.recent')}</div>
       {#each recent.slice(0, 5) as path (path)}
-        <button class="recent-item" onclick={() => onOpenRecent?.(path)} title={path}>
+        <button class="recent-item" onclick={() => onOpenRecent?.(path)} use:tip={path}>
           <span class="recent-name">{baseName(path)}</span>
           <span class="recent-path">{path}</span>
         </button>
@@ -121,7 +122,7 @@
   }
 
   .recent-item:active {
-    transform: scale(0.99);
+    transform: scale(var(--press-scale-row));
   }
 
   @media (hover: hover) and (pointer: fine) {

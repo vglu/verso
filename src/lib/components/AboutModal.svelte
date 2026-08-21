@@ -13,6 +13,7 @@
     copyrightLine,
     loadVersion
   } from '../ui/product';
+  import { tip } from '../ui/tooltip';
 
   interface Props {
     onClose: () => void;
@@ -54,7 +55,7 @@
         <div class="product">{APP_NAME}</div>
         <div class="subtitle">{APP_SUBTITLE}</div>
       </div>
-      <span class="version" title={t('about.versionHint')}>{version}</span>
+      <span class="version" use:tip={t('about.versionHint')}>{version}</span>
     </div>
 
     <p class="tagline">{t('about.tagline')}</p>
@@ -201,7 +202,7 @@
   }
 
   .row:active {
-    transform: scale(0.99);
+    transform: scale(var(--press-scale-row));
   }
 
   .row svg {

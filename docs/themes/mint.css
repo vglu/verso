@@ -1,0 +1,124 @@
+/*
+ * Mint — the leaf, not the sweet.
+ *
+ * Mint and Tiffany sit close enough on the wheel to be mistaken for each other,
+ * and a theme that is merely "the other blue-green one" has no reason to exist.
+ * So this one is built to be the opposite temperature. Tiffany is a cool white
+ * box with silver hardware; mint is a warm one — paper with a green wash on it,
+ * the way a herb looks on a kitchen table rather than in a jeweller's window.
+ * Two moves do it: the hue is pulled ~20° toward green, and every surface keeps
+ * a trace of yellow, so the white reads as cream instead of ice.
+ *
+ *   Spearmint  156°  the voice. Nearly desaturated in the surfaces, at full
+ *                    strength on the accent, and lit from within in the dark.
+ *   Herb       150°  the hue driven down into type: a green-black that stays
+ *                    soft at reading size where a true black would go hard.
+ *   Leaf        95°  the analogous neighbour, and the reason this reads as a
+ *                    plant. It carries strings in code — the longest-running
+ *                    colour on any screen of source, so it had better be one
+ *                    you like living with.
+ *   Raspberry  345°  the complement, used sparingly and on purpose: errors, and
+ *                    keywords. Green alone drifts toward institutional; one
+ *                    berry note is what turns it back into a garden.
+ *   Honey       40°  warning — the warm mid-point between leaf and raspberry,
+ *                    which is why it never looks like an intruder here.
+ *
+ * The palette is warm but the arithmetic is not negotiable: every colour was
+ * solved down against the surface it sits on until it cleared WCAG, and the
+ * measured ratios are in the comments.
+ *   node scripts/check-theme-contrast.mjs docs/themes/mint.css
+ */
+
+:root {
+  /* — Surfaces: mint at 0.08 saturation over a warm base. Cream, not ice — */
+  --bg: #fcfdf9;
+  --bg-app: #ebf3e8;
+  --bg-panel: #e4eee1;
+  --bg-hover: rgba(30, 58, 42, 0.055);
+  --bg-active: rgba(30, 58, 42, 0.09);
+  --bg-code: #ecf4e9;
+  --bg-field: #ffffff;
+
+  /* — Text: herb. Green-black, soft at reading size — */
+  --fg: #1e3a2a; /* 12.14:1 on --bg */
+  --fg-ui: #32503e; /*  7.87:1 on --bg-app */
+  --fg-muted: #536e5c; /*  4.69:1 on --bg-panel */
+  --fg-faint: #758b7c; /*  3.07:1 on --bg-panel */
+  --heading: #14573c; /*  8.36:1 — deep spearmint */
+
+  /* — Accent: spearmint, at the strength type can carry — */
+  --accent: #0e7759; /* 4.63:1 on --bg-panel, 5.41:1 on --bg */
+  --accent-hover: #0c6b50;
+  --accent-soft: rgba(14, 119, 89, 0.12);
+
+  /* — Utility: one berry note against all that green — */
+  --border: rgba(30, 58, 42, 0.13);
+  --selection: rgba(14, 119, 89, 0.16);
+  --caret: #0e7759;
+  --warning: #856313; /* honey,     4.62:1 */
+  --danger: #b93a55; /* raspberry, 4.64:1 */
+  --success: #22774e; /* leaf-mint, 4.62:1 */
+  --quote-border: #c6dcc4;
+  --search-match: rgba(255, 214, 102, 0.42);
+  --search-match-current: rgba(244, 176, 46, 0.62);
+  --scrollbar: rgba(30, 58, 42, 0.2);
+  --scrollbar-hover: rgba(30, 58, 42, 0.32);
+  --shadow-panel: 0 12px 32px rgba(30, 58, 42, 0.13), 0 2px 8px rgba(30, 58, 42, 0.07);
+  --scrim: rgba(16, 34, 24, 0.42);
+
+  /* — Code: the garden. Leaf for strings, berry for keywords — */
+  --syn-keyword: #a63a72; /* 5.38:1 — raspberry */
+  --syn-string: #4c7918; /* 4.62:1 — leaf */
+  --syn-number: #95621f; /* 4.62:1 — honey */
+  --syn-comment: #7b907c; /* 3.06:1 — sage */
+  --syn-function: #2f6fa8; /* 4.72:1 — water */
+  --syn-type: #8a6714; /* 4.64:1 */
+  --syn-property: #0e7759; /* 4.65:1 — spearmint */
+  --syn-operator: #32503e;
+}
+
+/* Evening: the garden after dark. Deep pine rather than black — the surfaces
+   keep the hue, so the dark belongs to the same plant — and against it the
+   mint is finally lit from within, the one colour with any light left in it. */
+[data-theme='dark'] {
+  --bg: #141f18;
+  --bg-app: #0f1913;
+  --bg-panel: #121c16;
+  --bg-hover: rgba(198, 223, 205, 0.07);
+  --bg-active: rgba(198, 223, 205, 0.11);
+  --bg-code: #1a291f;
+  --bg-field: #17231a;
+
+  --fg: #cbe0d1; /* 12.21:1 on --bg */
+  --fg-ui: #adc8b5; /* 10.02:1 on --bg-app */
+  --fg-muted: #85a28e; /*  6.28:1 on --bg-panel */
+  --fg-faint: #607c69; /*  3.81:1 on --bg-panel */
+  --heading: #8ddcae; /* 10.48:1 — mint, lit */
+
+  --accent: #5ec894; /* 8.20:1 */
+  --accent-hover: #8ddcae;
+  --accent-soft: rgba(94, 200, 148, 0.16);
+
+  --border: rgba(198, 223, 205, 0.13);
+  --selection: rgba(94, 200, 148, 0.2);
+  --caret: #5ec894;
+  --warning: #a58024;
+  --danger: #d35c74;
+  --success: #34996a;
+  --quote-border: #274134;
+  --search-match: rgba(255, 214, 102, 0.26);
+  --search-match-current: rgba(244, 176, 46, 0.48);
+  --scrollbar: rgba(198, 223, 205, 0.2);
+  --scrollbar-hover: rgba(198, 223, 205, 0.32);
+  --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.35);
+  --scrim: rgba(8, 16, 11, 0.58);
+
+  --syn-keyword: #d36b9e; /* 4.62:1 — raspberry */
+  --syn-string: #8ab53f; /* 4.60:1 — leaf */
+  --syn-number: #c1832f; /* 4.60:1 — honey */
+  --syn-comment: #64806b; /* 3.05:1 — sage */
+  --syn-function: #5b9ed6; /* 4.60:1 — water */
+  --syn-type: #a68128; /* 4.60:1 */
+  --syn-property: #4dbb8b; /* 4.60:1 — spearmint */
+  --syn-operator: #adc8b5;
+}

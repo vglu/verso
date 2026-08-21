@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { paletteIn, paletteOut } from '../ui/motion';
+  import { menuIn, menuOut } from '../ui/motion';
 
   export interface ContextItem {
     label: string;
@@ -30,7 +30,13 @@
     const height = items.length * 30 + 12;
     const left = Math.min(x, Math.max(8, window.innerWidth - width - 8));
     const top = Math.min(y, Math.max(8, window.innerHeight - height - 8));
-    return `left: ${left}px; top: ${top}px;`;
+    // Grow out of the corner the click happened in. When the menu had to move
+    // to stay on screen the click is no longer at its top left, and scaling
+    // from the wrong corner is the one thing that makes a menu look like it
+    // came from somewhere else.
+    const originX = left < x ? 'right' : 'left';
+    const originY = top < y ? 'bottom' : 'top';
+    return `left: ${left}px; top: ${top}px; transform-origin: ${originX} ${originY};`;
   });
 
   function choose(index: number): void {
@@ -88,8 +94,8 @@
     use:autofocus
     onkeydown={onKeydown}
     onclick={(e) => e.stopPropagation()}
-    in:paletteIn
-    out:paletteOut
+    in:menuIn
+    out:menuOut
   >
     {#each items as item, index (item.label)}
       {#if item.divider}<div class="divider"></div>{/if}
@@ -134,7 +140,13 @@
     color: var(--fg-ui);
     border-radius: var(--radius-s);
     white-space: nowrap;
-    transition: background-color var(--t-fast) var(--ease);
+    transition:
+      background-color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
+  }
+
+  .item:active {
+    transform: scale(var(--press-scale-row));
   }
 
   .item.selected {

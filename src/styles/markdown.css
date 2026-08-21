@@ -130,18 +130,27 @@ input.md-task {
   margin: 0 0.1em -0.12em 0;
   border: 1.5px solid var(--fg-faint);
   border-radius: var(--radius-s);
-  background: transparent;
+  background-color: transparent;
+  /* The tick is always here, at no size. Checking the box grows it into place
+     instead of stamping it: the fill and the border were already animating,
+     and the mark — the one part the eye is actually on — was the only thing
+     that arrived finished. */
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' d='M4 8.5l2.5 2.5L12 5.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 0 0;
   cursor: pointer;
   vertical-align: baseline;
   transition:
     background-color var(--t-fast) var(--ease),
+    background-size var(--t-press) var(--ease-out),
     border-color var(--t-fast) var(--ease),
     transform var(--t-press) var(--ease-out);
 }
 
 /* The most-clicked element inside a document has to answer the press. */
 input.md-task:active {
-  transform: scale(0.88);
+  transform: scale(var(--press-scale-icon));
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -151,10 +160,9 @@ input.md-task:active {
 }
 
 input.md-task:checked {
-  background: var(--accent);
+  background-color: var(--accent);
   border-color: var(--accent);
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' d='M4 8.5l2.5 2.5L12 5.5'/%3E%3C/svg%3E");
-  background-size: 100%;
+  background-size: 100% 100%;
 }
 
 .md-task-done {

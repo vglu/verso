@@ -2,6 +2,7 @@
   import { workspace } from '../stores/workspace.svelte';
   import { t } from '../stores/i18n';
   import { filterHeadings, splitByRanges } from '../editor/headingMatch';
+  import { tip } from '../ui/tooltip';
 
   interface Props {
     onRevealHeading: (pos: number) => void;
@@ -22,15 +23,21 @@
 
   /** Drag from the panel's left edge, so the handle grows the panel leftwards. */
   function startResize(event: PointerEvent): void {
+    // A second finger arriving mid-drag would otherwise take over and teleport
+    // the divider to wherever it landed.
+    if (resizing) return;
+
     resizing = true;
     const startX = event.clientX;
     const startWidth = workspace.outlineWidth;
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    document.documentElement.classList.add('resizing');
 
     const move = (e: PointerEvent): void =>
       workspace.setOutlineWidth(startWidth - (e.clientX - startX));
     const stop = (): void => {
       resizing = false;
+      document.documentElement.classList.remove('resizing');
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', stop);
     };
@@ -118,7 +125,7 @@
             aria-current={match.index === workspace.activeOutline ? 'true' : undefined}
             style="padding-left: {10 + (match.item.level - 1) * 11}px"
             onclick={() => onRevealHeading(match.item.from)}
-            title={match.item.text}
+            use:tip={match.item.text}
           >
             {#each splitByRanges(match.item.text, match.ranges) as part, i (i)}
               {#if part.hit}<mark>{part.text}</mark>{:else}{part.text}{/if}
@@ -219,7 +226,12 @@
     transition:
       background-color var(--t-fast) var(--ease),
       color var(--t-fast) var(--ease),
-      border-color var(--t-fast) var(--ease);
+      border-color var(--t-fast) var(--ease),
+      transform var(--t-press) var(--ease-out);
+  }
+
+  .item:active {
+    transform: scale(var(--press-scale-row));
   }
 
   /* Top-level headings carry a little more weight, so the shape of a long
@@ -254,6 +266,7 @@
     height: 100%;
     cursor: col-resize;
     z-index: 5;
+    transition: background-color var(--t-fast) var(--ease);
   }
 
   .resizer.active {
