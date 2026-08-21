@@ -253,7 +253,7 @@ if (!existsSync(manifestPath)) {
 }
 
 // PowerShell writes UTF-8 with a byte order mark, which JSON.parse will not have.
-const shots = JSON.parse(readFileSync(manifestPath, 'utf8').replace(/^﻿/, ''));
+const shots = JSON.parse(readFileSync(manifestPath, 'utf8').replace(/^\uFEFF/, ''));
 const list = Array.isArray(shots) ? shots : [shots];
 const failures = [];
 const sheet = [];
