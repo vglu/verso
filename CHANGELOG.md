@@ -4,6 +4,22 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.1] — 2026-08-21
+
+### Fixed
+
+- **The document was invisible unless the window was split.** The panes added
+  in 0.6.0 size themselves with `flex: 1`, and the area holding them only
+  became a flex row when there were two of them — so with one pane the flex
+  was ignored, the pane collapsed to no height, and the editor inside it was
+  drawn into nothing. Everything around it went on working, which is what made
+  it look like the document had failed to open: the tab, the outline and the
+  word count were all correct, and the page was blank.
+
+  The area is a row whether or not the window is split. Both states are now
+  checked by hand before a release, which is the process failure underneath
+  the bug — 0.6.0 was verified split, and only split.
+
 ## [0.6.0] — 2026-08-21
 
 ### Added

@@ -128,10 +128,21 @@ html.resizing * {
   background: var(--bg);
 }
 
+/*
+ * The panes live here, one or two of them.
+ *
+ * It is a flex row whether or not the window is split: a pane sizes itself
+ * with `flex: 1`, and in a block container that is ignored — the pane
+ * collapses to nothing, and with it the absolutely positioned editor inside.
+ * The document disappears while the tab strip, the outline and the word count
+ * all keep saying it is open.
+ */
 .app-content {
   flex: 1;
   min-height: 0;
   position: relative;
+  display: flex;
+  align-items: stretch;
   background: var(--bg);
 }
 

@@ -924,12 +924,8 @@
     color: var(--fg-ui);
   }
 
-  /* Two panes side by side; the ratio is a share of the room, not a width. */
-  .app-content.split {
-    display: flex;
-    align-items: stretch;
-  }
-
+  /* Two panes side by side; the ratio is a share of the room, not a width.
+     The row itself is in base.css — a single pane needs it just as much. */
   .app-content.split > :global(.pane:first-of-type) {
     flex: 0 0 calc(var(--split-ratio) * 100%);
   }
