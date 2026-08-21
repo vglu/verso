@@ -1,7 +1,7 @@
 {
   "name": "verso",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.5.1",
   "type": "module",
   "description": "A beautiful, instant Markdown viewer and editor built on Tauri 2.",
   "scripts": {
@@ -18,7 +18,8 @@
     "check:rust": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
     "check:colors": "node scripts/check-colors.mjs",
     "check:themes": "node scripts/check-theme-contrast.mjs --all",
-    "check:all": "npm run lint && npm run typecheck && npm run check:colors && npm run check:themes && npm run test && npm run test:ui && npm run test:perf && npm run check:rust",
+    "check:measure": "node scripts/check-measure.mjs",
+    "check:all": "npm run lint && npm run typecheck && npm run check:colors && npm run check:themes && npm run check:measure && npm run test && npm run test:ui && npm run test:perf && npm run check:rust",
     "test:ui": "vitest run --config vitest.ui.config.ts"
   },
   "devDependencies": {

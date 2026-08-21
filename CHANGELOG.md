@@ -4,6 +4,21 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.5.1] — 2026-08-21
+
+### Fixed
+
+- **Headings sat against the edge of the window while the prose stayed
+  centred.** The reading measure is centred by `margin-inline: auto` on each
+  line; every heading then set `margin: 0.5em 0`, and the shorthand quietly
+  put its side margins back to zero. In a narrow window the two axes are a few
+  pixels apart and nobody sees it. On a wide screen a heading and the
+  paragraph under it end up a hand's width apart, which is what the layout
+  looked like on a 3440px display.
+
+  `npm run check:measure` now refuses any side margin on a line, so the next
+  `margin:` shorthand written there fails the gate instead of the page.
+
 ## [0.5.0] — 2026-08-21
 
 ### Added
