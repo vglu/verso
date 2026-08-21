@@ -64,6 +64,41 @@ Two suites, and both run in CI:
 A bug fix comes with the test that would have caught it. Where a rule is about
 bytes — encodings, line endings, table shapes — the test states the bytes.
 
+### Measuring what a screenshot would show
+
+Two of the worst bugs this project has shipped were plain in a screenshot and
+survived anyway: a document that rendered into nothing, and a table that began
+two hundred pixels to the left of the paragraph above it. Both were looked at
+once, in one state, by someone who already knew what the picture was supposed
+to say.
+
+So the pictures are read by a program:
+
+```bash
+npm run tauri build      # it photographs the release binary
+npm run qa:visual        # capture twelve states, then measure them
+```
+
+`scripts/visual-qa.ps1` opens the application in two themes, one pane and two,
+at three window widths, and photographs each. It never takes the screen: the
+window stays at the bottom of the stack the whole time. `check-visual.mjs`
+reads the pixels back and asserts what a person would have to notice — that
+the page is not blank, that nothing on it starts to the left of the text, that
+the column is centred in the room it has, and that the body text clears 4.5:1
+against the page. Split windows are measured a pane at a time.
+
+It also writes `docs/qa/contact-sheet.png`, which is the twelve states at one
+size: some of what is wrong with a page is only wrong beside the same page in
+another state.
+
+The pages it photographs — `docs/qa/fixture.md` and `docs/qa/fixture-b.md` —
+are written without hard line breaks on purpose. A document wrapped by hand
+ends its lines where the author pressed Return, and then no measurement can
+tell where the column ends.
+
+This is a pre-release check rather than part of `npm run check:all`: it needs
+a built binary and a desktop to draw on.
+
 ## Commits and pull requests
 
 Conventional commits (`feat:`, `fix:`, `docs:`, `perf:`, `chore:`). The subject

@@ -19,6 +19,9 @@
     "check:colors": "node scripts/check-colors.mjs",
     "check:themes": "node scripts/check-theme-contrast.mjs --all",
     "check:measure": "node scripts/check-measure.mjs",
+    "qa:capture": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/visual-qa.ps1",
+    "qa:check": "node scripts/check-visual.mjs",
+    "qa:visual": "npm run qa:capture && npm run qa:check",
     "check:all": "npm run lint && npm run typecheck && npm run check:colors && npm run check:themes && npm run check:measure && npm run test && npm run test:ui && npm run test:perf && npm run check:rust",
     "test:ui": "vitest run --config vitest.ui.config.ts"
   },

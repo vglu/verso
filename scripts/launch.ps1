@@ -1,4 +1,4 @@
-# Launch Verso without it landing on top of whatever you are doing.
+﻿# Launch Verso without it landing on top of whatever you are doing.
 #
 # Two things have to happen, and only doing one of them is why the window kept
 # appearing in the middle of the screen anyway:
@@ -29,9 +29,29 @@ public static class Placer {
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr pid);
+    [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint attach, uint to, bool join);
+    [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
     public static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
     public const uint NOSIZE = 0x0001, NOMOVE = 0x0002, NOACTIVATE = 0x0010;
     public const int SW_SHOWNOACTIVATE = 4;
+
+    /// Windows refuses SetForegroundWindow to a process that is not already in
+    /// front, which is exactly our position: the launcher is in the background
+    /// and the window it just started is not. Attaching to the input queue of
+    /// the thread that owns the window we want back lifts that refusal for as
+    /// long as we are attached. Without this the focus was handed back only
+    /// when Windows felt like it, and in between, keystrokes meant for the
+    /// terminal landed in the document that had just opened.
+    public static void GiveFocusBack(IntPtr window) {
+        if (window == IntPtr.Zero) return;
+        uint owner = GetWindowThreadProcessId(window, IntPtr.Zero);
+        uint mine = GetCurrentThreadId();
+        if (owner == 0 || owner == mine) { SetForegroundWindow(window); return; }
+        AttachThreadInput(mine, owner, true);
+        SetForegroundWindow(window);
+        AttachThreadInput(mine, owner, false);
+    }
 }
 "@
 
@@ -50,7 +70,7 @@ $proc = if ($launchArgs.Count -gt 0) {
 function Set-OutOfTheWay([IntPtr]$handle, [IntPtr]$previous, [int]$x, [int]$y) {
     # Give the foreground back first — a focused window cannot be pushed down.
     if ($previous -ne [IntPtr]::Zero -and $previous -ne $handle) {
-        [Placer]::SetForegroundWindow($previous) | Out-Null
+        [Placer]::GiveFocusBack($previous)
     }
     [Placer]::SetWindowPos($handle, [Placer]::HWND_BOTTOM, $x, $y, 0, 0,
         [Placer]::NOSIZE -bor [Placer]::NOACTIVATE) | Out-Null

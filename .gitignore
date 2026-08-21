@@ -27,3 +27,7 @@ Thumbs.db
 .claude/personal/
 .claude/worktrees/
 .claude/agents/
+
+# Visual QA output: photographed on demand from a local build
+docs/qa/*.png
+docs/qa/manifest.json
