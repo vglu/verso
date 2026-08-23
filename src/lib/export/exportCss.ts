@@ -33,8 +33,15 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/*
+ * The same measure the application reads by, and for the same reason: a column
+ * frozen at its narrowest leaves two thirds of a wide screen empty, and one
+ * that fills that screen is two hundred characters wide. It grows with the
+ * window to the width the reader chose, and stops there.
+ */
 .page {
-  max-width: var(--page-width, 760px);
+  --page-cap: var(--page-width, 1400px);
+  max-width: min(100%, clamp(min(760px, var(--page-cap)), 70%, var(--page-cap)));
   margin: 0 auto;
 }
 
