@@ -4,6 +4,26 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.4] — 2026-08-23
+
+### Fixed
+
+- **A picture sits where the text does.** An image on its own line began at the
+  edge of the window rather than on the column's left edge — measured at 976px
+  out on a wide screen. It is the one block that is not wrapped in a container
+  of its own, so the rule that aligns a table, a diagram and a formula never
+  reached it. It is on that rule now, with the extra room a block is allowed
+  and a hairline border, so that a screenshot with a pale background no longer
+  dissolves into the page.
+
+- **A picture kept anywhere but beside its document now loads.** The webview
+  may only read folders it has been given, and it was given the document's own
+  — while `../images/diagram.png` from a document in `docs/guide` is an
+  ordinary thing to write, and drew a broken-image box. Opening a folder in the
+  tree allows that folder too, and a picture that still fails asks for the one
+  folder it lives in and tries once more. Nothing wider is opened, and nothing
+  at all until something is missing.
+
 ## [0.6.3] — 2026-08-23
 
 ### Fixed
