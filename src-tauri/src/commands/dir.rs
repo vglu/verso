@@ -2,6 +2,7 @@ use crate::error::{AppError, AppResult};
 use crate::paths;
 use serde::Serialize;
 use std::path::Path;
+use tauri::{AppHandle, Manager};
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -21,8 +22,20 @@ pub struct TreeEntry {
 /// opens on the path between double-clicking a file and seeing it. The arrow
 /// is drawn for every folder either way; nothing ever read the answer.
 #[tauri::command]
-pub async fn list_dir(path: String) -> AppResult<Vec<TreeEntry>> {
-    read_level(Path::new(&path))
+pub async fn list_dir(app: AppHandle, path: String) -> AppResult<Vec<TreeEntry>> {
+    let entries = read_level(Path::new(&path))?;
+
+    // Pictures live wherever the writer put them, and that is often not beside
+    // the document: `docs/guide/page.md` pointing at `../images/diagram.png`
+    // is an ordinary layout, and until now it drew a broken-image box. Opening
+    // a document allows its own folder; opening a folder allows that folder,
+    // which is the project the reader is working in.
+    if let Ok(dir) = std::fs::canonicalize(Path::new(&path)) {
+        // Verbatim on purpose; see allow_asset_dir in commands/fs.rs.
+        app.asset_protocol_scope().allow_directory(&dir, true).ok();
+    }
+
+    Ok(entries)
 }
 
 fn read_level(path: &Path) -> AppResult<Vec<TreeEntry>> {

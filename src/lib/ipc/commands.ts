@@ -29,6 +29,9 @@ export const saveFile = (
 
 export const statFile = (path: string): Promise<StatResult> => invoke('stat_file', { path });
 
+/** Let the webview read the folder a picture lives in. See ImageWidget. */
+export const allowImage = (path: string): Promise<void> => invoke('allow_image', { path });
+
 // ---- tree ----
 export const listDir = (path: string): Promise<TreeEntry[]> => invoke('list_dir', { path });
 

@@ -50,7 +50,16 @@ const base = EditorView.theme({
     maxWidth: 'var(--editor-wide-width)',
     marginInline: 'var(--editor-block-inset) auto'
   },
-  '.cm-content > .md-table-wrap, .cm-content > .md-mermaid, .cm-content > .md-math-display': {
+  [[
+    '.cm-content > .md-table-wrap',
+    '.cm-content > .md-mermaid',
+    '.cm-content > .md-math-display',
+    // A picture on its own line is a block too. Without this it began at the
+    // very edge of the content box — measured at 976px left of the text on a
+    // wide window — because it is the one block widget that is not wrapped in
+    // a container of its own.
+    '.cm-content > .md-img-wrap'
+  ].join(', ')]: {
     maxWidth: 'var(--editor-wide-width)',
     marginInline: 'var(--editor-block-inset) auto'
   },

@@ -4,6 +4,12 @@ This document exists for `scripts/visual-qa.ps1` and is written the way it is on
 
 Everything below is here because it is drawn differently from a paragraph, and each of them has at some point started somewhere a paragraph does not. That is the whole point of photographing the page: the failures worth catching are the ones where a single block comes loose from the column while everything around it stays put, and a person reading a screenshot they already expect to be correct will look straight past it.
 
+## A picture, which is a block like any other
+
+![A picture beside its document](picture.png)
+
+A paragraph after it, so the measurement has ordinary text on both sides of the picture and can say whether it begins where they do.
+
 ## A table, which is allowed to be wider than the prose
 
 | Block | Drawn as | Has been wrong by |

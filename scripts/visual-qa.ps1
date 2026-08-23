@@ -46,7 +46,11 @@ $docFull = (Resolve-Path $Doc).Path
 $secondFull = (Resolve-Path $Second).Path
 $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 New-Item -ItemType Directory $Out -Force | Out-Null
-Get-ChildItem $Out -Filter *.png -ErrorAction SilentlyContinue | Remove-Item -Force
+# Only the photographs, not the picture the fixture points at: deleting that
+# one made the document reference a file that was not there, and the run then
+# measured a broken-image box while blaming the renderer.
+Get-ChildItem $Out -Filter *.png -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne 'picture.png' } | Remove-Item -Force
 
 # Wider than the screen is not a state anyone can be in, so the matrix is
 # clamped to it rather than pretending.

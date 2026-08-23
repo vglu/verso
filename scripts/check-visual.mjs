@@ -31,8 +31,19 @@ import { decodePng, encodePng, scale } from './lib/png.mjs';
 
 const DIR = process.argv[2] ?? join('docs', 'qa');
 
-/** How far off the axis a row may start before it counts as loose. */
-const AXIS_TOLERANCE = 5;
+/**
+ * How far off the axis a row may start before it counts as loose.
+ *
+ * Generous on purpose. This rule exists to catch a block that has come away
+ * from the column — the table that began 195px to the left of its paragraph,
+ * the picture that began 976px out — and those are not subtle. A dozen pixels
+ * of slack is what a pixel-reading costs honestly: a rounded corner starts a
+ * picture's first rows inside its own edge, antialiasing softens a glyph's
+ * first column, and a heading in a larger size carries a different side
+ * bearing from the prose under it. Tightening this below that only teaches the
+ * reader of the report to ignore it.
+ */
+const AXIS_TOLERANCE = 20;
 /** Rows allowed to break the axis rule — antialiasing, a stray glyph. */
 const AXIS_OUTLIER_SHARE = 0.01;
 /** How far the column's centre may sit from the middle of the room. */
@@ -199,7 +210,7 @@ function measure(img) {
       if (first < 0) first = x;
       last = x;
     }
-    if (count >= MIN_ROW_INK) inkRows.push({ y, first, last });
+    if (count >= MIN_ROW_INK) inkRows.push({ y, first, last, ink: count });
   }
 
   const height = rect.bottom - rect.top;
@@ -208,13 +219,24 @@ function measure(img) {
     return { rect, inkShare: 0, error: 'the document area is empty' };
   }
 
-  // The axis is where most rows begin. Anything starting to the left of it has
-  // come loose from the column — a table, a diagram, a block of code.
+  // The axis is where most *lines of text* begin. Anything starting to the left
+  // of it has come loose from the column — a table, a diagram, a block of code.
+  //
+  // Only text votes. A picture is a solid field of ink hundreds of rows tall,
+  // and its own contents have left edges of their own: put to the vote, a
+  // screenshot of another program elected one of that program's panels as the
+  // axis of this document, and every line of prose was then "out of line".
+  // Text is sparse — glyphs with paper between them — and that is the
+  // difference the vote is taken on.
+  const TEXTLIKE_DENSITY = 0.6;
   const counts = new Map();
   for (const row of inkRows) {
+    const span = row.last - row.first + 1;
+    if (span > 0 && row.ink / span > TEXTLIKE_DENSITY) continue;
     const bucket = Math.round(row.first / 2) * 2;
     counts.set(bucket, (counts.get(bucket) ?? 0) + 1);
   }
+  if (counts.size === 0) return { rect, inkShare: 0, error: 'no line of text to measure against' };
   const axis = [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
   const loose = inkRows.filter((row) => row.first < axis - AXIS_TOLERANCE);
 

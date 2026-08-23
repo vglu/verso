@@ -174,10 +174,38 @@ pub async fn stat_file(path: String) -> AppResult<StatResult> {
     }
 }
 
+/// Grant the webview the folder one picture lives in.
+///
+/// Called only when an image has already failed to load, which on a local file
+/// means the folder was outside anything opened so far — `../images/logo.png`
+/// from a document in `docs/guide`, say. The document asked for it, so the
+/// reader asked for it; nothing wider is opened, and nothing is opened until
+/// something is missing.
+#[tauri::command]
+pub async fn allow_image(app: AppHandle, path: String) -> AppResult<()> {
+    let file = paths::canonicalize(Path::new(&path))?;
+    allow_asset_dir(&app, &file);
+    Ok(())
+}
+
 /// Register a directory with the asset protocol so `<img src="asset://...">`
 /// can load images that sit beside the document.
+///
+/// The path handed over must be the verbatim one that Windows itself uses,
+/// straight from `std::fs::canonicalize` and not through `paths::canonicalize`,
+/// which strips that prefix for everything else in the program.
+///
+/// The scope stores what it is given as a glob, and checks a request by
+/// canonicalizing it — which on Windows produces the verbatim form. A pattern
+/// registered without the prefix therefore never matches, and every local
+/// picture in every document came back 403 and drew a broken-image box.
+/// Registering the verbatim path adds both spellings, because Tauri strips the
+/// prefix itself when it sees one.
 pub fn allow_asset_dir(app: &AppHandle, file_path: &Path) {
     if let Some(dir) = file_path.parent() {
-        app.asset_protocol_scope().allow_directory(dir, true).ok();
+        let verbatim = std::fs::canonicalize(dir);
+        app.asset_protocol_scope()
+            .allow_directory(verbatim.as_deref().unwrap_or(dir), true)
+            .ok();
     }
 }

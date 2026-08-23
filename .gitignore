@@ -30,4 +30,5 @@ Thumbs.db
 
 # Visual QA output: photographed on demand from a local build
 docs/qa/*.png
+!docs/qa/picture.png
 docs/qa/manifest.json

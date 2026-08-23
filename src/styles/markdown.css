@@ -236,11 +236,25 @@ input.md-task:checked {
   max-width: 100%;
 }
 
+/*
+ * A picture is the one thing in a document that arrives with its own edges,
+ * and on a page made of type they read as unfinished: a screenshot with a
+ * white background dissolves into the paper, one with a dark background cuts
+ * a hole in it. A hairline and a soft shadow give it a border of its own,
+ * quietly enough that a small inline picture is unaffected.
+ */
 .md-img {
   max-width: 100%;
   height: auto;
-  border-radius: var(--radius-s);
+  border-radius: var(--radius-m);
   vertical-align: middle;
+}
+
+.cm-content > .md-img-wrap .md-img {
+  /* A hairline and nothing else. A shadow reads well on its own and badly on
+     this page: it spreads a dozen pixels past the column that everything else
+     lines up against, and the eye reads that as the picture sitting crooked. */
+  border: 1px solid var(--border);
 }
 
 .md-img-broken {

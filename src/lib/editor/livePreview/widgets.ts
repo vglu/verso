@@ -6,6 +6,7 @@ import { renderInline } from './inline';
 import { parseTable } from './table';
 import { cellsOfRow } from '../tableNav';
 import { decodeUrlPath, isRemoteUrl, joinPath, stripUrlSuffix } from '../pathUtil';
+import { allowImage } from '../../ipc/commands';
 
 /**
  * Widgets are view-only. None of them mutate the document, with one
@@ -163,7 +164,24 @@ export class ImageWidget extends WidgetType {
     img.loading = 'lazy';
     img.src = resolveImageSrc(this.url, this.baseDir);
 
+    // A picture that will not load may simply be somewhere the webview has not
+    // been allowed to read: pictures are kept in a folder of their own as often
+    // as beside the document, and `../images/logo.png` is an ordinary thing to
+    // write. Ask for that one folder and try again, once. If it fails a second
+    // time the file really is not there, and the box says so.
+    const local = !isRemoteUrl(this.url);
+    let retried = false;
     img.addEventListener('error', () => {
+      if (local && !retried && this.baseDir) {
+        retried = true;
+        const file = joinPath(this.baseDir, decodeUrlPath(stripUrlSuffix(this.url)));
+        void allowImage(file)
+          .then(() => {
+            img.src = resolveImageSrc(this.url, this.baseDir);
+          })
+          .catch(() => wrap.replaceChildren(brokenImage(this.alt || this.url)));
+        return;
+      }
       wrap.replaceChildren(brokenImage(this.alt || this.url));
     });
 
