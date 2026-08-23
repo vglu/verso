@@ -4,6 +4,40 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.3] — 2026-08-23
+
+### Fixed
+
+- **"Open with → Verso" opened the window and no document.** The launcher
+  filtered the files it was given through the six Markdown extensions, while
+  the application opens some twenty kinds — the data file a table came from,
+  the configuration beside the document, the page someone saved. Every XML,
+  JSON, CSV, YAML and log was dropped before any part of the program that
+  could have explained it. The launcher passes on every existing file now, and
+  what can be read is decided where the file is read: `package.json` opens
+  with its syntax coloured, a picture says "Not a text file" on a banner
+  instead of leaving an empty window.
+
+- **One press of an arrow key moves one step.** In live preview, pressing Up
+  from the last line of a document moved the caret from line 71 to line 33 —
+  past a formula, a rule, a diagram and a block of code — and a later press
+  went from 29 to 17, over a table. Going down, that same table was stepped
+  over rather than entered, which is the asymmetry that made the keyboard feel
+  arbitrary.
+
+  Vertical motion in CodeMirror is a question about pixels, and the pixels
+  above a document full of rendered blocks are estimates until they have been
+  drawn. The editor is now asked what it intends and overruled when it intends
+  a leap: one step is another row of the same wrapped line, the adjacent line,
+  or the near edge of a rendered block. Walking the whole showcase document in
+  the running application, up and down, is now 148 presses of exactly one line
+  each. Source mode was already correct and is untouched.
+
+- **The exported page grows with the window.** It kept the fixed width the
+  application dropped in 0.6.0. Measured on a browser window 2400px wide, the
+  column is 1394px with even margins, where it used to sit at 760 with a
+  thousand pixels of nothing on either side.
+
 ## [0.6.2] — 2026-08-21
 
 ### Fixed

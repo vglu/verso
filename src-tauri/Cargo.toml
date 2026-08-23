@@ -1,6 +1,6 @@
 [package]
 name = "verso"
-version = "0.6.2"
+version = "0.6.3"
 description = "Beautiful, instant, cross-platform Markdown viewer & editor"
 authors = ["SIMS tech"]
 license = "MIT"
