@@ -1,5 +1,5 @@
 import { syntaxTree } from '@codemirror/language';
-import { EditorSelection, type EditorState } from '@codemirror/state';
+import { EditorSelection, type EditorState, type SelectionRange } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { renderedBlocks } from './livePreview';
 
@@ -164,15 +164,32 @@ export function moveBlockDown(view: EditorView): boolean {
 }
 
 /**
- * Step the caret *into* a rendered block instead of over it.
+ * Own the vertical step whenever the editor's own idea of it is not one step.
+ *
+ * Two faults live here, and they are the same fault seen from two sides.
  *
  * A table drawn as a widget has no visual lines inside it, so plain Up/Down
- * skips the whole thing — twenty rows vanish in one keypress, which is
- * exactly what makes navigation feel unpredictable. This runs before the
- * default motion and, when the next line belongs to a rendered block, puts
- * the caret on that block's near edge. The selection landing inside turns the
- * block into source on the same transaction, so the following press continues
- * line by line, and leaving the far edge renders it again.
+ * skips the whole thing — twenty rows vanish in one keypress. That is the one
+ * this used to answer: when the next line belongs to a rendered block, put
+ * the caret on that block's near edge instead. The selection landing inside
+ * turns the block into source on the same transaction, so the following press
+ * continues line by line, and leaving the far edge renders it again.
+ *
+ * The other is worse and was invisible to that rule. Vertical motion in
+ * CodeMirror is a question about pixels, and the pixels above a document full
+ * of rendered blocks are estimates until they have been drawn. Measured in the
+ * running application, one press of Up from the last line of the showcase
+ * document moved the caret from line 71 to line 33 — past a formula, a rule, a
+ * diagram and a block of code — and a later press went from 29 to 17, over a
+ * table. The old rule declined both: the *adjacent* line was ordinary text, so
+ * as far as it could see nothing was being crossed.
+ *
+ * So the question changed. It is no longer "is a block next to me" but "is the
+ * editor about to move me further than one step". One step means: another row
+ * of the same wrapped line, the adjacent line, or the near edge of a rendered
+ * block. Anything else is overridden and the caret goes where it should have.
+ * CodeMirror keeps the movement whenever it is right, which is almost always —
+ * it tracks the goal column across a run of presses better than this can.
  */
 function stepIntoBlock(view: EditorView, direction: 1 | -1): boolean {
   const state = view.state;
@@ -205,10 +222,18 @@ function stepIntoBlock(view: EditorView, direction: 1 | -1): boolean {
       // is exactly right, so stay out of the way.
       !(head >= b.from && head <= b.to)
   );
-  if (!crossed) return false;
 
-  const edgeLine = direction === 1 ? state.doc.lineAt(crossed.from) : state.doc.lineAt(crossed.to);
-  const entry = keepColumn(view, head, edgeLine);
+  // Where one step is allowed to land: the next line, or — when a rendered
+  // block starts there — its near edge.
+  const targetLine = crossed
+    ? direction === 1
+      ? state.doc.lineAt(crossed.from)
+      : state.doc.lineAt(crossed.to)
+    : adjacent;
+
+  if (!crossed && !overshoots(view, range, direction, line.number, targetLine)) return false;
+
+  const entry = keepColumn(view, head, targetLine);
   if (entry === head) return false;
 
   view.dispatch({
@@ -217,6 +242,43 @@ function stepIntoBlock(view: EditorView, direction: 1 | -1): boolean {
     scrollIntoView: false
   });
   return true;
+}
+
+/**
+ * Would the editor's own vertical motion go further than one step?
+ *
+ * Asked by doing it: `moveVertically` is a pure calculation on the current
+ * layout, so the answer costs nothing and needs no guessing about wrapped
+ * lines — a long paragraph moving between its own rows lands on the same line
+ * number, which is inside the allowance by definition.
+ *
+ * When the layout cannot answer — a headless test, or the first keystroke of
+ * the session, before anything has been drawn — the answer is no. Overriding
+ * on a guess is how the caret ended up at the first table in the file the last
+ * time this was decided by geometry.
+ */
+function overshoots(
+  view: EditorView,
+  range: SelectionRange,
+  direction: 1 | -1,
+  from: number,
+  target: { from: number }
+): boolean {
+  // No layout, no opinion. A headless test and the moment before the first
+  // paint both report a content box of no height, and `moveVertically` on an
+  // unmeasured document answers with a position it has invented.
+  if (view.contentDOM.clientHeight === 0) return false;
+
+  try {
+    const proposed = view.moveVertically(range, direction === 1);
+    const line = view.state.doc.lineAt(proposed.head).number;
+    const wanted = view.state.doc.lineAt(target.from).number;
+    const low = Math.min(from, wanted);
+    const high = Math.max(from, wanted);
+    return line < low || line > high;
+  } catch {
+    return false;
+  }
 }
 
 /**
