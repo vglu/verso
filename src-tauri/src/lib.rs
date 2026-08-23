@@ -18,12 +18,24 @@ pub struct OpenFilePayload {
 
 /// Markdown paths out of a raw argv list. Anything that is not an existing
 /// Markdown file (flags, the exe path, dev-server args) is ignored.
-fn markdown_paths_from_args<I: IntoIterator<Item = String>>(args: I) -> Vec<String> {
+/// Files named on the command line — by a double-click, by "Open with", or by
+/// a drag onto the icon.
+///
+/// Every file, not every *Markdown* file. This used to filter by extension
+/// against the six Markdown ones, while the application itself opens some
+/// twenty kinds — XML, JSON, CSV, YAML, a log — as themselves. Choosing
+/// "Open with → Verso" on any of those opened the window and no document, and
+/// said nothing about why: the path was dropped here, before anything that
+/// could have explained it.
+///
+/// What can be read is decided where the file is read, which is the only place
+/// that knows. A file that is not text says so on screen.
+fn openable_paths_from_args<I: IntoIterator<Item = String>>(args: I) -> Vec<String> {
     args.into_iter()
         .skip(1)
         .filter(|a| !a.starts_with('-'))
         .map(PathBuf::from)
-        .filter(|p| p.is_file() && paths::is_markdown(p))
+        .filter(|p| p.is_file())
         .filter_map(|p| paths::canonicalize(&p).ok())
         .map(|p| p.to_string_lossy().to_string())
         .collect()
@@ -31,7 +43,7 @@ fn markdown_paths_from_args<I: IntoIterator<Item = String>>(args: I) -> Vec<Stri
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let startup_files = markdown_paths_from_args(std::env::args());
+    let startup_files = openable_paths_from_args(std::env::args());
 
     let mut builder = tauri::Builder::default();
 
@@ -40,7 +52,7 @@ pub fn run() {
     #[cfg(desktop)]
     {
         builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            let files = markdown_paths_from_args(argv);
+            let files = openable_paths_from_args(argv);
 
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.unminimize();
@@ -128,26 +140,46 @@ mod tests {
             "definitely-missing-file.md".to_string(),
         ];
         // Nothing exists on disk, so nothing is opened.
-        assert!(markdown_paths_from_args(args).is_empty());
+        assert!(openable_paths_from_args(args).is_empty());
     }
 
     #[test]
-    fn argv_picks_existing_markdown() {
+    fn argv_takes_every_file_the_reader_pointed_at() {
         let dir = std::env::temp_dir().join(format!("verso-argv-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let md = dir.join("doc.md");
         std::fs::write(&md, b"# hi").unwrap();
-        let png = dir.join("pic.png");
-        std::fs::write(&png, b"x").unwrap();
+        // The reported bug: "Open with -> Verso" on one of these opened the
+        // window and no document. They are files the application reads, and
+        // the launcher was the only thing that disagreed.
+        let data = dir.join("settings.json");
+        std::fs::write(&data, b"{}").unwrap();
+        let markup = dir.join("feed.xml");
+        std::fs::write(&markup, b"<x/>").unwrap();
 
         let args = vec![
             "verso.exe".to_string(),
             md.to_string_lossy().to_string(),
-            png.to_string_lossy().to_string(),
+            data.to_string_lossy().to_string(),
+            markup.to_string_lossy().to_string(),
         ];
-        let found = markdown_paths_from_args(args);
-        assert_eq!(found.len(), 1);
-        assert!(found[0].ends_with("doc.md"));
+        let found = openable_paths_from_args(args);
+        assert_eq!(found.len(), 3);
+        assert!(found.iter().any(|p| p.ends_with("doc.md")));
+        assert!(found.iter().any(|p| p.ends_with("settings.json")));
+        assert!(found.iter().any(|p| p.ends_with("feed.xml")));
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn argv_still_refuses_what_is_not_a_file() {
+        let dir = std::env::temp_dir().join(format!("verso-argv-dir-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let args = vec!["verso.exe".to_string(), dir.to_string_lossy().to_string()];
+        // A folder is not a document; the window must not try to read one.
+        assert!(openable_paths_from_args(args).is_empty());
 
         let _ = std::fs::remove_dir_all(&dir);
     }
