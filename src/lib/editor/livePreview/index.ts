@@ -22,6 +22,7 @@ import { computeActive, isLineActive, isRangeActive, type ActiveContext } from '
 import {
   BulletWidget,
   CheckboxWidget,
+  SoftBreakWidget,
   FenceChipWidget,
   HrWidget,
   ImageWidget,
@@ -574,6 +575,8 @@ interface BlockRange {
 
 interface BlockState {
   blocks: BlockRange[];
+  /** Paragraphs that span more than one line, for the soft-break merge. */
+  paragraphs: Array<{ from: number; to: number }>;
   decorations: DecorationSet;
 }
 
@@ -760,10 +763,21 @@ function isGenerated(kind: BlockKind): boolean {
   return kind === 'math' || kind === 'mermaid' || kind === 'image';
 }
 
-function blockDecorations(state: EditorState, blocks: BlockRange[]): DecorationSet {
+function blockDecorations(
+  state: EditorState,
+  blocks: BlockRange[],
+  paragraphs: Array<{ from: number; to: number }>
+): DecorationSet {
   const active = computeActive(state, isFrozen(state));
   const dir = state.facet(documentDir);
   const ranges: Range<Decoration>[] = [];
+
+  // A paragraph the caret is not in reads as one paragraph, whatever the
+  // author's line breaks. Inside one, the source comes back.
+  for (const paragraph of paragraphs) {
+    if (isRangeActive(active, paragraph.from, paragraph.to)) continue;
+    ranges.push(...softBreakRanges(state, paragraph.from, paragraph.to));
+  }
 
   for (const block of blocks) {
     if (isRangeActive(active, block.from, block.to)) {
@@ -794,10 +808,79 @@ function blockDecorations(state: EditorState, blocks: BlockRange[]): DecorationS
   return Decoration.set(ranges, true);
 }
 
+/**
+ * Every paragraph in the document, for the soft-break merge below.
+ *
+ * Scanned with the blocks and cached with them: this runs when the text or the
+ * tree changes, never when the caret moves. The same size guard applies — in a
+ * document too large to scan, paragraphs keep their hand-made line breaks, the
+ * way tables there keep their source.
+ */
+function scanParagraphs(
+  state: EditorState,
+  allowForce = true
+): Array<{ from: number; to: number }> {
+  if (state.doc.length > TABLE_SCAN_LIMIT_BYTES) return [];
+  const found: Array<{ from: number; to: number }> = [];
+
+  scanTree(state, allowForce).iterate({
+    enter: (node) => {
+      if (node.name !== 'Paragraph') return;
+      if (state.doc.lineAt(node.from).number !== state.doc.lineAt(node.to).number) {
+        found.push({ from: node.from, to: node.to });
+      }
+      return false;
+    }
+  });
+
+  return found;
+}
+
+/**
+ * Replace the line breaks inside one paragraph with spaces.
+ *
+ * A single newline inside a paragraph is a space in CommonMark, and every
+ * renderer flows it as one. A live editor is tempted to disagree, because in
+ * CodeMirror a line of the file is a line of the screen — and so a document
+ * wrapped by hand at seventy-six columns was drawn as four short lines in a
+ * column wide enough for two, with the right half of the page empty.
+ *
+ * Two things are left alone. A hard break — two spaces or a backslash at the
+ * end of a line — asks for the break on purpose and keeps it. And the
+ * whitespace either side of the newline goes with it, so what appears is
+ * exactly one space rather than the two or three hand-wrapped text carries.
+ *
+ * The file is not touched. A caret anywhere inside the paragraph puts the
+ * lines back, which is ADR-003's rule and what keeps the wrapping editable by
+ * whoever maintains it.
+ */
+function softBreakRanges(state: EditorState, from: number, to: number): Range<Decoration>[] {
+  const ranges: Range<Decoration>[] = [];
+  const first = state.doc.lineAt(from).number;
+  const last = state.doc.lineAt(to).number;
+
+  for (let n = first; n < last; n += 1) {
+    const line = state.doc.line(n);
+    const next = state.doc.line(n + 1);
+    if (/(\s{2}|\\)$/.test(line.text)) continue;
+
+    const trailing = line.text.length - line.text.trimEnd().length;
+    const indent = next.text.length - next.text.trimStart().length;
+    const start = line.to - trailing;
+    const end = Math.min(next.from + indent, next.to);
+    if (end > start) {
+      ranges.push(Decoration.replace({ widget: new SoftBreakWidget() }).range(start, end));
+    }
+  }
+
+  return ranges;
+}
+
 const blockPreview = StateField.define<BlockState>({
   create(state) {
     const blocks = scanBlocks(state);
-    return { blocks, decorations: blockDecorations(state, blocks) };
+    const paragraphs = scanParagraphs(state);
+    return { blocks, paragraphs, decorations: blockDecorations(state, blocks, paragraphs) };
   },
 
   update(value, tr) {
@@ -815,9 +898,10 @@ const blockPreview = StateField.define<BlockState>({
     if (!tr.docChanged && !tr.selection && !tr.reconfigured && !treeAdvanced && !startedEditing)
       return value;
 
-    const blocks =
-      tr.docChanged || treeAdvanced ? scanBlocks(tr.state, !tr.docChanged) : value.blocks;
-    return { blocks, decorations: blockDecorations(tr.state, blocks) };
+    const rescan = tr.docChanged || treeAdvanced;
+    const blocks = rescan ? scanBlocks(tr.state, !tr.docChanged) : value.blocks;
+    const paragraphs = rescan ? scanParagraphs(tr.state, !tr.docChanged) : value.paragraphs;
+    return { blocks, paragraphs, decorations: blockDecorations(tr.state, blocks, paragraphs) };
   },
 
   provide: (field) => [

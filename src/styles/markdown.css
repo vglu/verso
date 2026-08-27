@@ -221,6 +221,12 @@ input.md-task:checked {
   user-select: none;
 }
 
+/* The space a hand-made line break becomes; `pre` so it is never collapsed
+   away between two words. */
+.md-softbreak {
+  white-space: pre;
+}
+
 /* — Rules — */
 .md-hr {
   display: inline-block;

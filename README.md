@@ -15,7 +15,6 @@ finished document, not like source code.
 
 ![Verso rendering a document](docs/screenshots/light.png)
 
-</div>
 
 ## Why
 

@@ -220,6 +220,32 @@ export function resolveImageSrc(url: string, baseDir: string): string {
  * language slot, so the fence reveals itself and the language can be changed.
  * Without that the language is simply uneditable — visible, but out of reach.
  */
+/**
+ * The space a hand-wrapped line break becomes while the paragraph is being
+ * read.
+ *
+ * A widget rather than simply hiding the newline: hidden, the last word of one
+ * line and the first of the next run together into one. It renders a single
+ * space and nothing else — the file still holds the newline, and the caret
+ * entering the paragraph puts the lines back.
+ */
+export class SoftBreakWidget extends WidgetType {
+  eq(): boolean {
+    return true;
+  }
+
+  toDOM(): HTMLElement {
+    const span = document.createElement('span');
+    span.className = 'md-softbreak';
+    span.textContent = ' ';
+    return span;
+  }
+
+  ignoreEvent(): boolean {
+    return false;
+  }
+}
+
 export class FenceChipWidget extends WidgetType {
   constructor(
     readonly language: string,
