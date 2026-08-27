@@ -15,6 +15,7 @@ finished document, not like source code.
 
 ![Verso rendering a document](docs/screenshots/light.png)
 
+</div>
 
 ## Why
 
@@ -56,6 +57,10 @@ edit in place, and never damages your file.
   tab across, and each half keeps its own tabs, its own scroll and its own
   caret. The reading column grows with the window rather than staying a narrow
   strip on a wide screen.
+- **The page beside the text.** `Ctrl+Alt+P` puts the rendered document in the
+  right half while you write Markdown in the left one — and it is rendered by
+  the same code as the export, so what stands beside you is what the reader
+  will get.
 - **Plugins** that add formatters, [in about thirty lines](docs/plugins.md).
   They run in a worker with no DOM, no file system and no network, and none of
   their code runs until you switch them on.
