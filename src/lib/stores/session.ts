@@ -33,6 +33,7 @@ export function snapshotSession(): SessionState {
     activeIndex,
     split: tabs.split,
     splitRatio: workspace.splitRatio,
+    previewPane: tabs.previewPane,
     sidebar: {
       visible: workspace.sidebarVisible,
       panel: 'files',
@@ -118,7 +119,14 @@ export async function restoreSession({
     opened += 1;
   }
 
-  if (state.split && tabs.hasTabsIn(1)) {
+  // The page beside the text has no tabs of its own, so it has to be restored
+  // before the check below, which asks whether the right half holds anything.
+  if (state.previewPane === 1 && opened > 0) {
+    tabs.split = true;
+    tabs.previewPane = 1;
+    tabs.focusedPane = 0;
+    if (state.splitRatio) workspace.setSplitRatio(state.splitRatio);
+  } else if (state.split && tabs.hasTabsIn(1)) {
     tabs.split = true;
     if (state.splitRatio) workspace.setSplitRatio(state.splitRatio);
     // Give each pane something to show. The active tab, below, then decides

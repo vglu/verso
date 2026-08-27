@@ -108,6 +108,14 @@ class TabsStore {
 
   /** Whether the second pane is on screen. */
   split = $state(false);
+  /**
+   * The half showing a rendered page instead of an editor, if any.
+   *
+   * ADR-005: the preview is a page, not a second editor. One document is one
+   * buffer and one editor — the reader writes on the left and looks on the
+   * right, and there is never a question about which caret is the real one.
+   */
+  previewPane = $state<PaneId | null>(null);
   /** The pane the keyboard, the toolbar and the outline belong to. */
   focusedPane = $state<PaneId>(0);
   /**
@@ -191,7 +199,30 @@ class TabsStore {
 
   focusPane(pane: PaneId): void {
     if (!this.split && pane === 1) return;
+    // A page cannot be typed into, so it never takes the keyboard: clicking
+    // the preview must not leave the next keystroke with nowhere to go.
+    if (this.previewPane === pane) return;
     this.focusedPane = pane;
+  }
+
+  /**
+   * Show the document beside its own rendering, or stop.
+   *
+   * Turning it on splits the window and gives the right half to the page. The
+   * left half keeps the document and the caret; what the reader asked for was
+   * "source and preview on one screen", and the source is where the writing
+   * happens.
+   */
+  toggleSourceAndPreview(): void {
+    if (this.previewPane !== null) {
+      this.previewPane = null;
+      if (!this.hasTabsIn(1)) this.unsplit();
+      return;
+    }
+
+    this.split = true;
+    this.previewPane = 1;
+    this.focusedPane = 0;
   }
 
   /**
@@ -220,6 +251,7 @@ class TabsStore {
 
   /** Everything back into one pane, keeping whatever was in front. */
   unsplit(): void {
+    this.previewPane = null;
     const keep = this.currentIds[this.focusedPane] ?? this.currentIds[0] ?? this.currentIds[1];
     for (const tab of this.tabs) tab.pane = 0;
     this.currentIds = [keep, null];

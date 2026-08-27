@@ -68,6 +68,9 @@ pub struct SessionState {
     pub split: bool,
     #[serde(default = "default_split_ratio")]
     pub split_ratio: f64,
+    /// Which half, if either, was showing the rendered page instead of text.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preview_pane: Option<u8>,
     pub sidebar: SidebarState,
     pub tree_root: Option<String>,
 }

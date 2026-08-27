@@ -57,7 +57,11 @@ Get-ChildItem $Out -Filter *.png -ErrorAction SilentlyContinue |
 $widths = @(1100, 1600, [Math]::Min(3440, $screen.Width)) | Sort-Object -Unique
 $shots = @()
 
-function Set-State([string]$theme, [bool]$split) {
+function Set-State([string]$theme, [string]$layout) {
+    $split = $layout -ne 'single'
+    # The page beside the text: one document, two halves, and the right one
+    # holds no tab of its own.
+    $preview = if ($layout -eq 'preview') { 1 } else { $null }
     $settings = Get-Content $settingsFile -Raw | ConvertFrom-Json
     $settings.theme = $theme
     $settings.themeFile = $null
@@ -73,13 +77,14 @@ function Set-State([string]$theme, [bool]$split) {
     # so the same path in both panes leaves the second one empty and the split
     # state quietly photographs as a single pane.
     $tabs = @(@{ path = $docFull; cursor = 0; scrollPos = 0; scrollOffset = 0; pane = 0 })
-    if ($split) { $tabs += @{ path = $secondFull; cursor = 0; scrollPos = 0; scrollOffset = 0; pane = 1 } }
+    if ($layout -eq 'split') { $tabs += @{ path = $secondFull; cursor = 0; scrollPos = 0; scrollOffset = 0; pane = 1 } }
 
     @{
         tabs        = $tabs
         activeIndex = 0
         split       = $split
         splitRatio  = 0.5
+        previewPane = $preview
         sidebar     = @{ visible = $false; panel = 'files'; width = 260; outlineVisible = $false; outlineWidth = 240 }
         treeRoot    = $null
     } | ConvertTo-Json -Depth 8 | Out-File $sessionFile -Encoding utf8
@@ -87,13 +92,13 @@ function Set-State([string]$theme, [bool]$split) {
 
 try {
     foreach ($theme in @('light', 'dark')) {
-        foreach ($layout in @('single', 'split')) {
+        foreach ($layout in @('single', 'split', 'preview')) {
             foreach ($width in $widths) {
                 Get-Process verso -ErrorAction SilentlyContinue | Stop-Process -Force
                 Start-Sleep -Milliseconds 700
                 Remove-Item (Join-Path $config 'drafts\*.json') -Force -ErrorAction SilentlyContinue
 
-                Set-State -theme $theme -split:($layout -eq 'split')
+                Set-State -theme $theme -layout $layout
 
                 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'launch.ps1') | Out-Null
                 Start-Sleep -Milliseconds 2200

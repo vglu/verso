@@ -123,6 +123,10 @@
 
   function bump(): void {
     revision += 1;
+    // The page beside the document, if there is one, has no other way to hear
+    // that the text moved on: the document lives in CodeMirror, outside
+    // reactive state.
+    if (tabs.previewPane !== null) workspace.previewRevision += 1;
     scheduleSessionSave();
   }
 
@@ -484,6 +488,14 @@
         tabs.toggleSplit();
         bump();
         break;
+      case 'toggleSourceAndPreview':
+        tabs.toggleSourceAndPreview();
+        bump();
+        // The page appearing beside the text must not take the keyboard from
+        // it: the reader pressed the key mid-sentence and expects to go on
+        // typing the sentence.
+        focusEditor();
+        break;
       case 'find':
         focusSearch();
         break;
@@ -559,6 +571,13 @@
       else if (event.shiftKey) workspace.toggleOutline();
       else workspace.toggleSidebar();
       bump();
+      return;
+    }
+    // Source on the left, the page on the right. Alt because Ctrl+P is the
+    // heading palette in every editor that has one, and will be here too.
+    if (event.altKey && event.key.toLowerCase() === 'p') {
+      event.preventDefault();
+      runAction('toggleSourceAndPreview');
       return;
     }
     if (event.key.toLowerCase() === 'e') {

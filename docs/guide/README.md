@@ -61,6 +61,8 @@ to restore that text.
 | Bold / italic | `Ctrl+B` / `Ctrl+I` |
 | Link from selection | `Ctrl+K` |
 | Reader mode | `Ctrl+E` |
+| Two documents side by side | `Ctrl+Alt+\` |
+| Source and preview side by side | `Ctrl+Alt+P` |
 | Zoom in / out / actual size | `Ctrl+=` / `Ctrl+-` / `Ctrl+0`, or `Ctrl` + wheel |
 | Export as HTML | `Ctrl+Shift+E` |
 | Print (and Save as PDF) | `Ctrl+Shift+P` |
@@ -81,6 +83,22 @@ highlighted, and clicking a heading jumps to it.
 
 The session — open tabs, caret positions, sidebar state — comes back when you
 reopen the app. Turn that off in Settings if you prefer a clean start.
+
+## Two halves of the window
+
+`Ctrl+Alt+\` splits the window in two. Each half keeps its own tabs, its own
+scroll and its own caret; drag a tab across to move a document between them,
+and closing the last document in a half gives the window back.
+
+`Ctrl+Alt+P` does something different with the same two halves: it puts the
+document you are writing on the left and the finished page on the right. The
+page is not editable — writing lives on the left — and it follows you: it
+redraws a moment after you stop typing, and scrolls to the section your caret
+is in. It is drawn by the same code as **Export as HTML**, so what stands
+beside you is what anyone you send the file to will see.
+
+The mode survives a restart, and `Ctrl+Alt+P` again puts the window back to
+one document.
 
 ## The toolbar
 

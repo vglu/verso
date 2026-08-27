@@ -50,7 +50,7 @@ export interface ExportOptions {
 }
 
 /** Formulas as MathML: no stylesheet, no fonts, drawn by the browser itself. */
-async function mathRenderer(): Promise<(formula: string, display: boolean) => string> {
+export async function mathRenderer(): Promise<(formula: string, display: boolean) => string> {
   const katex = await import('katex');
   return (formula, display) => {
     try {
@@ -73,7 +73,7 @@ async function mathRenderer(): Promise<(formula: string, display: boolean) => st
  * the diagrams are drawn first, in document order, and handed to the walk as
  * a finished list.
  */
-async function renderDiagrams(state: EditorState): Promise<string[]> {
+export async function renderDiagrams(state: EditorState): Promise<string[]> {
   const sources = [...state.doc.toString().matchAll(/```mermaid\n([\s\S]*?)```/g)].map(
     (m) => m[1] ?? ''
   );

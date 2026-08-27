@@ -42,6 +42,14 @@ class WorkspaceStore {
   expanded = $state<Record<string, boolean>>({});
   treeLoading = $state(false);
 
+  /**
+   * Bumped on every edit, for the preview pane to notice.
+   *
+   * The document itself lives in CodeMirror, outside reactive state on
+   * purpose; this is the one bit of it the page beside it has to hear about.
+   */
+  previewRevision = $state(0);
+
   outline = $state<OutlineItem[]>([]);
   activeOutline = $state(-1);
   /** First document offset on screen — tells the crumbs what is already visible. */

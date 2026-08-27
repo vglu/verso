@@ -111,6 +111,8 @@ export interface SessionState {
   /** Whether the window was showing two panes. */
   split?: boolean;
   splitRatio?: number;
+  /** Which half, if either, was showing the rendered page rather than text. */
+  previewPane?: 0 | 1 | null;
   sidebar: {
     visible: boolean;
     /** Kept for sessions written before the outline moved to its own panel. */
@@ -220,6 +222,7 @@ export type MenuActionId =
   | 'toggleSidebar'
   | 'toggleOutline'
   | 'toggleSplit'
+  | 'toggleSourceAndPreview'
   | 'find'
   | 'goToHeading'
   | 'goToLine'

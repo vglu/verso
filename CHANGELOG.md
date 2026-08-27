@@ -4,6 +4,36 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **The page beside the text.** `Ctrl+Alt+P`, or **View → Source and Preview**,
+  puts the document you are writing in the left half of the window and the
+  finished page in the right one. The page redraws a quarter of a second after
+  you stop typing and follows the section your caret is in; it is not editable,
+  because writing lives on the left (ADR-005). It is drawn by the same code as
+  **Export as HTML**, so what stands beside you is what the reader gets — and
+  the mode comes back when you reopen the app.
+
+### Changed
+
+- **A paragraph wrapped by hand is read as one paragraph.** A single newline
+  inside a paragraph is a space in CommonMark, and every renderer flows it as
+  one; the editor drew each line of the file as a line of the screen, so a
+  document wrapped at seventy-six columns took four lines in a column wide
+  enough for two. The file is not touched, a caret inside the paragraph puts
+  the lines back, and a hard break — two trailing spaces or a backslash — is
+  still a break.
+
+### Fixed
+
+- **An exported checklist says what it says.** The words of a task item were
+  dropped from the exported HTML: the parser hangs them off the item's `Task`
+  node rather than giving it a paragraph, and the exporter read only the
+  paragraph. Every `- [x] …` came out as a correctly ticked, entirely silent
+  box.
+
 ## [0.6.4] — 2026-08-23
 
 ### Fixed

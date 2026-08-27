@@ -12,6 +12,7 @@
   import TabBar from './TabBar.svelte';
   import EditorHost from './EditorHost.svelte';
   import EmptyState from './EmptyState.svelte';
+  import PreviewPane from './PreviewPane.svelte';
   import { tabs, type PaneId } from '../stores/tabs.svelte';
   import { settings } from '../stores/settings.svelte';
 
@@ -77,31 +78,35 @@
   ondragover={onDragOver}
   ondrop={onDrop}
 >
-  {#if tabs.split}
+  {#if tabs.split && tabs.previewPane !== pane}
     <TabBar {pane} {onCloseTab} {onCloseTabs} />
   {/if}
 
-  <div class="pane-body">
-    <EditorHost
-      {pane}
-      {onLinkClick}
-      {onFind}
-      {onSave}
-      {onToggleSource}
-      {onGoToHeading}
-      {onActivity}
-    />
-
-    {#if booted && !tabs.hasTabsIn(pane)}
-      <EmptyState
-        recent={settings.value.recentFiles}
-        {onNewFile}
-        {onOpenFile}
-        {onOpenFolder}
-        {onOpenRecent}
+  {#if tabs.previewPane === pane}
+    <PreviewPane />
+  {:else}
+    <div class="pane-body">
+      <EditorHost
+        {pane}
+        {onLinkClick}
+        {onFind}
+        {onSave}
+        {onToggleSource}
+        {onGoToHeading}
+        {onActivity}
       />
-    {/if}
-  </div>
+
+      {#if booted && !tabs.hasTabsIn(pane)}
+        <EmptyState
+          recent={settings.value.recentFiles}
+          {onNewFile}
+          {onOpenFile}
+          {onOpenFolder}
+          {onOpenRecent}
+        />
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <style>

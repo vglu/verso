@@ -289,8 +289,10 @@ for (const shot of list) {
   // A split window is two documents, and measuring across both would take the
   // left pane's column as the axis and call the right pane's a departure from
   // it. Each half answers for itself.
+  // The preview state is two halves as well: text on the left, the page it
+  // becomes on the right.
   const halves =
-    shot.layout === 'split'
+    shot.layout === 'split' || shot.layout === 'preview'
       ? [
           { suffix: ' left', image: crop(image, 0, Math.floor(image.width / 2) - 4) },
           { suffix: ' right', image: crop(image, Math.floor(image.width / 2) + 4, image.width) }

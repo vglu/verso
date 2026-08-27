@@ -122,6 +122,13 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         MenuItemBuilder::with_id("toggleSplit", label(l, "toggleSplit", "Split Editor"))
             .accelerator("CmdOrCtrl+Alt+\\")
             .build(app)?;
+    // The document beside its own rendering (ADR-005).
+    let source_and_preview = MenuItemBuilder::with_id(
+        "toggleSourceAndPreview",
+        label(l, "toggleSourceAndPreview", "Source and Preview"),
+    )
+    .accelerator("CmdOrCtrl+Alt+P")
+    .build(app)?;
     let fold_all = MenuItemBuilder::with_id("foldAll", label(l, "foldAll", "Fold All Sections"))
         .accelerator("CmdOrCtrl+Alt+[")
         .build(app)?;
@@ -153,6 +160,7 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         .item(&toggle_sidebar)
         .item(&toggle_outline)
         .item(&split_editor)
+        .item(&source_and_preview)
         .separator()
         .item(&fold_all)
         .item(&unfold_all)

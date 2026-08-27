@@ -21,6 +21,12 @@ public static class VersoWindows {
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
 
+    /// A window smaller than this is not a document window, whatever Windows
+    /// says: during start-up Verso briefly owns a titled 160x28 one, and a
+    /// screenshot run that caught it photographed a grey sliver and then
+    /// reported that it could not find the document.
+    public const int MIN_W = 400, MIN_H = 300;
+
     /// The largest visible titled window of a process, or zero.
     public static IntPtr MainWindow(int processId) {
         IntPtr best = IntPtr.Zero;
@@ -33,7 +39,9 @@ public static class VersoWindows {
 
             RECT r;
             if (!GetWindowRect(h, out r)) return true;
-            long area = (long)(r.Right - r.Left) * (r.Bottom - r.Top);
+            int w = r.Right - r.Left, hgt = r.Bottom - r.Top;
+            if (w < MIN_W || hgt < MIN_H) return true;
+            long area = (long)w * hgt;
             if (area > bestArea) { bestArea = area; best = h; }
             return true;
         }, IntPtr.Zero);
