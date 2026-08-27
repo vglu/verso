@@ -51,6 +51,21 @@ describe('the shape of a document', () => {
     expect(out).toContain('<input type="checkbox" disabled>');
   });
 
+  it('keeps the words of a task item, which is what the item says', () => {
+    // The parser hangs a task item's text off the `Task` node rather than
+    // giving the item a paragraph, and reading it as a paragraph produced a
+    // checklist of empty boxes — checked correctly, and saying nothing.
+    const out = html('- [x] `npm run check:all` is green\n- [ ] Screenshots **retaken**\n');
+    expect(out).toContain('<code>npm run check:all</code> is green');
+    expect(out).toContain('Screenshots <strong>retaken</strong>');
+  });
+
+  it('keeps the words of a nested task item too', () => {
+    const out = html('- [ ] outer\n  - [x] inner\n');
+    expect(out).toContain('outer');
+    expect(out).toContain('inner');
+  });
+
   it('renders a table, keeping the alignment the author asked for', () => {
     // `:-` is left alignment stated on purpose, not the absence of one, so it
     // survives into the export.

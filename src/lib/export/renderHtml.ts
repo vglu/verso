@@ -188,7 +188,10 @@ class Renderer {
         child = child.nextSibling;
         continue;
       }
-      if (child.name === 'Paragraph' && !wroteBlock) {
+      // A checked item has no paragraph of its own: the parser puts the text
+      // inside the `Task` node, next to the marker. Read the same way as a
+      // paragraph, or the item renders as a checkbox with nothing beside it.
+      if ((child.name === 'Paragraph' || child.name === 'Task') && !wroteBlock) {
         // The first paragraph of an item is the item's own text: no <p>, or
         // every list in the document gains a blank line between its markers
         // and its words.
