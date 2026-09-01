@@ -60,7 +60,7 @@
     "@tauri-apps/plugin-opener": "^2.2.5",
     "@tauri-apps/plugin-window-state": "^2.2.1",
     "katex": "^0.18.4",
-    "mermaid": "^11.17.0"
+    "mermaid": "^11.17.2"
   },
   "license": "MIT",
   "author": "SIMS tech"
