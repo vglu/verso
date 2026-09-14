@@ -7,6 +7,7 @@ import { parseTable } from './table';
 import { cellsOfRow } from '../tableNav';
 import { decodeUrlPath, isRemoteUrl, joinPath, stripUrlSuffix } from '../pathUtil';
 import { allowImage } from '../../ipc/commands';
+import { t } from '../../stores/i18n';
 
 /**
  * Widgets are view-only. None of them mutate the document, with one
@@ -213,14 +214,6 @@ export function resolveImageSrc(url: string, baseDir: string): string {
 }
 
 /**
- * Language chip on the opening line of a fenced code block.
- *
- * The chip stands in for the ``` marker and the language name, which means it
- * is also the only way back to them: clicking it puts the caret in the
- * language slot, so the fence reveals itself and the language can be changed.
- * Without that the language is simply uneditable — visible, but out of reach.
- */
-/**
  * The space a hand-wrapped line break becomes while the paragraph is being
  * read.
  *
@@ -246,27 +239,55 @@ export class SoftBreakWidget extends WidgetType {
   }
 }
 
+const COPY_ICON =
+  '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.4" y="5.4" width="8.2" height="8.2" rx="1.5"/><path d="M10.6 2.4H3.9a1.5 1.5 0 0 0-1.5 1.5v6.7"/></svg>';
+const COPIED_ICON =
+  '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8.4 6.6 11.8 12.8 4.6"/></svg>';
+
+/**
+ * Language chip on the opening line of a fenced code block.
+ *
+ * The chip stands in for the ``` marker and the language name, which means it
+ * is also the only way back to them: clicking it puts the caret in the
+ * language slot, so the fence reveals itself and the language can be changed.
+ * Without that the language is simply uneditable — visible, but out of reach.
+ * The copy button writes the block body, so a reader can take the code
+ * without first selecting it.
+ */
 export class FenceChipWidget extends WidgetType {
   constructor(
     readonly language: string,
-    readonly languageFrom = -1
+    readonly languageFrom = -1,
+    readonly code = ''
   ) {
     super();
   }
 
   eq(other: FenceChipWidget): boolean {
-    return other.language === this.language && other.languageFrom === this.languageFrom;
+    return (
+      other.language === this.language &&
+      other.languageFrom === this.languageFrom &&
+      other.code === this.code
+    );
+  }
+
+  get estimatedHeight(): number {
+    return 28;
   }
 
   toDOM(view: EditorView): HTMLElement {
     const chip = document.createElement('span');
     chip.className = 'md-fence-chip';
-    chip.textContent = this.language || 'text';
-    chip.title = 'Click to change the language';
+
+    const lang = document.createElement('span');
+    lang.className = 'md-fence-lang';
+    lang.textContent = this.language || 'text';
+    lang.title = t('fence.langTitle');
 
     if (this.languageFrom >= 0) {
-      chip.addEventListener('mousedown', (event) => {
+      lang.addEventListener('click', (event) => {
         event.preventDefault();
+        event.stopPropagation();
         const from = Math.min(this.languageFrom, view.state.doc.length);
         const to = Math.min(from + this.language.length, view.state.doc.length);
         // Select the language so typing replaces it outright.
@@ -279,11 +300,41 @@ export class FenceChipWidget extends WidgetType {
       });
     }
 
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'md-fence-copy';
+    copy.title = t('fence.copyTitle');
+    copy.setAttribute('aria-label', t('fence.copyTitle'));
+    copy.innerHTML = `${COPY_ICON}<span>${t('fence.copy')}</span>`;
+
+    const stop = (event: Event): void => {
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    copy.addEventListener('mousedown', stop);
+    copy.addEventListener('click', (event) => {
+      stop(event);
+      void navigator.clipboard.writeText(this.code).then(
+        () => {
+          copy.classList.add('is-copied');
+          copy.innerHTML = `${COPIED_ICON}<span>${t('fence.copied')}</span>`;
+          window.setTimeout(() => {
+            copy.classList.remove('is-copied');
+            copy.innerHTML = `${COPY_ICON}<span>${t('fence.copy')}</span>`;
+          }, 1400);
+        },
+        (error) => {
+          console.warn('clipboard copy failed', error);
+        }
+      );
+    });
+
+    chip.append(lang, copy);
     return chip;
   }
 
-  ignoreEvent(): boolean {
-    return false;
+  ignoreEvent(event: Event): boolean {
+    return event.target instanceof Element && event.target.closest('.md-fence-copy') !== null;
   }
 }
 

@@ -196,11 +196,11 @@
                 onCloseTab(index);
               }}
             >
-              <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+              <svg viewBox="0 0 14 14" width="14" height="14" aria-hidden="true">
                 <path
-                  d="M3 3l6 6M9 3l-6 6"
+                  d="M3.5 3.5l7 7M10.5 3.5l-7 7"
                   stroke="currentColor"
-                  stroke-width="1.5"
+                  stroke-width="1.6"
                   stroke-linecap="round"
                 />
               </svg>
@@ -268,8 +268,8 @@
   .affordance {
     display: grid;
     place-items: center;
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
   }
 
@@ -295,8 +295,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
     border-radius: var(--radius-s);
     color: var(--fg-faint);
     opacity: 0;

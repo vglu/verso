@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseFully } from './support/tree';
 import { EditorState } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
 import {
   buildInlineForRange,
@@ -161,11 +162,23 @@ describe('block elements', () => {
   });
 
   it('gives fenced code a panel and a language chip', () => {
-    const built = build('```ts\nconst a = 1;\n```\n');
+    const doc = '```ts\nconst a = 1;\n```\n';
+    const built = build(doc);
     expect(classes(built)).toContain('md-codeblock-line');
     expect(classes(built)).toContain('md-codeblock-first');
     const chip = widgets(built).find((w) => w instanceof FenceChipWidget) as FenceChipWidget;
     expect(chip?.language).toBe('ts');
+    expect(chip?.code).toBe('const a = 1;');
+    expect(hidden(built)).toContainEqual([0, doc.indexOf('\n')]);
+  });
+
+  it('puts a copy button on the fence chip', () => {
+    const view = new EditorView({ doc: '' });
+    const chip = new FenceChipWidget('ts', 3, 'const a = 1;');
+    const dom = chip.toDOM(view);
+    expect(dom.querySelector('.md-fence-lang')?.textContent).toBe('ts');
+    expect(dom.querySelector('.md-fence-copy')?.textContent).toContain('Copy');
+    view.destroy();
   });
 
   it('renders images and resolves them against the document folder', () => {

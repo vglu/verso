@@ -191,6 +191,9 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     bracketMatching(),
     indentOnInput(),
     markdown ? markdownFolding() : [],
+    // Other occurrences of the selected text, like Notepad++: the drag itself
+    // stays on the line being selected, and matching spans elsewhere only
+    // light up. That is not rectangular selection.
     highlightSelectionMatches(),
     search({ top: true, createPanel: createSearchPanel }),
     searchRail,

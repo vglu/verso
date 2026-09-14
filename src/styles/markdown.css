@@ -25,42 +25,43 @@
 }
 
 /*
- * Blank source lines already separate blocks, so heading margins stay modest —
- * otherwise the gap doubles and the page reads as loose.
+ * Blank source lines already separate blocks, so heading gaps stay modest —
+ * otherwise the space doubles and the page reads as loose.
  *
- * `margin-block`, never the `margin` shorthand: the reading measure is
- * centred by `margin-inline: auto` on `.cm-line`, and a shorthand here sets
- * the side margins back to zero. That left every heading against the edge of
- * the window while the prose under it stayed centred — invisible in a narrow
- * window, and a hand's width apart on a wide screen.
+ * Vertical spacing is padding, never margin, on `.cm-line`. CodeMirror's
+ * height map does not count line margins, so a click on the first line of a
+ * code block after a heading landed two or three lines further down.
+ * Horizontal centering still lives on `margin-inline` (see cmTheme) — never
+ * the `margin` shorthand, which would zero those side margins and shove
+ * headings against the window edge.
  */
 .cm-line.md-h1 {
   font-size: 2em;
   font-weight: 700;
   line-height: 1.25;
-  margin-block: 0.5em 0.15em;
+  padding-block: 0.5em 0.15em;
 }
 
 .cm-line.md-h2 {
   font-size: 1.55em;
-  margin-block: 0.5em 0.1em;
+  padding-block: 0.5em 0.1em;
 }
 
 .cm-line.md-h3 {
   font-size: 1.25em;
-  margin-block: 0.4em 0.1em;
+  padding-block: 0.4em 0.1em;
 }
 
 .cm-line.md-h4 {
   font-size: 1.08em;
   font-weight: 600;
-  margin-block: 0.35em 0.05em;
+  padding-block: 0.35em 0.05em;
 }
 
 .cm-line.md-h5 {
   font-size: 1em;
   font-weight: 600;
-  margin-block: 0.3em 0.05em;
+  padding-block: 0.3em 0.05em;
 }
 
 .cm-line.md-h6 {
@@ -69,14 +70,14 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--fg-muted);
-  margin-block: 0.3em 0.05em;
+  padding-block: 0.3em 0.05em;
 }
 
 /* The first heading should not push the document away from the top edge. */
 .cm-content > .cm-line:first-child.md-h1,
 .cm-content > .cm-line:first-child.md-h2,
 .cm-content > .cm-line:first-child.md-h3 {
-  margin-top: 0.1em;
+  padding-top: 0.1em;
 }
 
 /* — Inline — */
@@ -199,26 +200,79 @@ input.md-task:checked {
 
 .cm-line.md-codeblock-first {
   border-radius: var(--radius-m) var(--radius-m) 0 0;
-  padding-top: var(--sp-2);
-  margin-top: 0.6em;
+  padding-top: calc(var(--sp-2) + 0.6em);
 }
 
 .cm-line.md-codeblock-last {
   border-radius: 0 0 var(--radius-m) var(--radius-m);
-  padding-bottom: var(--sp-2);
-  margin-bottom: 0.6em;
+  padding-bottom: calc(var(--sp-2) + 0.6em);
   min-height: 0.6em;
 }
 
 .md-fence-chip {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   font-family: var(--font-ui);
+  user-select: none;
+}
+
+.md-fence-lang {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--fg-faint);
-  user-select: none;
+  cursor: pointer;
+}
+
+.md-fence-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-s);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--fg-muted);
+  background: var(--bg-hover);
+  flex-shrink: 0;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease),
+    transform var(--t-press) var(--ease-out);
+}
+
+.md-fence-copy svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.md-fence-copy:active {
+  transform: scale(var(--press-scale-icon));
+}
+
+.md-fence-copy.is-copied {
+  color: var(--success);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .md-fence-copy:hover {
+    background: var(--bg-active);
+    color: var(--fg-ui);
+  }
+
+  .md-fence-copy.is-copied:hover {
+    color: var(--success);
+  }
 }
 
 /* The space a hand-made line break becomes; `pre` so it is never collapsed
@@ -338,8 +392,7 @@ input.md-task:checked {
 }
 
 .cm-line.md-frontmatter-last {
-  padding-bottom: 6px;
-  margin-bottom: 0.9em;
+  padding-bottom: calc(6px + 0.9em);
   border-bottom-left-radius: var(--radius-m);
   border-bottom-right-radius: var(--radius-m);
 }

@@ -368,13 +368,20 @@ function handleNode(
     if (parent?.name === 'FencedCode' && node.from === parent.from && !lineActive(node.from)) {
       const info = parent.getChild('CodeInfo');
       const language = info ? state.doc.sliceString(info.from, info.to) : '';
-      // The chip carries where the language lives, so clicking it can select
-      // the language rather than leaving it unreachable behind the widget.
+      const text = parent.getChild('CodeText');
+      let code = text ? state.doc.sliceString(text.from, text.to) : '';
+      if (code.endsWith('\n')) code = code.slice(0, -1);
+      // Replace the whole opening line so the chip can sit as a header —
+      // language on the left, copy on the right — rather than a three-backtick
+      // stub that cannot stretch across the panel.
+      const line = state.doc.lineAt(node.from);
       pushReplace(
         built,
-        Decoration.replace({ widget: new FenceChipWidget(language, info ? info.from : node.to) }),
+        Decoration.replace({
+          widget: new FenceChipWidget(language, info ? info.from : node.to, code)
+        }),
         node.from,
-        node.to
+        line.to
       );
       return;
     }
@@ -382,8 +389,7 @@ function handleNode(
     return;
   }
   if (name === 'CodeInfo') {
-    // The language already shows in the chip.
-    if (!lineActive(node.from)) pushHide(built, node.from, node.to);
+    // Covered by the opening-line chip while the fence is concealed.
     return;
   }
 
@@ -975,13 +981,13 @@ export function renderedBlocks(state: EditorState): BlockRange[] {
  * Flip the document into "editing" the moment the user touches it, and back
  * to a clean reading surface when focus leaves.
  */
-/** Pending deferred reveal, so it can be cancelled if the view goes away. */
-let revealTimer: ReturnType<typeof setTimeout> | null = null;
+/** Pending mouseup reveal, cancelled if the view goes away before it fires. */
+let pendingRevealUp: (() => void) | null = null;
 
 function cancelPendingReveal(): void {
-  if (revealTimer !== null) {
-    clearTimeout(revealTimer);
-    revealTimer = null;
+  if (pendingRevealUp) {
+    window.removeEventListener('mouseup', pendingRevealUp);
+    pendingRevealUp = null;
   }
 }
 
@@ -990,18 +996,20 @@ const editingTracker = EditorView.domEventHandlers({
     if (view.composing) return false;
     if (!view.state.field(editingField, false)) {
       cancelPendingReveal();
-      // Deferred on purpose: revealing syntax re-flows the line, and doing
-      // that mid-click would move the text out from under the pointer before
-      // CodeMirror resolves the click into a caret position.
-      revealTimer = setTimeout(() => {
-        revealTimer = null;
-        // The tab may have been closed, or the buffer replaced, in the
-        // meantime — dispatching into a dead view throws, and into a fresh
-        // one would open a document nobody has touched yet.
+      // Reveal on mouseup, not mousedown. Revealing syntax re-flows the
+      // line; doing that before CodeMirror resolves the click puts the caret
+      // in the wrong place, and doing it mid-drag (the old setTimeout(0))
+      // rebuilt decorations under a live native selection — the first line
+      // of a code block jumped, and the selection landed on the wrong span.
+      const onUp = (): void => {
+        pendingRevealUp = null;
+        window.removeEventListener('mouseup', onUp);
         if (!view.dom.isConnected) return;
         if (view.state.field(editingField, false)) return;
         view.dispatch({ effects: setEditing.of(true) });
-      }, 0);
+      };
+      pendingRevealUp = onUp;
+      window.addEventListener('mouseup', onUp);
     }
     return false;
   },

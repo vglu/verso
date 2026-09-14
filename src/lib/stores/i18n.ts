@@ -199,7 +199,11 @@ const en: Dict = {
   'toolbar.modeLive': 'Preview',
   'toolbar.modeSource': 'Source',
   'settings.showToolbar': 'Show formatting toolbar',
-  'settings.editorMode': 'Editing view'
+  'settings.editorMode': 'Editing view',
+  'fence.copy': 'Copy',
+  'fence.copied': 'Copied',
+  'fence.copyTitle': 'Copy code block',
+  'fence.langTitle': 'Click to change the language'
 };
 
 const uk: Dict = {
@@ -394,7 +398,11 @@ const uk: Dict = {
   'toolbar.modeLive': 'Вигляд',
   'toolbar.modeSource': 'Джерело',
   'settings.showToolbar': 'Показувати панель форматування',
-  'settings.editorMode': 'Режим редагування'
+  'settings.editorMode': 'Режим редагування',
+  'fence.copy': 'Копіювати',
+  'fence.copied': 'Скопійовано',
+  'fence.copyTitle': 'Копіювати блок коду',
+  'fence.langTitle': 'Натисніть, щоб змінити мову'
 };
 
 const dicts: Record<'uk' | 'en', Dict> = { uk, en };
