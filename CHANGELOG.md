@@ -4,6 +4,26 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.1] — 2026-09-14
+
+### Added
+
+- **A copy button on every fenced code block.** The language chip is a header
+  now: the language on the left, Copy on the right. One click puts the block
+  on the clipboard without first selecting it.
+
+### Fixed
+
+- **Selecting the first line of a code block selected the third or fourth.**
+  Headings and fences used vertical `margin` on `.cm-line`, which CodeMirror's
+  height map does not count, so a click after a heading landed two or three
+  lines further down. The same space is padding now, which the map can see.
+  Revealing markup also waits until the mouse is up, so a drag to select is
+  not rebuilt out from under the pointer.
+
+- **The close button on a tab was too small to hit comfortably.** It is 24px
+  now, in a slightly taller tab bar.
+
 ## [0.7.0] — 2026-08-27
 
 ### Added
