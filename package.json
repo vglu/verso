@@ -59,7 +59,7 @@
     "@tauri-apps/plugin-dialog": "^2.2.0",
     "@tauri-apps/plugin-opener": "^2.2.5",
     "@tauri-apps/plugin-window-state": "^2.2.1",
-    "katex": "^0.18.4",
+    "katex": "^0.18.9",
     "mermaid": "^11.17.0"
   },
   "license": "MIT",
