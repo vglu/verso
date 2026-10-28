@@ -121,6 +121,27 @@ export class CheckboxWidget extends WidgetType {
   }
 }
 
+/** Rendered height per image, keyed by folder + URL. */
+const imageHeights = new Map<string, number>();
+
+function imageHeightKey(url: string, baseDir: string): string {
+  return `${baseDir}\0${url}`;
+}
+
+/**
+ * Tell CodeMirror the widget's size changed.
+ *
+ * Without this, `posAtCoords` keeps using the pre-load height and a click on
+ * line N lands on line N+1 (or worse) once pictures above have grown in.
+ */
+function remasureWidget(view: EditorView, host: HTMLElement, cacheKey: string): void {
+  requestAnimationFrame(() => {
+    const height = host.getBoundingClientRect().height;
+    if (height > 0) imageHeights.set(cacheKey, Math.round(height));
+    view.requestMeasure();
+  });
+}
+
 /** Rendered image; `baseDir` resolves document-relative sources. */
 export class ImageWidget extends WidgetType {
   constructor(
@@ -137,19 +158,22 @@ export class ImageWidget extends WidgetType {
   }
 
   /**
-   * A guess, but a much better one than a line of text.
+   * Prefer the last measured height; fall back to a line-of-pictures guess.
    *
    * Until a picture loads the editor has no idea how tall it is, and every
    * position below it is computed against that wrong height — which is what
-   * makes a document jump about while images arrive.
+   * makes a document jump about while images arrive. Caching the real height
+   * keeps the second open honest; `requestMeasure` on load keeps the first.
    */
   get estimatedHeight(): number {
-    return 220;
+    return imageHeights.get(imageHeightKey(this.url, this.baseDir)) ?? 220;
   }
 
   toDOM(view: EditorView): HTMLElement {
     const wrap = document.createElement('span');
     wrap.className = 'md-img-wrap';
+    const cacheKey = imageHeightKey(this.url, this.baseDir);
+    const remasure = (): void => remasureWidget(view, wrap, cacheKey);
 
     // An image on its own line is otherwise a dead end: the only way to reach
     // its source is to click past the picture's right edge.
@@ -180,6 +204,11 @@ export class ImageWidget extends WidgetType {
     // time the file really is not there, and the box says so.
     const local = !isRemoteUrl(this.url);
     let retried = false;
+    const showBroken = (): void => {
+      wrap.replaceChildren(brokenImage(this.alt || this.url));
+      remasure();
+    };
+    img.addEventListener('load', remasure);
     img.addEventListener('error', () => {
       if (local && !retried && this.baseDir) {
         retried = true;
@@ -188,11 +217,14 @@ export class ImageWidget extends WidgetType {
           .then(() => {
             img.src = resolveImageSrc(this.url, this.baseDir);
           })
-          .catch(() => wrap.replaceChildren(brokenImage(this.alt || this.url)));
+          .catch(showBroken);
         return;
       }
-      wrap.replaceChildren(brokenImage(this.alt || this.url));
+      showBroken();
     });
+
+    // Cached pictures fire `load` before the listener is attached.
+    if (img.complete && img.naturalHeight > 0) remasure();
 
     wrap.appendChild(img);
     return wrap;

@@ -109,9 +109,13 @@ export class MathWidget extends WidgetType {
           output: 'html',
           strict: 'ignore'
         });
+        // KaTeX replaces the source placeholder; without a remasure every
+        // position below the formula stays mapped against the old height.
+        view.requestMeasure();
       })
       .catch(() => {
         host.classList.add('md-math-error');
+        view.requestMeasure();
       });
 
     return host;
@@ -182,15 +186,19 @@ export class MermaidWidget extends WidgetType {
         host.replaceChildren(document.importNode(node, true));
 
         // Remember what it actually came out as, so the next estimate is a
-        // measurement rather than a guess.
+        // measurement rather than a guess — and remasure now so the first
+        // open does not keep clicking one line off until something else
+        // forces a layout pass.
         requestAnimationFrame(() => {
           const height = host.getBoundingClientRect().height;
           if (height > 0) measuredHeights.set(this.source, Math.round(height));
+          view.requestMeasure();
         });
       })
       .catch((error) => {
         placeholder.classList.add('md-mermaid-error');
         placeholder.textContent = `${this.source}\n\n${String(error)}`;
+        view.requestMeasure();
       });
 
     return host;

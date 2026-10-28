@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { parseFully } from './support/tree';
 import { EditorState } from '@codemirror/state';
 import { markdownSupport } from '../src/lib/editor/markdownLang';
@@ -85,6 +85,23 @@ describe('images', () => {
     const found = widgets('![a [b] c](x.png)\n').filter((w) => w instanceof ImageWidget);
     expect(found).toHaveLength(1);
     expect((found[0] as ImageWidget).alt).toContain('[b]');
+  });
+
+  it('asks the editor to remasure after the picture loads', async () => {
+    const { EditorView } = await import('@codemirror/view');
+    const view = new EditorView({ doc: 'x' });
+    const spy = vi.spyOn(view, 'requestMeasure');
+    const widget = new ImageWidget('https://example.com/a.png', 'a', '');
+    const dom = widget.toDOM(view);
+    const img = dom.querySelector('img');
+    expect(img).toBeTruthy();
+    img!.dispatchEvent(new Event('load'));
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+    view.destroy();
   });
 });
 

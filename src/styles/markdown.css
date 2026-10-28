@@ -329,8 +329,9 @@ input.md-task:checked {
 /* — Tables — */
 .md-table-wrap {
   overflow-x: auto;
-  margin: 0.8em 0;
-  padding-bottom: 2px;
+  /* Vertical gap as padding — outer spacing is invisible to CM's height map
+     and used to shift every click about one line down past a table. */
+  padding: 0.8em 0 2px;
 }
 
 .md-table {
@@ -423,7 +424,7 @@ input.md-task:checked {
 
 .md-math-display {
   display: block;
-  margin: 0.8em 0;
+  padding: 0.8em 0;
   text-align: center;
   overflow-x: auto;
   overflow-y: hidden;
@@ -448,8 +449,8 @@ input.md-task:checked {
 .md-mermaid {
   display: flex;
   justify-content: center;
-  margin: 0.8em 0;
-  padding: var(--sp-4);
+  /* Former vertical margin folded into padding so the height map sees it. */
+  padding: calc(0.8em + var(--sp-4)) var(--sp-4);
   background: var(--bg-code);
   border-radius: var(--radius-m);
   overflow-x: auto;
