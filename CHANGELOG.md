@@ -4,6 +4,18 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.3] — 2026-10-28
+
+### Fixed
+
+- **A click landed one line below the text under the pointer.** Pictures
+  grew after load without telling CodeMirror, and tables, formulas and
+  Mermaid diagrams used vertical `margin` the height map cannot see — so
+  in a long document with screenshots above, selecting «Printer, File,
+  Email.» could paint the next list item instead. Images, math and
+  diagrams remasure when they finish drawing; the same gaps are padding
+  now, which the map can count.
+
 ## [0.7.2] — 2026-10-28
 
 ### Added
