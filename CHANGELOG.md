@@ -4,6 +4,16 @@ All notable changes to Verso are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.2] — 2026-10-28
+
+### Added
+
+- **Reading Mode is the default.** A file opens for looking: tables stay
+  tables, formulas stay formulas, and you can select and copy from them
+  without the Markdown unfolding underneath. **Ctrl+E**, or **View → Reading
+  Mode**, switches to editing for the current tab; the next file starts
+  reading again.
+
 ## [0.7.1] — 2026-09-14
 
 ### Added
