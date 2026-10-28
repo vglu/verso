@@ -8,7 +8,7 @@ import {
   type Extension,
   type Range
 } from '@codemirror/state';
-import { editingField, setEditing } from './editing';
+import { editingField, isReaderMode, readerMode, setEditing } from './editing';
 import {
   Decoration,
   EditorView,
@@ -47,15 +47,10 @@ export const documentDir = Facet.define<string, string>({
   combine: (values) => values[0] ?? ''
 });
 
-/** Reader mode: never reveal syntax, whatever the selection does. */
-export const readerMode = Facet.define<boolean, boolean>({
-  combine: (values) => values.some((v) => v)
-});
-
-export { editingField, setEditing };
+export { editingField, readerMode, setEditing };
 
 function isFrozen(state: EditorState): boolean {
-  return state.facet(readerMode) || !state.field(editingField, false);
+  return isReaderMode(state) || !state.field(editingField, false);
 }
 
 /**
@@ -994,6 +989,9 @@ function cancelPendingReveal(): void {
 const editingTracker = EditorView.domEventHandlers({
   mousedown: (_event, view) => {
     if (view.composing) return false;
+    // Reading Mode is deliberate: clicks select and copy, they do not start
+    // an edit session that would unwrap the line under the pointer later.
+    if (isReaderMode(view.state)) return false;
     if (!view.state.field(editingField, false)) {
       cancelPendingReveal();
       // Reveal on mouseup, not mousedown. Revealing syntax re-flows the
@@ -1005,6 +1003,7 @@ const editingTracker = EditorView.domEventHandlers({
         pendingRevealUp = null;
         window.removeEventListener('mouseup', onUp);
         if (!view.dom.isConnected) return;
+        if (isReaderMode(view.state)) return;
         if (view.state.field(editingField, false)) return;
         view.dispatch({ effects: setEditing.of(true) });
       };
@@ -1019,12 +1018,14 @@ const editingTracker = EditorView.domEventHandlers({
     // composition the browser is holding — the half-typed word disappears.
     // Anything worth revealing will still be revealed when composition ends.
     if (view.composing) return false;
+    if (isReaderMode(view.state)) return false;
     if (!view.state.field(editingField, false)) {
       view.dispatch({ effects: setEditing.of(true) });
     }
     return false;
   },
   compositionend: (_event, view) => {
+    if (isReaderMode(view.state)) return false;
     if (!view.state.field(editingField, false)) {
       view.dispatch({ effects: setEditing.of(true) });
     }

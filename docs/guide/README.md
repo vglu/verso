@@ -15,12 +15,11 @@
 Verso renders Markdown in place: headings, bold, links, tables, code and
 formulas all look like the finished document, not like source.
 
-The moment you click or type, the line your caret is on shows its raw
-Markdown, so you can edit the exact characters. Move away and it renders
-again. Click outside the document — into the sidebar, for example — and the
-whole page returns to a clean reading view.
-
-**Ctrl+E** toggles reader mode, which never reveals syntax.
+Files open in **Reading Mode**: tables stay tables, formulas stay formulas,
+and you can select and copy from them. **Ctrl+E** (View → Reading Mode)
+switches to editing for the current tab — click a line and its Markdown
+appears under the caret; move away and it renders again. The next file you
+open starts in Reading Mode once more.
 
 ## Saving
 

@@ -399,9 +399,8 @@
     if (!activeTab) return;
     const handle = tabs.handleOf(activeTab.id);
     if (!handle) return;
-    const next = !handle.isReaderMode();
-    handle.setReaderMode(next);
-    handle.view.contentDOM.classList.toggle('md-reader', next);
+    handle.setReaderMode(!handle.isReaderMode());
+    bump();
   }
 
   /**
@@ -496,6 +495,9 @@
         // typing the sentence.
         focusEditor();
         break;
+      case 'toggleReader':
+        toggleReader();
+        break;
       case 'find':
         focusSearch();
         break;
@@ -580,7 +582,8 @@
       runAction('toggleSourceAndPreview');
       return;
     }
-    if (event.key.toLowerCase() === 'e') {
+    // Ctrl+E is Reading Mode. Ctrl+Shift+E is Export (native menu); leave it.
+    if (event.key.toLowerCase() === 'e' && !event.shiftKey && !event.altKey) {
       event.preventDefault();
       toggleReader();
       return;

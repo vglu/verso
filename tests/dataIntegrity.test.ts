@@ -9,7 +9,7 @@ import { createEditor } from '../src/lib/editor/createEditor';
 function setup(doc: string) {
   const parent = document.createElement('div');
   document.body.appendChild(parent);
-  return createEditor({ parent, doc, dir: '/docs' });
+  return createEditor({ parent, doc, dir: '/docs', readerMode: false });
 }
 
 describe('reader mode', () => {

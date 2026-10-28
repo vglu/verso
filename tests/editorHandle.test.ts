@@ -15,6 +15,7 @@ function setup(doc: string) {
     parent,
     doc,
     dir: '/docs',
+    readerMode: false,
     onChange: (content, meta) => changes.push({ content, userInitiated: meta.userInitiated })
   });
 
@@ -74,11 +75,12 @@ describe('EditorHandle basics', () => {
     handle.destroy();
   });
 
-  it('toggles reader mode', () => {
+  it('can enter reading mode from editing', () => {
     const { handle } = setup('# One\n');
     expect(handle.isReaderMode()).toBe(false);
     handle.setReaderMode(true);
     expect(handle.isReaderMode()).toBe(true);
+    expect(handle.view.contentDOM.classList.contains('md-reader')).toBe(true);
     handle.destroy();
   });
 });

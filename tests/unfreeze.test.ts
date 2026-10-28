@@ -95,7 +95,7 @@ describe('the toolbar declares its edits', () => {
   it('begins editing before it changes anything', () => {
     const parent = document.createElement('div');
     document.body.appendChild(parent);
-    const handle = createEditor({ parent, doc: '# heading\n', dir: '/docs' });
+    const handle = createEditor({ parent, doc: '# heading\n', dir: '/docs', readerMode: false });
 
     handle.beginEditing();
     handle.view.dispatch({ changes: { from: 0, insert: 'x' }, userEvent: 'input.format' });

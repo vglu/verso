@@ -1,16 +1,19 @@
 import { EditorSelection } from '@codemirror/state';
 import { EditorView, WidgetType } from '@codemirror/view';
-import { setEditing } from './editing';
+import { isReaderMode, setEditing } from './editing';
 
 /**
  * Clicking a rendered block puts the caret into its source.
  *
  * Without this a widget is a dead end: the block looks finished, and there is
  * no way to get at the text behind it — which is how a Mermaid diagram or a
- * display formula becomes uneditable.
+ * display formula becomes uneditable. Reading Mode is the exception: the
+ * painted block stays painted so the reader can select and copy from it.
  */
 function editOnClick(host: HTMLElement, view: EditorView, from: number): void {
   host.addEventListener('mousedown', (event) => {
+    const target = event.target as Element | null;
+    if (target?.closest?.('.md-reader') || isReaderMode(view.state)) return;
     event.preventDefault();
     const pos = Math.min(from + 1, view.state.doc.length);
     view.dispatch({
@@ -23,6 +26,11 @@ function editOnClick(host: HTMLElement, view: EditorView, from: number): void {
     });
     view.focus();
   });
+}
+
+function readingClick(event: Event): boolean {
+  const el = event.target as Element | null;
+  return Boolean(el?.closest?.('.md-reader'));
 }
 
 /**
@@ -108,6 +116,10 @@ export class MathWidget extends WidgetType {
 
     return host;
   }
+
+  ignoreEvent(event: Event): boolean {
+    return readingClick(event);
+  }
 }
 
 /**
@@ -184,9 +196,9 @@ export class MermaidWidget extends WidgetType {
     return host;
   }
 
-  /** Let clicks through, so the diagram can be opened for editing. */
-  ignoreEvent(): boolean {
-    return false;
+  /** Reading Mode keeps the diagram selectable; otherwise clicks open source. */
+  ignoreEvent(event: Event): boolean {
+    return readingClick(event);
   }
 }
 

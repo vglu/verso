@@ -223,6 +223,7 @@ export type MenuActionId =
   | 'toggleOutline'
   | 'toggleSplit'
   | 'toggleSourceAndPreview'
+  | 'toggleReader'
   | 'find'
   | 'goToHeading'
   | 'goToLine'

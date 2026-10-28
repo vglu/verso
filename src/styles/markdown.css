@@ -347,6 +347,8 @@ input.md-task:checked {
   padding: 6px 12px;
   text-align: left;
   vertical-align: top;
+  /* Reading Mode leaves the painted table alone so cell text can be copied. */
+  user-select: text;
   /* Line wrapping in the editor is `overflow-wrap: anywhere`, which tells the
      layout a column may be one character wide. Inside a table that is ruinous:
      the space goes to whichever column has the most text and a five-letter

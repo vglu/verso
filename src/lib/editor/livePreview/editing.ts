@@ -1,4 +1,4 @@
-import { StateEffect, StateField } from '@codemirror/state';
+import { Facet, StateEffect, StateField, type EditorState } from '@codemirror/state';
 
 /**
  * Whether the user is working in this document, as opposed to reading it.
@@ -25,3 +25,20 @@ export const editingField = StateField.define<boolean>({
     return value;
   }
 });
+
+/**
+ * Dedicated reading mode: syntax never reveals, the document is read-only,
+ * and rendered widgets (tables, formulas) keep their painted form so the
+ * reader can select and copy from them.
+ *
+ * Default-on for every new editor. Ctrl+E toggles it for the active tab only;
+ * the next file opened starts reading again.
+ */
+export const readerMode = Facet.define<boolean, boolean>({
+  combine: (values) => values.some((v) => v)
+});
+
+/** True while Reading Mode is on for this document. */
+export function isReaderMode(state: EditorState): boolean {
+  return state.facet(readerMode);
+}

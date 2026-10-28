@@ -1,6 +1,6 @@
 import { EditorSelection } from '@codemirror/state';
 import { EditorView, WidgetType } from '@codemirror/view';
-import { setEditing } from './editing';
+import { isReaderMode, setEditing } from './editing';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { renderInline } from './inline';
 import { parseTable } from './table';
@@ -14,6 +14,12 @@ import { t } from '../../stores/i18n';
  * deliberate exception: the task checkbox, where clicking *is* the user
  * editing the text (EDITOR-CORE §6).
  */
+
+/** In Reading Mode the painted widget stays painted — select and copy. */
+function readingClick(event: Event): boolean {
+  const el = event.target as Element | null;
+  return Boolean(el?.closest?.('.md-reader'));
+}
 
 /** Bullet glyph replacing `-`/`*`/`+` in unordered lists. */
 export class BulletWidget extends WidgetType {
@@ -52,6 +58,7 @@ export class HrWidget extends WidgetType {
     // all, and no way to delete it with the mouse.
     if (this.from >= 0) {
       span.addEventListener('mousedown', (event) => {
+        if (readingClick(event) || isReaderMode(view.state)) return;
         event.preventDefault();
         view.dispatch({
           selection: EditorSelection.cursor(Math.min(this.from, view.state.doc.length)),
@@ -65,8 +72,8 @@ export class HrWidget extends WidgetType {
     return span;
   }
 
-  ignoreEvent(): boolean {
-    return false;
+  ignoreEvent(event: Event): boolean {
+    return readingClick(event);
   }
 }
 
@@ -148,6 +155,7 @@ export class ImageWidget extends WidgetType {
     // its source is to click past the picture's right edge.
     if (this.from >= 0) {
       wrap.addEventListener('mousedown', (event) => {
+        if (readingClick(event) || isReaderMode(view.state)) return;
         event.preventDefault();
         const pos = Math.min(this.from, view.state.doc.length);
         view.dispatch({
@@ -190,8 +198,8 @@ export class ImageWidget extends WidgetType {
     return wrap;
   }
 
-  ignoreEvent(): boolean {
-    return false;
+  ignoreEvent(event: Event): boolean {
+    return readingClick(event);
   }
 }
 
@@ -286,6 +294,7 @@ export class FenceChipWidget extends WidgetType {
 
     if (this.languageFrom >= 0) {
       lang.addEventListener('click', (event) => {
+        if (readingClick(event) || isReaderMode(view.state)) return;
         event.preventDefault();
         event.stopPropagation();
         const from = Math.min(this.languageFrom, view.state.doc.length);
@@ -402,7 +411,10 @@ export class TableWidget extends WidgetType {
     table.appendChild(tbody);
 
     // One handler for the whole table: put the caret near what was clicked.
+    // In Reading Mode leave the painted table alone — the reader is selecting
+    // a cell to copy, not asking to see the pipes.
     wrap.addEventListener('mousedown', (event) => {
+      if (readingClick(event) || isReaderMode(view.state)) return;
       event.preventDefault();
       const target = event.target as HTMLElement | null;
       const cell = target?.closest('td, th') as HTMLTableCellElement | null;
@@ -448,8 +460,10 @@ export class TableWidget extends WidgetType {
     return target ? target.from : this.from + offset;
   }
 
-  ignoreEvent(): boolean {
-    return false;
+  ignoreEvent(event: Event): boolean {
+    // Hand mouse gestures to the browser so cell text can be selected and
+    // copied while Reading Mode keeps the table rendered.
+    return readingClick(event);
   }
 }
 

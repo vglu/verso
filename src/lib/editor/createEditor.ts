@@ -83,6 +83,12 @@ export interface CreateEditorOptions {
    */
   fileName?: string;
   readOnly?: boolean;
+  /**
+   * Start in Reading Mode (default true): syntax stays concealed, the
+   * document is read-only, and rendered widgets can be selected and copied.
+   * Pass false in tests that need to type into a fresh editor.
+   */
+  readerMode?: boolean;
   /** Start in plain Markdown source rather than live preview. */
   sourceMode?: boolean;
   /** Underline misspelled words, using the system's own dictionaries. */
@@ -109,7 +115,9 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
 
   const markdown = isMarkdownFile(options.fileName ?? 'untitled.md');
 
-  let readerOn = false;
+  // Reading Mode is the default: open a file, look at it, copy from a table.
+  // Ctrl+E turns editing on for this tab; the next file starts reading again.
+  let readerOn = options.readerMode ?? true;
   let sourceOn = options.sourceMode ?? false;
 
   const listener = EditorView.updateListener.of((update) => {
@@ -214,6 +222,7 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
     state: EditorState.create({ doc: options.doc, extensions: buildExtensions() })
   });
 
+  if (readerOn) view.contentDOM.classList.add('md-reader');
   if (sourceOn) view.dom.classList.add('cm-wide');
 
   // A non-Markdown file gets its grammar as soon as it arrives. The document
@@ -347,6 +356,7 @@ export function createEditor(options: CreateEditorOptions): EditorHandle {
 
     setReaderMode(value) {
       readerOn = value;
+      view.contentDOM.classList.toggle('md-reader', value);
       view.dispatch({
         effects: [
           readerComp.reconfigure(readerMode.of(value)),

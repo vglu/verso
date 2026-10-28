@@ -129,6 +129,12 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
     )
     .accelerator("CmdOrCtrl+Alt+P")
     .build(app)?;
+    // Reading Mode is default-on: open a file, look, copy. The accelerator
+    // lives on the window keydown (same as zoom) so Ctrl+Shift+E can stay
+    // Export; the menu item is here to be discoverable.
+    let toggle_reader =
+        MenuItemBuilder::with_id("toggleReader", label(l, "toggleReader", "Reading Mode	Ctrl+E"))
+            .build(app)?;
     let fold_all = MenuItemBuilder::with_id("foldAll", label(l, "foldAll", "Fold All Sections"))
         .accelerator("CmdOrCtrl+Alt+[")
         .build(app)?;
@@ -161,6 +167,7 @@ pub fn build_with<R: Runtime>(app: &AppHandle<R>, l: &Labels) -> tauri::Result<M
         .item(&toggle_outline)
         .item(&split_editor)
         .item(&source_and_preview)
+        .item(&toggle_reader)
         .separator()
         .item(&fold_all)
         .item(&unfold_all)
